@@ -392,6 +392,102 @@ extension ProtocolWitnessingTests {
         }
     }
 }
+
+// MARK: - Parameters
+
+extension ProtocolWitnessingTests {
+    func testMacro_usesWitnessForTypeName_whenTypeNameParameterIsNotSet() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyWitness {
+                func returnsVoid() { }
+                func returnsAThing() -> Thing { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyWitness {
+                func returnsVoid() { }
+                func returnsAThing() -> Thing { }
+
+                struct Witness {
+                    var _returnsVoid: () -> Void
+                    var _returnsAThing: () -> Thing
+
+                    init(
+                        returnsVoid: @escaping () -> Void,
+                        returnsAThing: @escaping () -> Thing
+                    ) {
+                        _returnsVoid = returnsVoid
+                        _returnsAThing = returnsAThing
+                    }
+
+                    func returnsVoid() {
+                        _returnsVoid()
+                    }
+
+                    func returnsAThing() -> Thing {
+                        _returnsAThing()
+                    }
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_usesCustomTypeName_whenTypeNameParameterIsSet_andTypeHasNoFunctions() throws {
+        assertMacro {
+            """
+            @Witnessing("MyCustomWitnessTypeName")
+            struct MyWitness {
+            
+            }
+            """
+        } expansion: {
+            """
+            struct MyWitness {
+
+                struct MyCustomWitnessTypeName {
+                    init() {
+
+                    }
+                }
+
+            }
+            """
+        }
+    }
+    
+    func testMacro_usesCustomTypeName_whenTypeNameParameterIsSet_andTypeHasOneFunction() throws {
+        assertMacro {
+            """
+            @Witnessing("MyCustomWitnessTypeName")
+            struct MyWitness {
+                func myFunction() {}
+            }
+            """
+        } expansion: {
+            """
+            struct MyWitness {
+                func myFunction() {}
+
+                struct MyCustomWitnessTypeName {
+                    var _myFunction: () -> Void
+
+                    init(myFunction: @escaping () -> Void) {
+                        _myFunction = myFunction
+                    }
+
+                    func myFunction() {
+                        _myFunction()
+                    }
+                }
+            }
+            """
+        }
+    }
+}
 #else
 final class ProtocolWitnessingTests: XCTestCase {
     func testMacro() throws {

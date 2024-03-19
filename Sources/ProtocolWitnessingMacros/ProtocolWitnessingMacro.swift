@@ -165,19 +165,33 @@ public struct WitnessingMacro: MemberMacro {
         
         
         
+        let witnessTypeName = node
+            .arguments?
+            .as(LabeledExprListSyntax.self)?
+            .first?
+            .as(LabeledExprSyntax.self)?
+            .expression
+            .as(StringLiteralExprSyntax.self)?
+            .segments
+            .first?
+            .as(StringSegmentSyntax.self)?
+            .content
+            .text
+        ?? "Witness"
+        
         
         
         let witnessDecl: DeclSyntax
         
         if expandedProperties.isEmpty {
             witnessDecl = """
-                struct Witness {
+                struct \(raw: witnessTypeName) {
                     \(raw: expandedInit)
                 }
                 """
         } else {
             witnessDecl = """
-                struct Witness {
+                struct \(raw: witnessTypeName) {
                     \(raw: expandedProperties)
                     
                     \(raw: expandedInit)

@@ -2,8 +2,9 @@ import ProtocolWitnessing
 
 // TODO: 
 
-// @Witnessing(typeName: String = "Witness", generatedRealName: String = "production")
-@Witnessing
+// @Witnessing(_ typeName: String = "Witness", generatedRealName: String = "production")
+//@Witnessing
+//@Witnessing("ChildWitness")
 struct MyService {
     func fetchData() -> Int {
         return (100...10_000).randomElement()!
