@@ -3,6 +3,7 @@ import ProtocolWitnessing
 // TODO: 
 
 // @Witnessing(typeName: String = "Witness", generatedRealName: String = "production")
+@Witnessing
 struct MyService {
     func fetchData() -> Int {
         return (100...10_000).randomElement()!
@@ -10,33 +11,34 @@ struct MyService {
     
     // < Generated >
     // Uses typeName arg
-    struct Witness {
-        var _fetchData: () -> Int
-        
-        init(fetchData: @escaping () -> Int) {
-            _fetchData = fetchData
-        }
-        
-        func fetchData() -> Int {
-            _fetchData()
-        }
-    }
+//    struct Witness {
+//        var _fetchData: () -> Int
+//        
+//        init(fetchData: @escaping () -> Int) {
+//            _fetchData = fetchData
+//        }
+//        
+//        func fetchData() -> Int {
+//            _fetchData()
+//        }
+//    }
     // < / Generated >
 }
 
 
+// TODO: Come back to this one...
 // < Generated >
-extension MyService {
-    // Uses generatedRealName arg with _ prefix
-    private static var _production = {
-        Self()
-    }()
-    
-    // Uses generatedRealName and typeName args
-    static var production = Witness(
-        fetchData: _production.fetchData
-    )
-}
+//extension MyService {
+//    // Uses generatedRealName arg with _ prefix
+//    private static var _production = {
+//        Self()
+//    }()
+//    
+//    // Uses generatedRealName and typeName args
+//    static var production = Witness(
+//        fetchData: _production.fetchData
+//    )
+//}
 // < / Generated >
 
 
@@ -45,19 +47,19 @@ extension MyService {
 
 // Using the Macro...
 
-var production = MyService.production
-
-print(production.fetchData())
-
-var preproduction = production
-preproduction._fetchData = { 0 }
-
-print(preproduction.fetchData())
-
-var flakey = production
-flakey._fetchData = { (0...1).randomElement()! }
-
-print(flakey.fetchData())
+//var production = MyService.production
+//
+//print(production.fetchData())
+//
+//var preproduction = production
+//preproduction._fetchData = { 0 }
+//
+//print(preproduction.fetchData())
+//
+//var flakey = production
+//flakey._fetchData = { (0...1).randomElement()! }
+//
+//print(flakey.fetchData())
 
 //var crashing = production
 //crashing._fetchData = { fatalError("Crashed! :(") }

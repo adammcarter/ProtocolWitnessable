@@ -3,6 +3,16 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
+
+@main
+struct ProtocolWitnessingPlugin: CompilerPlugin {
+    let providingMacros: [Macro.Type] = [
+        WitnessingMacro.self,
+    ]
+}
+
+
+
 public struct WitnessingMacro: MemberMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -13,10 +23,12 @@ public struct WitnessingMacro: MemberMacro {
             throw WitnessingError.structOnly
         }
         
+        
+        
         let functions = structDecl.memberBlock.members
             .compactMap { $0.decl.as(FunctionDeclSyntax.self) }
             .map {
-                let parameterList = $0
+                let parameterTypesList = $0
                     .signature
                     .parameterClause
                     .parameters
@@ -29,6 +41,38 @@ public struct WitnessingMacro: MemberMacro {
                     }
                     .joined(separator: ", ")
                 
+                let parameterNameWithTypeList = $0
+                    .signature
+                    .parameterClause
+                    .parameters
+                    .compactMap {
+                        guard
+                            let type = $0
+                                .type
+                                .as(IdentifierTypeSyntax.self)?
+                                .name
+                                .text
+                        else {
+                            return nil
+                        }
+                        
+                        let firstName = $0.firstName.text
+
+                        return "\(firstName): \(type)"
+                    }
+                    .joined(separator: ", ")
+                
+                let parameterNameWithNameList = $0
+                    .signature
+                    .parameterClause
+                    .parameters
+                    .compactMap { "\($0.firstName.text)" }
+                    .joined(separator: ", ")
+                
+                
+                
+                
+                
                 let returnValue = $0
                     .signature
                     .returnClause?
@@ -36,13 +80,29 @@ public struct WitnessingMacro: MemberMacro {
                     .as(IdentifierTypeSyntax.self)?
                     .name
                     .text
-                ?? "Void"
+                
+                let name = $0.name.text
+                
+                let returnValueOrVoid = returnValue ?? "Void"
+                let returnValueIfNotVoid = returnValue.flatMap { " -> \($0)" } ?? ""
+                
+                
+                
+                
                 
                 return FunctionDetails(
-                    name: $0.name.text,
-                    type: "(\(parameterList)) -> \(returnValue)"
+                    name: name,
+                    type: "(\(parameterTypesList)) -> \(returnValueOrVoid)",
+                    callsite:
+                        """
+                        func \(name)(\(parameterNameWithTypeList))\(returnValueIfNotVoid) {
+                        _\(name)(\(parameterNameWithNameList))
+                        }
+                        """
                 )
             }
+        
+        
         
         let expandedProperties = functions
             .map {
@@ -50,60 +110,92 @@ public struct WitnessingMacro: MemberMacro {
             }
             .joined(separator: "\n")
         
+        
+        
+        
+        
+        
+        
         let expandedInit: String
         
         if functions.isEmpty {
-            expandedInit = """
-            init() {
-            
-            }
-            """
+            expandedInit = 
+                """
+                init() {
+                
+                }
+                """
         } else if functions.count == 1, let function = functions.first {
-            expandedInit = """
-            init(\(function.name): @escaping \(function.type)) {
+            expandedInit = 
+                """
+                init(\(function.name): @escaping \(function.type)) {
                 _\(function.name) = \(function.name)
-            }
-            """
+                }
+                """
         } else {
             let args = functions
                 .map { "\($0.name): @escaping \($0.type)" }
-                .joined(separator: ",\n    ")
+                .joined(separator: ",\n")
             
             let assigns = functions
                 .map { "_\($0.name) = \($0.name)" }
-                .joined(separator: "\n    ")
+                .joined(separator: "\n")
             
-            expandedInit = """
-            init(
+            expandedInit = 
+                """
+                init(
                 \(args)
-            ) {
+                ) {
                 \(assigns)
-            }
-            """
+                }
+                """
         }
         
-        return [
-            """
-            \(raw: expandedProperties)
-            
-            \(raw: expandedInit)
-            """
-        ]
+        
+        
+        
+        
+        
+        let expandedFunctions = functions
+            .map {
+                $0.callsite
+            }
+            .joined(separator: "\n\n")
+        
+        
+        
+        
+        
+        
+        let witnessDecl: DeclSyntax
+        
+        if expandedProperties.isEmpty {
+            witnessDecl = """
+                struct Witness {
+                    \(raw: expandedInit)
+                }
+                """
+        } else {
+            witnessDecl = """
+                struct Witness {
+                    \(raw: expandedProperties)
+                    
+                    \(raw: expandedInit)
+                    
+                    \(raw: expandedFunctions)
+                }
+                """
+        }
+        
+        return [witnessDecl]
     }
-}
-
-
-@main
-struct ProtocolWitnessingPlugin: CompilerPlugin {
-    let providingMacros: [Macro.Type] = [
-        WitnessingMacro.self,
-    ]
 }
 
 
 private struct FunctionDetails {
     let name: String
     let type: String
+    let callsite: String
 }
 
 private enum WitnessingError: Error, CustomStringConvertible {

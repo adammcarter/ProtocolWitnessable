@@ -25,7 +25,7 @@ extension ProtocolWitnessingTests {
         assertMacro {
             """
             @Witnessing
-            class MyClass {
+            class MyClientClass {
             }
             """
         } diagnostics: {
@@ -33,7 +33,7 @@ extension ProtocolWitnessingTests {
             @Witnessing
             ┬──────────
             ╰─ 🛑 @Witnessing can only be attached to a struct
-            class MyClass {
+            class MyClientClass {
             }
             """
         }
@@ -47,15 +47,17 @@ extension ProtocolWitnessingTests {
         assertMacro {
             """
             @Witnessing
-            struct MyWitness {
+            struct MyClient {
             }
             """
         } expansion: {
             """
-            struct MyWitness {
-
-                init() {
-
+            struct MyClient {
+            
+                struct Witness {
+                    init() {
+            
+                    }
                 }
             }
             """
@@ -70,42 +72,54 @@ extension ProtocolWitnessingTests {
         assertMacro {
             """
             @Witnessing
-            struct MyWitness {
+            struct MyClient {
                 func doSomething() { }
             }
             """
         } expansion: {
             """
-            struct MyWitness {
+            struct MyClient {
                 func doSomething() { }
-            
-                var _doSomething: () -> Void
-            
-                init(doSomething: @escaping () -> Void) {
-                    _doSomething = doSomething
+
+                struct Witness {
+                    var _doSomething: () -> Void
+
+                    init(doSomething: @escaping () -> Void) {
+                        _doSomething = doSomething
+                    }
+
+                    func doSomething() {
+                        _doSomething()
+                    }
                 }
             }
             """
         }
     }
-    
+
     func testMacro_addsInitWithParameterToVoidClosure_andPropertyForParameterToVoidClosure_whenOneFunction_andOneArgument_andReturnsVoid() throws {
         assertMacro {
             """
             @Witnessing
-            struct MyWitness {
+            struct MyClient {
                 func doSomething(int: Int) { }
             }
             """
         } expansion: {
             """
-            struct MyWitness {
+            struct MyClient {
                 func doSomething(int: Int) { }
-            
-                var _doSomething: (Int) -> Void
-            
-                init(doSomething: @escaping (Int) -> Void) {
-                    _doSomething = doSomething
+
+                struct Witness {
+                    var _doSomething: (Int) -> Void
+
+                    init(doSomething: @escaping (Int) -> Void) {
+                        _doSomething = doSomething
+                    }
+
+                    func doSomething(int: Int) {
+                        _doSomething(int)
+                    }
                 }
             }
             """
@@ -116,19 +130,25 @@ extension ProtocolWitnessingTests {
         assertMacro {
             """
             @Witnessing
-            struct MyWitness {
+            struct MyClient {
                 func doSomething(int: Int) -> Double { 0.5 }
             }
             """
         } expansion: {
             """
-            struct MyWitness {
+            struct MyClient {
                 func doSomething(int: Int) -> Double { 0.5 }
-            
-                var _doSomething: (Int) -> Double
-            
-                init(doSomething: @escaping (Int) -> Double) {
-                    _doSomething = doSomething
+
+                struct Witness {
+                    var _doSomething: (Int) -> Double
+
+                    init(doSomething: @escaping (Int) -> Double) {
+                        _doSomething = doSomething
+                    }
+
+                    func doSomething(int: Int) -> Double {
+                        _doSomething(int)
+                    }
                 }
             }
             """
@@ -139,19 +159,25 @@ extension ProtocolWitnessingTests {
         assertMacro {
             """
             @Witnessing
-            struct MyWitness {
+            struct MyClient {
                 func doSomething(int: Int, float: Float) -> Double { 0.5 }
             }
             """
         } expansion: {
             """
-            struct MyWitness {
+            struct MyClient {
                 func doSomething(int: Int, float: Float) -> Double { 0.5 }
-            
-                var _doSomething: (Int, Float) -> Double
-            
-                init(doSomething: @escaping (Int, Float) -> Double) {
-                    _doSomething = doSomething
+
+                struct Witness {
+                    var _doSomething: (Int, Float) -> Double
+
+                    init(doSomething: @escaping (Int, Float) -> Double) {
+                        _doSomething = doSomething
+                    }
+
+                    func doSomething(int: Int, float: Float) -> Double {
+                        _doSomething(int, float)
+                    }
                 }
             }
             """
@@ -166,26 +192,36 @@ extension ProtocolWitnessingTests {
         assertMacro {
             """
             @Witnessing
-            struct MyWitness {
+            struct MyClient {
                 func doSomething() { }
                 func doAnotherThing() { }
             }
             """
         } expansion: {
             """
-            struct MyWitness {
+            struct MyClient {
                 func doSomething() { }
                 func doAnotherThing() { }
-            
-                var _doSomething: () -> Void
-                var _doAnotherThing: () -> Void
-            
-                init(
-                    doSomething: @escaping () -> Void,
-                    doAnotherThing: @escaping () -> Void
-                ) {
-                    _doSomething = doSomething
-                    _doAnotherThing = doAnotherThing
+
+                struct Witness {
+                    var _doSomething: () -> Void
+                    var _doAnotherThing: () -> Void
+
+                    init(
+                        doSomething: @escaping () -> Void,
+                        doAnotherThing: @escaping () -> Void
+                    ) {
+                        _doSomething = doSomething
+                        _doAnotherThing = doAnotherThing
+                    }
+
+                    func doSomething() {
+                        _doSomething()
+                    }
+
+                    func doAnotherThing() {
+                        _doAnotherThing()
+                    }
                 }
             }
             """
@@ -206,16 +242,26 @@ extension ProtocolWitnessingTests {
             struct MyWitness {
                 func doSomething(arg1: Type) { }
                 func doAnotherThing(otherArg: OtherType) { }
-            
-                var _doSomething: (Type) -> Void
-                var _doAnotherThing: (OtherType) -> Void
-            
-                init(
-                    doSomething: @escaping (Type) -> Void,
-                    doAnotherThing: @escaping (OtherType) -> Void
-                ) {
-                    _doSomething = doSomething
-                    _doAnotherThing = doAnotherThing
+
+                struct Witness {
+                    var _doSomething: (Type) -> Void
+                    var _doAnotherThing: (OtherType) -> Void
+
+                    init(
+                        doSomething: @escaping (Type) -> Void,
+                        doAnotherThing: @escaping (OtherType) -> Void
+                    ) {
+                        _doSomething = doSomething
+                        _doAnotherThing = doAnotherThing
+                    }
+
+                    func doSomething(arg1: Type) {
+                        _doSomething(arg1)
+                    }
+
+                    func doAnotherThing(otherArg: OtherType) {
+                        _doAnotherThing(otherArg)
+                    }
                 }
             }
             """
@@ -237,15 +283,25 @@ extension ProtocolWitnessingTests {
                 func doSomething(arg1: Type) -> OtherType { }
                 func doAnotherThing(otherArg: OtherType) -> Type { }
 
-                var _doSomething: (Type) -> OtherType
-                var _doAnotherThing: (OtherType) -> Type
-            
-                init(
-                    doSomething: @escaping (Type) -> OtherType,
-                    doAnotherThing: @escaping (OtherType) -> Type
-                ) {
-                    _doSomething = doSomething
-                    _doAnotherThing = doAnotherThing
+                struct Witness {
+                    var _doSomething: (Type) -> OtherType
+                    var _doAnotherThing: (OtherType) -> Type
+
+                    init(
+                        doSomething: @escaping (Type) -> OtherType,
+                        doAnotherThing: @escaping (OtherType) -> Type
+                    ) {
+                        _doSomething = doSomething
+                        _doAnotherThing = doAnotherThing
+                    }
+
+                    func doSomething(arg1: Type) -> OtherType {
+                        _doSomething(arg1)
+                    }
+
+                    func doAnotherThing(otherArg: OtherType) -> Type {
+                        _doAnotherThing(otherArg)
+                    }
                 }
             }
             """
@@ -267,15 +323,25 @@ extension ProtocolWitnessingTests {
                 func doSomething(arg1: Type, arg2: TypeTwo) -> OtherType { }
                 func doAnotherThing(otherArg: OtherType, anotherArg: AnotherType) -> Type { }
 
-                var _doSomething: (Type, TypeTwo) -> OtherType
-                var _doAnotherThing: (OtherType, AnotherType) -> Type
-            
-                init(
-                    doSomething: @escaping (Type, TypeTwo) -> OtherType,
-                    doAnotherThing: @escaping (OtherType, AnotherType) -> Type
-                ) {
-                    _doSomething = doSomething
-                    _doAnotherThing = doAnotherThing
+                struct Witness {
+                    var _doSomething: (Type, TypeTwo) -> OtherType
+                    var _doAnotherThing: (OtherType, AnotherType) -> Type
+
+                    init(
+                        doSomething: @escaping (Type, TypeTwo) -> OtherType,
+                        doAnotherThing: @escaping (OtherType, AnotherType) -> Type
+                    ) {
+                        _doSomething = doSomething
+                        _doAnotherThing = doAnotherThing
+                    }
+
+                    func doSomething(arg1: Type, arg2: TypeTwo) -> OtherType {
+                        _doSomething(arg1, arg2)
+                    }
+
+                    func doAnotherThing(otherArg: OtherType, anotherArg: AnotherType) -> Type {
+                        _doAnotherThing(otherArg, anotherArg)
+                    }
                 }
             }
             """
@@ -301,48 +367,31 @@ extension ProtocolWitnessingTests {
                 func returnsVoid() { }
                 func returnsAThing() -> Thing { }
 
-                var _returnsVoid: () -> Void
-                var _returnsAThing: () -> Thing
-            
-                init(
-                    returnsVoid: @escaping () -> Void,
-                    returnsAThing: @escaping () -> Thing
-                ) {
-                    _returnsVoid = returnsVoid
-                    _returnsAThing = returnsAThing
+                struct Witness {
+                    var _returnsVoid: () -> Void
+                    var _returnsAThing: () -> Thing
+
+                    init(
+                        returnsVoid: @escaping () -> Void,
+                        returnsAThing: @escaping () -> Thing
+                    ) {
+                        _returnsVoid = returnsVoid
+                        _returnsAThing = returnsAThing
+                    }
+
+                    func returnsVoid() {
+                        _returnsVoid()
+                    }
+
+                    func returnsAThing() -> Thing {
+                        _returnsAThing()
+                    }
                 }
             }
             """
         }
     }
 }
-
-// MARK: - Assistance
-
-//extension ProtocolWitnessingTests {
-//    func testMacroActualOutputByForcingRecordToTrue() throws {
-//        assertMacro(record: true) {
-//            """
-//            @Witnessing
-//            struct MyWitness {
-//                func doSomething(int: Int) -> Double { 0.5 }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyWitness {
-//                func doSomething(int: Int) -> Double { 0.5 }
-//
-//                var _doSomething: (Int) -> Double
-//
-//                init(doSomething: @escaping (Int) -> Double) {
-//                    _doSomething = doSomething
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
 #else
 final class ProtocolWitnessingTests: XCTestCase {
     func testMacro() throws {
@@ -353,6 +402,8 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 
 /*
+ TODO:
  - Function returns explicit void
  - Weird/unusual formatting?
+ - Using custom args
  */
