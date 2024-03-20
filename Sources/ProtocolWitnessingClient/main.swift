@@ -127,26 +127,29 @@ import ProtocolWitnessing
 
 
 
-
-
 struct MyClient {
-    func    doSomething ()
+    func doSomething() { }
     
-    {
-        
-        /*some logic here*/
-        
-    }
+    func doAnotherThing() async { }
     
     struct Witness {
         var _doSomething: () -> Void
+        var _doAnotherThing: () async -> Void
         
-        init(doSomething: @escaping () -> Void) {
+        init(
+            doSomething: @escaping () -> Void,
+            doAnotherThing: @escaping () async -> Void
+        ) {
             _doSomething = doSomething
+            _doAnotherThing = doAnotherThing
         }
         
         func doSomething() {
             _doSomething()
+        }
+        
+        func doAnotherThing() async {
+            await _doAnotherThing()
         }
     }
 }
@@ -162,15 +165,32 @@ extension MyClient {
         }
         
         return MyClient.Witness(
-            doSomething: production.doSomething
+            doSomething: production.doSomething,
+            doAnotherThing: production.doAnotherThing
         )
     }
 }
 
 
 
+
+
+
+import Foundation
+
+
 var client = MyClient.production()
-client.doSomething()
+await client.doSomething()
+
+
+var mock = client
+mock._doSomething = {
+    print("Mock. Async \(Thread.current)")
+}
+
+
+await mock.doSomething()
+
 
 //print(client._som)
 //var mock = client

@@ -301,8 +301,13 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         structDecl.memberBlock.members
             .compactMap { $0.decl.as(FunctionDeclSyntax.self) }
             .map {
-                let parameterDetails = $0
-                    .signature
+                let signature = $0.signature
+                
+                let isAsync = signature
+                    .effectSpecifiers?
+                    .asyncSpecifier != nil
+                
+                let parameterDetails = signature
                     .parameterClause
                     .parameters
                     .compactMap {
@@ -315,7 +320,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                 
                 
                 let parameterTypesList = parameterDetails
-                    .map(\.type)
+                    .map { $0.type }
                     .joined(separator: ", ")
                 
                 let parameterNameWithTypeList = parameterDetails
@@ -346,15 +351,33 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                 
                 
                 
+                let signatureDecl = if isAsync {
+                    "(\(parameterTypesList)) async"
+                } else {
+                    "(\(parameterTypesList))"
+                }
                 
+                
+                let signatureParameterNamesDecl = if isAsync {
+                    "(\(parameterNameWithTypeList)) async"
+                } else {
+                    "(\(parameterNameWithTypeList))"
+                }
+                
+                
+                let awaitOrEmpty = if isAsync {
+                    "await "
+                } else {
+                    ""
+                }
                 
                 return FunctionDetails(
                     name: name,
-                    type: "(\(parameterTypesList)) -> \(returnValueOrVoid)",
+                    type: "\(signatureDecl) -> \(returnValueOrVoid)",
                     callsite:
                         """
-                        func \(name)(\(parameterNameWithTypeList))\(returnValueIfNotVoid) {
-                        _\(name)(\(parameterNameWithNameList))
+                        func \(name)\(signatureParameterNamesDecl)\(returnValueIfNotVoid) {
+                        \(awaitOrEmpty)_\(name)(\(parameterNameWithNameList))
                         }
                         """
                 )

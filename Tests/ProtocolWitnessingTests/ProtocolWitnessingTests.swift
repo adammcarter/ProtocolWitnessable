@@ -21,7 +21,9 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
- - Async/await functions/vars
+ - Async/await vars
+ - throwing functions/vars
+ - when adding multiple macros (eg @MainActor is also on the struct)
  - production() returns non-mutable version with no "_" properties, separate name for witness? `witness()`
  - Nested types
  - Add fix it for non-struct type to convert type to a struct
@@ -503,6 +505,173 @@ extension ProtocolWitnessingTests {
 
                     func doAnotherThing(otherArg: OtherType, anotherArg: AnotherType) -> MyType {
                         _doAnotherThing(otherArg, anotherArg)
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        doSomething: production.doSomething,
+                        doAnotherThing: production.doAnotherThing
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Async/await
+
+extension ProtocolWitnessingTests {
+    func testMacro_whenOneFunction_andFunctionIsAsync() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                func doSomething() async { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                func doSomething() async { }
+
+                struct Witness {
+                    var _doSomething: () async -> Void
+
+                    init(doSomething: @escaping () async -> Void) {
+                        _doSomething = doSomething
+                    }
+
+                    func doSomething() async {
+                        await _doSomething()
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        doSomething: production.doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenTwoFunctions_andBothFunctionsAreAsync() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                func doSomething() async { }
+            
+                func doAnotherThing() async { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                func doSomething() async { }
+
+                func doAnotherThing() async { }
+
+                struct Witness {
+                    var _doSomething: () async -> Void
+                    var _doAnotherThing: () async -> Void
+
+                    init(
+                        doSomething: @escaping () async -> Void,
+                        doAnotherThing: @escaping () async -> Void
+                    ) {
+                        _doSomething = doSomething
+                        _doAnotherThing = doAnotherThing
+                    }
+
+                    func doSomething() async {
+                        await _doSomething()
+                    }
+
+                    func doAnotherThing() async {
+                        await _doAnotherThing()
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        doSomething: production.doSomething,
+                        doAnotherThing: production.doAnotherThing
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenTwoFunctions_andOnlyOneFunctionsIsAsync() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                func doSomething() { }
+            
+                func doAnotherThing() async { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                func doSomething() { }
+
+                func doAnotherThing() async { }
+
+                struct Witness {
+                    var _doSomething: () -> Void
+                    var _doAnotherThing: () async -> Void
+
+                    init(
+                        doSomething: @escaping () -> Void,
+                        doAnotherThing: @escaping () async -> Void
+                    ) {
+                        _doSomething = doSomething
+                        _doAnotherThing = doAnotherThing
+                    }
+
+                    func doSomething() {
+                        _doSomething()
+                    }
+
+                    func doAnotherThing() async {
+                        await _doAnotherThing()
                     }
                 }
             }
