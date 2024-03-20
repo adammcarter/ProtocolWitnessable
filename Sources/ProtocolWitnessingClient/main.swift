@@ -129,45 +129,49 @@ import ProtocolWitnessing
 
 
 
+
 //struct MyClient {
-//    let someProperty: Int
+//    let someLetProperty = 532
 //    
-//    init(someProperty: Int) {
-//        self.someProperty = someProperty
-//    }
+//    func doSomething() { }
 //    
 //    struct Witness {
-//        let _someProperty: Int
+//        var _doSomething: () -> Void
 //        
-//        init(someProperty: Int) {
-//            _someProperty = someProperty
+//        init(doSomething: @escaping () -> Void) {
+//            _doSomething = doSomething
+//        }
+//        
+//        func doSomething() {
+//            _doSomething()
 //        }
 //    }
 //}
 //
 //extension MyClient {
-//    private static var _production: MyClient.Witness?
+//    private static var _production: MyClient?
 //    
-//    static func production(
-//        someProperty: Int
-//    ) -> MyClient.Witness {
-//        let production = _production ?? MyClient.Witness(
-//            someProperty: someProperty
-//        )
+//    static func production() -> MyClient.Witness {
+//        let production = _production ?? MyClient()
 //        
 //        if _production == nil {
 //            _production = production
 //        }
 //        
 //        return MyClient.Witness(
-//            someProperty: production._someProperty
+//            doSomething: production.doSomething
 //        )
 //    }
 //}
-
-
-
-
+//
+//
+//
+//
+//var client = MyClient.production()
+//print(client._som)
+//var mock = client
+//mock._someLetProperty = 9
+//print(mock._someLetProperty)
 
 
 

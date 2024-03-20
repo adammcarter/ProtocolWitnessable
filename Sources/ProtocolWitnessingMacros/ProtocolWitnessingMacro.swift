@@ -30,28 +30,15 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         let combinedInitParameters: [InitParameterDetails] = [
             parameters.map {
-                InitParameterDetails(name: $0.name, type: $0.type, isEscaping: false)
+                InitParameterDetails(name: $0.name, type: $0.type, equals: $0.equals, isEscaping: false)
             }
             +
             functions.map {
-                InitParameterDetails(name: $0.name, type: $0.type, isEscaping: true)
+                InitParameterDetails(name: $0.name, type: $0.type, equals: nil, isEscaping: true)
             }
-        ].flatMap { $0 }
-        
-        
-        
-        
-        let expandedProperties = combinedInitParameters
-            .map {
-                "var _\($0.name): \($0.type)"
-            }
-            .joined(separator: "\n")
-        
-        
-        
-        
-        
-        
+        ]
+            .flatMap { $0 }
+            .filter { $0.equals == nil }
         
         let expandedInit: String
         
@@ -62,16 +49,19 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                 
                 }
                 """
-        } else if combinedInitParameters.count == 1, let parameter = combinedInitParameters.first {
+        } else if
+            combinedInitParameters.count == 1,
+            let parameter = combinedInitParameters.first
+        {
             expandedInit =
                 """
-                init(\(parameter.name): \(parameter.escapingType)) {
+                init(\(parameter.name)\(parameter.escapingRhs)) {
                 _\(parameter.name) = \(parameter.name)
                 }
                 """
         } else {
             let args = combinedInitParameters
-                .map { "\($0.name): \($0.escapingType)" }
+                .map { "\($0.name)\($0.escapingRhs)" }
                 .joined(separator: ",\n")
             
             let assigns = combinedInitParameters
@@ -98,6 +88,15 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                 $0.callsite
             }
             .joined(separator: "\n\n")
+        
+        
+        
+        
+        let expandedProperties = combinedInitParameters
+            .map {
+                "var _\($0.name)\($0.rhs)"
+            }
+            .joined(separator: "\n")
         
         
         
@@ -147,21 +146,35 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         let combinedInitParameters: [InitParameterDetails] = [
             parameters.map {
-                InitParameterDetails(name: $0.name, type: $0.type, isEscaping: false)
+                InitParameterDetails(
+                    name: $0.name, 
+                    type: $0.type,
+                    equals: $0.equals,
+                    isEscaping: false
+                )
             }
             +
             functions.map {
-                InitParameterDetails(name: $0.name, type: $0.type, isEscaping: true)
+                InitParameterDetails(
+                    name: $0.name,
+                    type: $0.type,
+                    equals: nil,
+                    isEscaping: true
+                )
             }
-        ].flatMap { $0 }
+        ]
+            .flatMap { $0 }
+            .filter { $0.equals == nil }
 
         let expandedParameters = parameters
+            .filter { $0.equals == nil }
             .map {
-                "\($0.name): \($0.type)"
+                "\($0.name): \($0.type ?? "")"
             }
             .joined(separator: ",\n")
 
         let expandedProperties = parameters
+            .filter { $0.equals == nil }
             .map {
                 "\($0.name): \($0.name)"
             }
@@ -204,6 +217,19 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         }
         
         
+        let returnDeclaration = if expandedProductionProperties.isEmpty {
+            """
+            return \(typeName).\(witnessTypeName)()
+            """
+        } else {
+            """
+            return \(typeName).\(witnessTypeName)(
+            \(expandedProductionProperties)
+            )
+            """
+        }
+        
+        
         return [
             try ExtensionDeclSyntax(
                 """
@@ -217,9 +243,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                 _\(raw: productionName) = \(raw: productionName)
                 }
                 
-                return \(raw: typeName).\(raw: witnessTypeName)(
-                \(raw: expandedProductionProperties)
-                )
+                \(raw: returnDeclaration)
                 }
                 }
                 """
@@ -248,15 +272,23 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                 return varDecl
                     .bindings
                     .compactMap { binding -> ParameterDetails? in
-                        guard let type = binding.typeAnnotation?.type.description else {
+                        if let type = binding.typeAnnotation?.type.description {
+                            return ParameterDetails(
+                                letOrVar: letOrVar,
+                                name: binding.pattern.trimmedDescription,
+                                type: type,
+                                equals: nil
+                            )
+                        } else if binding.is(PatternBindingSyntax.self) {
+                            return ParameterDetails(
+                                letOrVar: "var",
+                                name: binding.pattern.trimmedDescription,
+                                type: nil,
+                                equals: binding.initializer?.value.trimmedDescription
+                            )
+                        } else {
                             return nil
                         }
-                        
-                        return ParameterDetails(
-                            letOrVar: letOrVar,
-                            name: binding.pattern.description,
-                            type: type
-                        )
                     }
             }
             .flatMap { $0 }
@@ -388,17 +420,29 @@ private struct ClosureParameterDetails {
 private struct ParameterDetails {
     let letOrVar: String
     let name: String
-    let type: String
+    let type: String?
+    let equals: String?
 }
 
 
 private struct InitParameterDetails {
     let name: String
-    let type: String
+    let type: String?
+    let equals: String?
     let isEscaping: Bool
     
-    var escapingType: String {
-        isEscaping ? "@escaping \(type)" : type
+    var escapingType: String? {
+        guard let type else { return nil }
+        
+        return isEscaping ? "@escaping \(type)" : type
+    }
+    
+    var rhs: String {
+        type.flatMap { ": \($0)" } ?? equals.flatMap { " = \($0)" } ?? ""
+    }
+    
+    var escapingRhs: String {
+        escapingType.flatMap { ": \($0)" } ?? equals.flatMap { " = \($0)" } ?? ""
     }
 }
 

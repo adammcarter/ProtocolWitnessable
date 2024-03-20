@@ -21,8 +21,6 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
- - struct has properties as well as funcs
-    - properties with no value
  - Function returns explicit void
     - Weird/unusual formatting?
  - Async/await functions/vars
@@ -87,9 +85,7 @@ extension ProtocolWitnessingTests {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-
-                    )
+                    return MyClient.Witness()
                 }
             }
             """
@@ -97,7 +93,9 @@ extension ProtocolWitnessingTests {
     }
 }
 
-// MARK: - One function
+// MARK: - Functions
+
+// MARK: One
 
 extension ProtocolWitnessingTests {
     func testMacro_addsInitWithVoidToVoidClosure_andPropertyForVoidToVoidClosure_whenOneFunction_andNoArguments_andReturnsVoid() throws {
@@ -281,7 +279,7 @@ extension ProtocolWitnessingTests {
     }
 }
 
-// MARK: - Two functions
+// MARK: Two
 
 extension ProtocolWitnessingTests {
     func testMacro_addsInitWithVoidToVoidClosure_andPropertyForVoidToVoidClosure_whenTwoFunctions_andBothHaveNoArguments_andBothReturnsVoid() throws {
@@ -532,7 +530,209 @@ extension ProtocolWitnessingTests {
     }
 }
 
+// MARK: Complex
+
+extension ProtocolWitnessingTests {
+    func testMacro_expandsType_whenFunctionParametersContainsVoidToVoidClosure() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                func doSomething(completionHandler: (Int) -> Void) {
+                    // Complex logic here...
+                    completionHandler()
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                func doSomething(completionHandler: (Int) -> Void) {
+                    // Complex logic here...
+                    completionHandler()
+                }
+            
+                struct Witness {
+                    var _doSomething: ((Int) -> Void) -> Void
+            
+                    init(doSomething: @escaping ((Int) -> Void) -> Void) {
+                        _doSomething = doSomething
+                    }
+            
+                    func doSomething(completionHandler: (Int) -> Void) {
+                        _doSomething(completionHandler)
+                    }
+                }
+            }
+            
+            extension MyClient {
+                private static var _production: MyClient?
+            
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+            
+                    if _production == nil {
+                        _production = production
+                    }
+            
+                    return MyClient.Witness(
+                        doSomething: production.doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_expandsType_whenFunctionParametersContainsParamToVoidClosure() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                func doSomething(completionHandler: (Int) -> Void) {
+                    // Complex logic here...
+                    completionHandler(1234567890)
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                func doSomething(completionHandler: (Int) -> Void) {
+                    // Complex logic here...
+                    completionHandler(1234567890)
+                }
+            
+                struct Witness {
+                    var _doSomething: ((Int) -> Void) -> Void
+            
+                    init(doSomething: @escaping ((Int) -> Void) -> Void) {
+                        _doSomething = doSomething
+                    }
+            
+                    func doSomething(completionHandler: (Int) -> Void) {
+                        _doSomething(completionHandler)
+                    }
+                }
+            }
+            
+            extension MyClient {
+                private static var _production: MyClient?
+            
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+            
+                    if _production == nil {
+                        _production = production
+                    }
+            
+                    return MyClient.Witness(
+                        doSomething: production.doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_expandsType_whenFunctionParametersContainsVoidToVoidClosure_andClosureIsEscaping() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                func doSomething(completionHandler: @escaping () -> Void) {
+                    completionHandler()
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                func doSomething(completionHandler: @escaping () -> Void) {
+                    completionHandler()
+                }
+            
+                struct Witness {
+                    var _doSomething: (@escaping () -> Void) -> Void
+            
+                    init(doSomething: @escaping (@escaping () -> Void) -> Void) {
+                        _doSomething = doSomething
+                    }
+            
+                    func doSomething(completionHandler: @escaping () -> Void) {
+                        _doSomething(completionHandler)
+                    }
+                }
+            }
+            
+            extension MyClient {
+                private static var _production: MyClient?
+            
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+            
+                    if _production == nil {
+                        _production = production
+                    }
+            
+                    return MyClient.Witness(
+                        doSomething: production.doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_expandsType_whenFunctionParametersContainsParamToVoidClosure_andClosureIsEscaping() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                func doSomething(completionHandler: @escaping (Int) -> Void) { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                func doSomething(completionHandler: @escaping (Int) -> Void) { }
+            
+                struct Witness {
+                    var _doSomething: (@escaping (Int) -> Void) -> Void
+            
+                    init(doSomething: @escaping (@escaping (Int) -> Void) -> Void) {
+                        _doSomething = doSomething
+                    }
+            
+                    func doSomething(completionHandler: @escaping (Int) -> Void) {
+                        _doSomething(completionHandler)
+                    }
+                }
+            }
+            
+            extension MyClient {
+                private static var _production: MyClient?
+            
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+            
+                    if _production == nil {
+                        _production = production
+                    }
+            
+                    return MyClient.Witness(
+                        doSomething: production.doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
 // MARK: - Properties
+
+// MARK: Only properties
 
 extension ProtocolWitnessingTests {
     func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andNoFunctions() throws {
@@ -541,20 +741,12 @@ extension ProtocolWitnessingTests {
             @Witnessing
             struct MyClient {
                 let someLetProperty: Int
-            
-                init(someLetProperty: Int) {
-                    self.someLetProperty = someLetProperty
-                }
             }
             """
         } expansion: {
             """
             struct MyClient {
                 let someLetProperty: Int
-
-                init(someLetProperty: Int) {
-                    self.someLetProperty = someLetProperty
-                }
 
                 struct Witness {
                     var _someLetProperty: Int
@@ -583,6 +775,347 @@ extension ProtocolWitnessingTests {
 
                     return MyClient.Witness(
                         someLetProperty: production.someLetProperty
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsInitWithProperty_whenStructHasOneSimpleVarProperty_andNoFunctions_andVarHasNoDefaultValue() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var someLetProperty: Int
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var someLetProperty: Int
+
+                struct Witness {
+                    var _someLetProperty: Int
+
+                    init(someLetProperty: Int) {
+                        _someLetProperty = someLetProperty
+                    }
+
+
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production(
+                    someLetProperty: Int
+                ) -> MyClient.Witness {
+                    let production = _production ?? MyClient(
+                        someLetProperty: someLetProperty
+                    )
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        someLetProperty: production.someLetProperty
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andNoFunctions_andLetHasDefaultValue() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                let someLetProperty = 10
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                let someLetProperty = 10
+
+                struct Witness {
+                    init() {
+
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness()
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andNoFunctions_andVarHasDefaultValue() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var someLetProperty = 10
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var someLetProperty = 10
+
+                struct Witness {
+                    init() {
+
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness()
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: With functions
+
+extension ProtocolWitnessingTests {
+    func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andOneFunction() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                let someLetProperty: Int
+            
+                func doSomething() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                let someLetProperty: Int
+
+                func doSomething() { }
+
+                struct Witness {
+                    var _someLetProperty: Int
+                    var _doSomething: () -> Void
+
+                    init(
+                        someLetProperty: Int,
+                        doSomething: @escaping () -> Void
+                    ) {
+                        _someLetProperty = someLetProperty
+                        _doSomething = doSomething
+                    }
+
+                    func doSomething() {
+                        _doSomething()
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production(
+                    someLetProperty: Int
+                ) -> MyClient.Witness {
+                    let production = _production ?? MyClient(
+                        someLetProperty: someLetProperty
+                    )
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        someLetProperty: production.someLetProperty,
+                        doSomething: production.doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsInitWithProperty_whenStructHasOneSimpleVarProperty_andOneFunction_andVarHasNoDefaultValue() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var someLetProperty: Int
+            
+                func doSomething() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var someLetProperty: Int
+
+                func doSomething() { }
+
+                struct Witness {
+                    var _someLetProperty: Int
+                    var _doSomething: () -> Void
+
+                    init(
+                        someLetProperty: Int,
+                        doSomething: @escaping () -> Void
+                    ) {
+                        _someLetProperty = someLetProperty
+                        _doSomething = doSomething
+                    }
+
+                    func doSomething() {
+                        _doSomething()
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production(
+                    someLetProperty: Int
+                ) -> MyClient.Witness {
+                    let production = _production ?? MyClient(
+                        someLetProperty: someLetProperty
+                    )
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        someLetProperty: production.someLetProperty,
+                        doSomething: production.doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andOneFunction_andLetHasDefaultValue() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                let someLetProperty = 532
+            
+                func doSomething() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                let someLetProperty = 532
+
+                func doSomething() { }
+
+                struct Witness {
+                    var _doSomething: () -> Void
+
+                    init(doSomething: @escaping () -> Void) {
+                        _doSomething = doSomething
+                    }
+
+                    func doSomething() {
+                        _doSomething()
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        doSomething: production.doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andOneFunction_andVarHasDefaultValue() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var someLetProperty = 10
+            
+                func doSomething() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var someLetProperty = 10
+
+                func doSomething() { }
+
+                struct Witness {
+                    var _doSomething: () -> Void
+
+                    init(doSomething: @escaping () -> Void) {
+                        _doSomething = doSomething
+                    }
+
+                    func doSomething() {
+                        _doSomething()
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        doSomething: production.doSomething
                     )
                 }
             }
@@ -646,206 +1179,6 @@ extension ProtocolWitnessingTests {
                     return MyClient.Witness(
                         returnsVoid: production.returnsVoid,
                         returnsAThing: production.returnsAThing
-                    )
-                }
-            }
-            """
-        }
-    }
-}
-
-// MARK: - Complex functions
-
-extension ProtocolWitnessingTests {
-    func testMacro_expandsType_whenFunctionParametersContainsVoidToVoidClosure() throws {
-        assertMacro {
-            """
-            @Witnessing
-            struct MyClient {
-                func doSomething(completionHandler: (Int) -> Void) {
-                    // Complex logic here...
-                    completionHandler()
-                }
-            }
-            """
-        } expansion: {
-            """
-            struct MyClient {
-                func doSomething(completionHandler: (Int) -> Void) {
-                    // Complex logic here...
-                    completionHandler()
-                }
-
-                struct Witness {
-                    var _doSomething: ((Int) -> Void) -> Void
-
-                    init(doSomething: @escaping ((Int) -> Void) -> Void) {
-                        _doSomething = doSomething
-                    }
-
-                    func doSomething(completionHandler: (Int) -> Void) {
-                        _doSomething(completionHandler)
-                    }
-                }
-            }
-
-            extension MyClient {
-                private static var _production: MyClient?
-
-                static func production() -> MyClient.Witness {
-                    let production = _production ?? MyClient()
-
-                    if _production == nil {
-                        _production = production
-                    }
-
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
-                    )
-                }
-            }
-            """
-        }
-    }
-    
-    func testMacro_expandsType_whenFunctionParametersContainsParamToVoidClosure() throws {
-        assertMacro {
-            """
-            @Witnessing
-            struct MyClient {
-                func doSomething(completionHandler: (Int) -> Void) {
-                    // Complex logic here...
-                    completionHandler(1234567890)
-                }
-            }
-            """
-        } expansion: {
-            """
-            struct MyClient {
-                func doSomething(completionHandler: (Int) -> Void) {
-                    // Complex logic here...
-                    completionHandler(1234567890)
-                }
-
-                struct Witness {
-                    var _doSomething: ((Int) -> Void) -> Void
-
-                    init(doSomething: @escaping ((Int) -> Void) -> Void) {
-                        _doSomething = doSomething
-                    }
-
-                    func doSomething(completionHandler: (Int) -> Void) {
-                        _doSomething(completionHandler)
-                    }
-                }
-            }
-
-            extension MyClient {
-                private static var _production: MyClient?
-
-                static func production() -> MyClient.Witness {
-                    let production = _production ?? MyClient()
-
-                    if _production == nil {
-                        _production = production
-                    }
-
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
-                    )
-                }
-            }
-            """
-        }
-    }
-    
-    func testMacro_expandsType_whenFunctionParametersContainsVoidToVoidClosure_andClosureIsEscaping() throws {
-        assertMacro {
-            """
-            @Witnessing
-            struct MyClient {
-                func doSomething(completionHandler: @escaping () -> Void) { 
-                    completionHandler()
-                }
-            }
-            """
-        } expansion: {
-            """
-            struct MyClient {
-                func doSomething(completionHandler: @escaping () -> Void) { 
-                    completionHandler()
-                }
-
-                struct Witness {
-                    var _doSomething: (@escaping () -> Void) -> Void
-
-                    init(doSomething: @escaping (@escaping () -> Void) -> Void) {
-                        _doSomething = doSomething
-                    }
-
-                    func doSomething(completionHandler: @escaping () -> Void) {
-                        _doSomething(completionHandler)
-                    }
-                }
-            }
-
-            extension MyClient {
-                private static var _production: MyClient?
-
-                static func production() -> MyClient.Witness {
-                    let production = _production ?? MyClient()
-
-                    if _production == nil {
-                        _production = production
-                    }
-
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
-                    )
-                }
-            }
-            """
-        }
-    }
-    
-    func testMacro_expandsType_whenFunctionParametersContainsParamToVoidClosure_andClosureIsEscaping() throws {
-        assertMacro {
-            """
-            @Witnessing
-            struct MyClient {
-                func doSomething(completionHandler: @escaping (Int) -> Void) { }
-            }
-            """
-        } expansion: {
-            """
-            struct MyClient {
-                func doSomething(completionHandler: @escaping (Int) -> Void) { }
-
-                struct Witness {
-                    var _doSomething: (@escaping (Int) -> Void) -> Void
-
-                    init(doSomething: @escaping (@escaping (Int) -> Void) -> Void) {
-                        _doSomething = doSomething
-                    }
-
-                    func doSomething(completionHandler: @escaping (Int) -> Void) {
-                        _doSomething(completionHandler)
-                    }
-                }
-            }
-
-            extension MyClient {
-                private static var _production: MyClient?
-
-                static func production() -> MyClient.Witness {
-                    let production = _production ?? MyClient()
-
-                    if _production == nil {
-                        _production = production
-                    }
-
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
                     )
                 }
             }
@@ -946,9 +1279,7 @@ extension ProtocolWitnessingTests {
                         _production = production
                     }
 
-                    return MyClient.MyCustomWitnessTypeName(
-
-                    )
+                    return MyClient.MyCustomWitnessTypeName()
                 }
             }
             """
