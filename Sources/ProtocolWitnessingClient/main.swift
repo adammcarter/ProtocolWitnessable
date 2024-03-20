@@ -3,13 +3,13 @@ import ProtocolWitnessing
 // TODO: 
 
 // @Witnessing(_ typeName: String = "Witness", generatedRealName: String? = "production")
-@Witnessing
-//@Witnessing("ChildWitness")
-struct MyService {
-    func fetchData() -> Int {
-        return (100...10_000).randomElement()!
-    }
-    
+//@Witnessing
+////@Witnessing("ChildWitness")
+//struct MyService {
+//    func fetchData() -> Int {
+//        return (100...10_000).randomElement()!
+//    }
+//    
     // < Generated >
     // Uses typeName arg
 //    struct Witness {
@@ -24,7 +24,7 @@ struct MyService {
 //        }
 //    }
     // < / Generated >
-}
+//}
 
 
 // < Generated > (if generatedRealName not nil)
@@ -47,19 +47,19 @@ struct MyService {
 
 // Using the Macro...
 
-var production = MyService.production
-
-print(production.fetchData())
-
-var preproduction = production
-preproduction._fetchData = { 0 }
-
-print(preproduction.fetchData())
-
-var flakey = production
-flakey._fetchData = { (0...1).randomElement()! }
-
-print(flakey.fetchData())
+//var production = MyService.production
+//
+//print(production.fetchData())
+//
+//var preproduction = production
+//preproduction._fetchData = { 0 }
+//
+//print(preproduction.fetchData())
+//
+//var flakey = production
+//flakey._fetchData = { (0...1).randomElement()! }
+//
+//print(flakey.fetchData())
 
 //var crashing = production
 //crashing._fetchData = { fatalError("Crashed! :(") }
@@ -109,7 +109,22 @@ print(flakey.fetchData())
 //}
 //
 //
-//var production = MyComplexClient.production
-//production._something
+//var mock = MyComplexClient.production
+//mock._somethingThatDownloadsData = { int, completion in
+//    debugPrint(int)
+//    
+//    let test = [
+//        CodedThing(name: "test", age: 999),
+//    ]
+//    
+//    completion(test)
+//}
+//
+//mock.somethingThatDownloadsData(int: 0) { things in
+//    print(things)
+//}
 //
 //Thread.sleep(forTimeInterval: 10)
+//
+//
+//

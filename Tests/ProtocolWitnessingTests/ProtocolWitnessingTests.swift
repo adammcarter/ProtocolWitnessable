@@ -21,13 +21,12 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
- - function has closure parameters like a completion handler
  - struct has properties as well as funcs
  - Function returns explicit void
- - Weird/unusual formatting?
- - Using custom args
- - Add fix it for non-struct type to convert type to a struct
+    - Weird/unusual formatting?
  - Async/await functions/vars
+ - Nested types
+ - Add fix it for non-struct type to convert type to a struct
  */
 
 // MARK: - Initial sanity checking
@@ -504,6 +503,166 @@ extension ProtocolWitnessingTests {
                 static var production = MyWitness.Witness(
                     returnsVoid: _production.returnsVoid,
                     returnsAThing: _production.returnsAThing
+                )
+            }
+            """
+        }
+    }
+}
+
+// MARK: - Complex functions
+
+extension ProtocolWitnessingTests {
+    func testMacro_expandsType_whenFunctionContainsVoidToVoidClosure() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyWitness {
+                func doSomething(completionHandler: () -> Void) { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyWitness {
+                func doSomething(completionHandler: () -> Void) { }
+
+                struct Witness {
+                    var _doSomething: (() -> Void) -> Void
+
+                    init(doSomething: @escaping (() -> Void) -> Void) {
+                        _doSomething = doSomething
+                    }
+
+                    func doSomething(completionHandler: () -> Void) {
+                        _doSomething(completionHandler)
+                    }
+                }
+            }
+
+            extension MyWitness {
+                private static var _production: MyWitness = {
+                    Self.init()
+                }()
+
+                static var production = MyWitness.Witness(
+                    doSomething: _production.doSomething
+                )
+            }
+            """
+        }
+    }
+    
+    func testMacro_expandsType_whenFunctionContainsParamToVoidClosure() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyWitness {
+                func doSomething(completionHandler: (Int) -> Void) { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyWitness {
+                func doSomething(completionHandler: (Int) -> Void) { }
+
+                struct Witness {
+                    var _doSomething: ((Int) -> Void) -> Void
+
+                    init(doSomething: @escaping ((Int) -> Void) -> Void) {
+                        _doSomething = doSomething
+                    }
+
+                    func doSomething(completionHandler: (Int) -> Void) {
+                        _doSomething(completionHandler)
+                    }
+                }
+            }
+
+            extension MyWitness {
+                private static var _production: MyWitness = {
+                    Self.init()
+                }()
+
+                static var production = MyWitness.Witness(
+                    doSomething: _production.doSomething
+                )
+            }
+            """
+        }
+    }
+    
+    func testMacro_expandsType_whenFunctionContainsVoidToVoidClosure_andClosureIsEscaping() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyWitness {
+                func doSomething(completionHandler: @escaping () -> Void) { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyWitness {
+                func doSomething(completionHandler: @escaping () -> Void) { }
+            
+                struct Witness {
+                    var _doSomething: (@escaping () -> Void) -> Void
+            
+                    init(doSomething: @escaping (@escaping () -> Void) -> Void) {
+                        _doSomething = doSomething
+                    }
+            
+                    func doSomething(completionHandler: @escaping () -> Void) {
+                        _doSomething(completionHandler)
+                    }
+                }
+            }
+            
+            extension MyWitness {
+                private static var _production: MyWitness = {
+                    Self.init()
+                }()
+            
+                static var production = MyWitness.Witness(
+                    doSomething: _production.doSomething
+                )
+            }
+            """
+        }
+    }
+    
+    func testMacro_expandsType_whenFunctionContainsParamToVoidClosure_andClosureIsEscaping() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyWitness {
+                func doSomething(completionHandler: @escaping (Int) -> Void) { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyWitness {
+                func doSomething(completionHandler: @escaping (Int) -> Void) { }
+            
+                struct Witness {
+                    var _doSomething: (@escaping (Int) -> Void) -> Void
+            
+                    init(doSomething: @escaping (@escaping (Int) -> Void) -> Void) {
+                        _doSomething = doSomething
+                    }
+            
+                    func doSomething(completionHandler: @escaping (Int) -> Void) {
+                        _doSomething(completionHandler)
+                    }
+                }
+            }
+            
+            extension MyWitness {
+                private static var _production: MyWitness = {
+                    Self.init()
+                }()
+            
+                static var production = MyWitness.Witness(
+                    doSomething: _production.doSomething
                 )
             }
             """

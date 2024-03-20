@@ -144,7 +144,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                 private static var _\(raw: productionName): \(raw: typeName) = {
                 Self.init()
                 }()
-
+                
                 static var \(raw: productionName) = \(raw: typeName).\(raw: witnessTypeName)(
                 \(raw: expandedProperties)
                 )
@@ -161,49 +161,30 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         structDecl.memberBlock.members
             .compactMap { $0.decl.as(FunctionDeclSyntax.self) }
             .map {
-                let parameterTypesList = $0
+                let parameterDetails = $0
                     .signature
                     .parameterClause
                     .parameters
                     .compactMap {
-                        $0
-                            .type
-                            .as(IdentifierTypeSyntax.self)?
-                            .name
-                            .text
+                        ParameterDetails(
+                            name: $0.firstName.text,
+                            type: $0.type.description
+                        )
                     }
+                
+                
+                
+                let parameterTypesList = parameterDetails
+                    .map(\.type)
+                    .joined(separator: ", ")
+                
+                let parameterNameWithTypeList = parameterDetails
+                    .map { "\($0.name): \($0.type)" }
                     .joined(separator: ", ")
                 
                 
-                
-                let parameterNameWithTypeList = $0
-                    .signature
-                    .parameterClause
-                    .parameters
-                    .compactMap {
-                        guard
-                            let type = $0
-                                .type
-                                .as(IdentifierTypeSyntax.self)?
-                                .name
-                                .text
-                        else {
-                            return nil
-                        }
-                        
-                        let firstName = $0.firstName.text
-                        
-                        return "\(firstName): \(type)"
-                    }
-                    .joined(separator: ", ")
-                
-                
-                
-                let parameterNameWithNameList = $0
-                    .signature
-                    .parameterClause
-                    .parameters
-                    .compactMap { "\($0.firstName.text)" }
+                let parameterNameWithNameList = parameterDetails
+                    .map { "\($0.name)" }
                     .joined(separator: ", ")
                 
                 
@@ -265,6 +246,11 @@ private struct FunctionDetails {
     let name: String
     let type: String
     let callsite: String
+}
+
+private struct ParameterDetails {
+    let name: String
+    let type: String
 }
 
 private enum WitnessingError: Error, CustomStringConvertible {
