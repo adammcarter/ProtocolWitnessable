@@ -24,12 +24,24 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         }
         
         
+        let parameters = makeParameterDetails(from: structDecl)
+        
         let functions = makeFunctionDetails(from: structDecl)
         
+        let combinedInitParameters: [InitParameterDetails] = [
+            parameters.map {
+                InitParameterDetails(name: $0.name, type: $0.type, isEscaping: false)
+            }
+            +
+            functions.map {
+                InitParameterDetails(name: $0.name, type: $0.type, isEscaping: true)
+            }
+        ].flatMap { $0 }
         
         
         
-        let expandedProperties = functions
+        
+        let expandedProperties = combinedInitParameters
             .map {
                 "var _\($0.name): \($0.type)"
             }
@@ -43,26 +55,26 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         let expandedInit: String
         
-        if functions.isEmpty {
-            expandedInit = 
+        if combinedInitParameters.isEmpty {
+            expandedInit =
                 """
                 init() {
                 
                 }
                 """
-        } else if functions.count == 1, let function = functions.first {
-            expandedInit = 
+        } else if combinedInitParameters.count == 1, let parameter = combinedInitParameters.first {
+            expandedInit =
                 """
-                init(\(function.name): @escaping \(function.type)) {
-                _\(function.name) = \(function.name)
+                init(\(parameter.name): \(parameter.escapingType)) {
+                _\(parameter.name) = \(parameter.name)
                 }
                 """
         } else {
-            let args = functions
-                .map { "\($0.name): @escaping \($0.type)" }
+            let args = combinedInitParameters
+                .map { "\($0.name): \($0.escapingType)" }
                 .joined(separator: ",\n")
             
-            let assigns = functions
+            let assigns = combinedInitParameters
                 .map { "_\($0.name) = \($0.name)" }
                 .joined(separator: "\n")
             
@@ -129,29 +141,125 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         let typeName = structDecl.name.text
         let witnessTypeName = makeWitnessTypeName(from: node)
         
+        let parameters = makeParameterDetails(from: structDecl)
+        
         let functions = makeFunctionDetails(from: structDecl)
         
-        let expandedProperties = functions
+        let combinedInitParameters: [InitParameterDetails] = [
+            parameters.map {
+                InitParameterDetails(name: $0.name, type: $0.type, isEscaping: false)
+            }
+            +
+            functions.map {
+                InitParameterDetails(name: $0.name, type: $0.type, isEscaping: true)
+            }
+        ].flatMap { $0 }
+
+        let expandedParameters = parameters
             .map {
-                "\($0.name): _\(productionName).\($0.name)"
+                "\($0.name): \($0.type)"
             }
             .joined(separator: ",\n")
+
+        let expandedProperties = parameters
+            .map {
+                "\($0.name): \($0.name)"
+            }
+            .joined(separator: ",\n")
+        
+        let expandedProductionProperties = combinedInitParameters
+            .map {
+                "\($0.name): \(productionName).\($0.name)"
+            }
+            .joined(separator: ",\n")
+        
+        
+        
+        
+        
+        let productionFunctionDeclaration = if expandedParameters.isEmpty {
+            """
+            static func \(productionName)() -> \(typeName).\(witnessTypeName) {
+            """
+        } else {
+            """
+            static func \(productionName)(
+                \(expandedParameters)
+            ) -> \(typeName).\(witnessTypeName) {
+            """
+        }
+        
+        
+        
+        let productionPropertyDeclaration = if expandedProperties.isEmpty {
+            """
+            let \(productionName) = _\(productionName) ?? \(typeName)()
+            """
+        } else {
+            """
+            let \(productionName) = _\(productionName) ?? \(typeName)(
+            \(expandedProperties)
+            )
+            """
+        }
+        
         
         return [
             try ExtensionDeclSyntax(
                 """
                 extension \(raw: typeName) {
-                private static var _\(raw: productionName): \(raw: typeName) = {
-                Self.init()
-                }()
+                private static var _\(raw: productionName): \(raw: typeName)?
                 
-                static var \(raw: productionName) = \(raw: typeName).\(raw: witnessTypeName)(
-                \(raw: expandedProperties)
+                \(raw: productionFunctionDeclaration)
+                \(raw: productionPropertyDeclaration)
+                
+                if _\(raw: productionName) == nil {
+                _\(raw: productionName) = \(raw: productionName)
+                }
+                
+                return \(raw: typeName).\(raw: witnessTypeName)(
+                \(raw: expandedProductionProperties)
                 )
+                }
                 }
                 """
             )
         ]
+    }
+    
+    
+    
+    
+    private static func makeParameterDetails(from structDecl: StructDeclSyntax) -> [ParameterDetails] {
+        structDecl
+            .memberBlock
+            .members
+            .compactMap { member -> [ParameterDetails]? in
+                guard
+                    let varDecl = member
+                        .decl
+                        .as(VariableDeclSyntax.self)
+                else {
+                    return nil
+                }
+                
+                let letOrVar = varDecl.bindingSpecifier.text
+                
+                return varDecl
+                    .bindings
+                    .compactMap { binding -> ParameterDetails? in
+                        guard let type = binding.typeAnnotation?.type.description else {
+                            return nil
+                        }
+                        
+                        return ParameterDetails(
+                            letOrVar: letOrVar,
+                            name: binding.pattern.description,
+                            type: type
+                        )
+                    }
+            }
+            .flatMap { $0 }
     }
     
     
@@ -166,7 +274,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                     .parameterClause
                     .parameters
                     .compactMap {
-                        ParameterDetails(
+                        ClosureParameterDetails(
                             name: $0.firstName.text,
                             type: $0.type.description
                         )
@@ -270,9 +378,28 @@ private struct FunctionDetails {
     let callsite: String
 }
 
-private struct ParameterDetails {
+
+private struct ClosureParameterDetails {
     let name: String
     let type: String
+}
+
+
+private struct ParameterDetails {
+    let letOrVar: String
+    let name: String
+    let type: String
+}
+
+
+private struct InitParameterDetails {
+    let name: String
+    let type: String
+    let isEscaping: Bool
+    
+    var escapingType: String {
+        isEscaping ? "@escaping \(type)" : type
+    }
 }
 
 private enum WitnessingError: Error, CustomStringConvertible {

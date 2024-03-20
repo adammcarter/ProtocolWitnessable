@@ -4,28 +4,27 @@ import ProtocolWitnessing
 
 // @Witnessing(_ typeName: String = "Witness", generatedRealName: String? = "production")
 //@Witnessing
-////@Witnessing("ChildWitness")
-@Witnessing("CustomWitness", productionInstanceName: "live")
-struct MyService {
-    func fetchData() -> Int {
-        return (100...10_000).randomElement()!
-    }
-    
-    // < Generated >
-    // Uses typeName arg
-//    struct Witness {
-//        var _fetchData: () -> Int
-//        
-//        init(fetchData: @escaping () -> Int) {
-//            _fetchData = fetchData
-//        }
-//        
-//        func fetchData() -> Int {
-//            _fetchData()
-//        }
+//////@Witnessing("ChildWitness")
+//struct MyService {
+//    func fetchData() -> Int {
+//        return (100...10_000).randomElement()!
 //    }
-    // < / Generated >
-}
+//    
+//    // < Generated >
+//    // Uses typeName arg
+////    struct Witness {
+////        var _fetchData: () -> Int
+////        
+////        init(fetchData: @escaping () -> Int) {
+////            _fetchData = fetchData
+////        }
+////        
+////        func fetchData() -> Int {
+////            _fetchData()
+////        }
+////    }
+//    // < / Generated >
+//}
 
 
 // < Generated > (if generatedRealName not nil)
@@ -48,19 +47,19 @@ struct MyService {
 
 // Using the Macro...
 
-var production = MyService.live
-
-print(production.fetchData())
-
-var preproduction = production
-preproduction._fetchData = { 0 }
-
-print(preproduction.fetchData())
-
-var flakey = production
-flakey._fetchData = { (0...1).randomElement()! }
-
-print(flakey.fetchData())
+//var production = MyService.production
+//
+//print(production.fetchData())
+//
+//var preproduction = production
+//preproduction._fetchData = { 0 }
+//
+//print(preproduction.fetchData())
+//
+//var flakey = production
+//flakey._fetchData = { (0...1).randomElement()! }
+//
+//print(flakey.fetchData())
 
 //var crashing = production
 //crashing._fetchData = { fatalError("Crashed! :(") }
@@ -109,23 +108,95 @@ print(flakey.fetchData())
 //    let age: Int
 //}
 //
-//
-//var mock = MyComplexClient.production
-//mock._somethingThatDownloadsData = { int, completion in
-//    debugPrint(int)
-//    
-//    let test = [
-//        CodedThing(name: "test", age: 999),
-//    ]
-//    
-//    completion(test)
+//var prod = MyComplexClient.production()
+//prod.somethingThatDownloadsData(int: 3) { things in
+//    print("mock", things)
 //}
 //
-//mock.somethingThatDownloadsData(int: 0) { things in
-//    print(things)
+//
+//var mock = prod
+//mock._somethingThatDownloadsData = { _, _ in
+//    print("Hi from _somethingThatDownloadsData mock")
+//}
+//
+//mock.somethingThatDownloadsData(int: 3) { things in
+//    print("mock", things)
 //}
 //
 //Thread.sleep(forTimeInterval: 10)
+
+
+
+
+
+//struct MyClient {
+//    let someProperty: Int
+//    
+//    init(someProperty: Int) {
+//        self.someProperty = someProperty
+//    }
+//    
+//    struct Witness {
+//        let _someProperty: Int
+//        
+//        init(someProperty: Int) {
+//            _someProperty = someProperty
+//        }
+//    }
+//}
+//
+//extension MyClient {
+//    private static var _production: MyClient.Witness?
+//    
+//    static func production(
+//        someProperty: Int
+//    ) -> MyClient.Witness {
+//        let production = _production ?? MyClient.Witness(
+//            someProperty: someProperty
+//        )
+//        
+//        if _production == nil {
+//            _production = production
+//        }
+//        
+//        return MyClient.Witness(
+//            someProperty: production._someProperty
+//        )
+//    }
+//}
+
+
+
+
+
+
+
+
+
+
+
+
+//var prod = MyClient.live()
+//prod.doSomething { int in
+//    print(int)
+//}
 //
 //
+//var preprod = prod
+//preprod._doSomething = { int in
+//    print("preprod")
+//}
 //
+//preprod.doSomething { int in
+//    print("prod: \(int)")
+//}
+//
+//
+//var flakey = prod
+//flakey._doSomething = { closure in
+//    closure(Bool.random() ? 999 : -1)
+//}
+//
+//flakey.doSomething { int in
+//    print("Flakey \(int)")
+//}
