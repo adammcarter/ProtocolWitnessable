@@ -124,7 +124,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
             throw WitnessingError.structOnly
         }
 
-        let productionName = "production"
+        let productionName = makeProductionInstanceName(from: node)
 
         let typeName = structDecl.name.text
         let witnessTypeName = makeWitnessTypeName(from: node)
@@ -224,11 +224,17 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
     
     
     private static func makeWitnessTypeName(from node: AttributeSyntax) -> String {
-        node
+        let labeledExpression = node
             .arguments?
             .as(LabeledExprListSyntax.self)?
             .first?
-            .as(LabeledExprSyntax.self)?
+            .as(LabeledExprSyntax.self)
+        
+        guard labeledExpression?.label == nil else {
+            return "Witness"
+        }
+        
+        return labeledExpression?
             .expression
             .as(StringLiteralExprSyntax.self)?
             .segments
@@ -237,6 +243,22 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
             .content
             .text
         ?? "Witness"
+    }
+    
+    
+    private static func makeProductionInstanceName(from node: AttributeSyntax) -> String {
+        node
+            .arguments?
+            .as(LabeledExprListSyntax.self)?
+            .first(where: { $0.as(LabeledExprSyntax.self)?.label?.text == "productionInstanceName" })?
+            .expression
+            .as(StringLiteralExprSyntax.self)?
+            .segments
+            .first?
+            .as(StringSegmentSyntax.self)?
+            .content
+            .text
+        ?? "production"
     }
 
 }

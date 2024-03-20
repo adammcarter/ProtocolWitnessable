@@ -670,7 +670,7 @@ extension ProtocolWitnessingTests {
     }
 }
 
-// MARK: - Parameters
+// MARK: - Custom witness type name
 
 extension ProtocolWitnessingTests {
     func testMacro_usesWitnessForTypeName_whenTypeNameParameterIsNotSet() throws {
@@ -790,6 +790,88 @@ extension ProtocolWitnessingTests {
 
                 static var production = MyWitness.MyCustomWitnessTypeName(
                     myFunction: _production.myFunction
+                )
+            }
+            """
+        }
+    }
+}
+
+// MARK: - Custom production instance name
+
+extension ProtocolWitnessingTests {
+    func testMacro_usesProductionForTypeName_whenProductionInstanceNameParameterIsNotSet() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyWitness {
+                func returnsVoid() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyWitness {
+                func returnsVoid() { }
+
+                struct Witness {
+                    var _returnsVoid: () -> Void
+
+                    init(returnsVoid: @escaping () -> Void) {
+                        _returnsVoid = returnsVoid
+                    }
+
+                    func returnsVoid() {
+                        _returnsVoid()
+                    }
+                }
+            }
+
+            extension MyWitness {
+                private static var _production: MyWitness = {
+                    Self.init()
+                }()
+
+                static var production = MyWitness.Witness(
+                    returnsVoid: _production.returnsVoid
+                )
+            }
+            """
+        }
+    }
+    
+    func testMacro_usesProductionForTypeNameAsTheInstanceName_whenProductionInstanceNameParameterIsSet() throws {
+        assertMacro {
+            """
+            @Witnessing(productionInstanceName: "live")
+            struct MyWitness {
+                func returnsVoid() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyWitness {
+                func returnsVoid() { }
+
+                struct Witness {
+                    var _returnsVoid: () -> Void
+
+                    init(returnsVoid: @escaping () -> Void) {
+                        _returnsVoid = returnsVoid
+                    }
+
+                    func returnsVoid() {
+                        _returnsVoid()
+                    }
+                }
+            }
+
+            extension MyWitness {
+                private static var _live: MyWitness = {
+                    Self.init()
+                }()
+
+                static var live = MyWitness.Witness(
+                    returnsVoid: _live.returnsVoid
                 )
             }
             """

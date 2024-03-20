@@ -5,11 +5,12 @@ import ProtocolWitnessing
 // @Witnessing(_ typeName: String = "Witness", generatedRealName: String? = "production")
 //@Witnessing
 ////@Witnessing("ChildWitness")
-//struct MyService {
-//    func fetchData() -> Int {
-//        return (100...10_000).randomElement()!
-//    }
-//    
+@Witnessing("CustomWitness", productionInstanceName: "live")
+struct MyService {
+    func fetchData() -> Int {
+        return (100...10_000).randomElement()!
+    }
+    
     // < Generated >
     // Uses typeName arg
 //    struct Witness {
@@ -24,7 +25,7 @@ import ProtocolWitnessing
 //        }
 //    }
     // < / Generated >
-//}
+}
 
 
 // < Generated > (if generatedRealName not nil)
@@ -47,19 +48,19 @@ import ProtocolWitnessing
 
 // Using the Macro...
 
-//var production = MyService.production
-//
-//print(production.fetchData())
-//
-//var preproduction = production
-//preproduction._fetchData = { 0 }
-//
-//print(preproduction.fetchData())
-//
-//var flakey = production
-//flakey._fetchData = { (0...1).randomElement()! }
-//
-//print(flakey.fetchData())
+var production = MyService.live
+
+print(production.fetchData())
+
+var preproduction = production
+preproduction._fetchData = { 0 }
+
+print(preproduction.fetchData())
+
+var flakey = production
+flakey._fetchData = { (0...1).randomElement()! }
+
+print(flakey.fetchData())
 
 //var crashing = production
 //crashing._fetchData = { fatalError("Crashed! :(") }
