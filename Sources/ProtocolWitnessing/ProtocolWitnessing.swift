@@ -3,5 +3,6 @@
 
 /// A macro that produces a protocol witness from the types functions
 @attached(member, names: arbitrary)
-public macro Witnessing(_ typeName: String = "Witness") = 
+@attached(extension, names: arbitrary)
+public macro Witnessing(_ typeName: String = "Witness") =
     #externalMacro(module: "ProtocolWitnessingMacros", type: "WitnessingMacro")

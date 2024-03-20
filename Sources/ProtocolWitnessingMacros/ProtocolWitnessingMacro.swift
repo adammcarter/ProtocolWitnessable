@@ -13,7 +13,7 @@ struct ProtocolWitnessingPlugin: CompilerPlugin {
 
 
 
-public struct WitnessingMacro: MemberMacro {
+public struct WitnessingMacro: MemberMacro, ExtensionMacro {
     public static func expansion(
         of node: AttributeSyntax,
         providingMembersOf declaration: some DeclGroupSyntax,
@@ -24,83 +24,8 @@ public struct WitnessingMacro: MemberMacro {
         }
         
         
+        let functions = makeFunctionDetails(from: structDecl)
         
-        let functions = structDecl.memberBlock.members
-            .compactMap { $0.decl.as(FunctionDeclSyntax.self) }
-            .map {
-                let parameterTypesList = $0
-                    .signature
-                    .parameterClause
-                    .parameters
-                    .compactMap {
-                        $0
-                            .type
-                            .as(IdentifierTypeSyntax.self)?
-                            .name
-                            .text
-                    }
-                    .joined(separator: ", ")
-                
-                let parameterNameWithTypeList = $0
-                    .signature
-                    .parameterClause
-                    .parameters
-                    .compactMap {
-                        guard
-                            let type = $0
-                                .type
-                                .as(IdentifierTypeSyntax.self)?
-                                .name
-                                .text
-                        else {
-                            return nil
-                        }
-                        
-                        let firstName = $0.firstName.text
-
-                        return "\(firstName): \(type)"
-                    }
-                    .joined(separator: ", ")
-                
-                let parameterNameWithNameList = $0
-                    .signature
-                    .parameterClause
-                    .parameters
-                    .compactMap { "\($0.firstName.text)" }
-                    .joined(separator: ", ")
-                
-                
-                
-                
-                
-                let returnValue = $0
-                    .signature
-                    .returnClause?
-                    .type
-                    .as(IdentifierTypeSyntax.self)?
-                    .name
-                    .text
-                
-                let name = $0.name.text
-                
-                let returnValueOrVoid = returnValue ?? "Void"
-                let returnValueIfNotVoid = returnValue.flatMap { " -> \($0)" } ?? ""
-                
-                
-                
-                
-                
-                return FunctionDetails(
-                    name: name,
-                    type: "(\(parameterTypesList)) -> \(returnValueOrVoid)",
-                    callsite:
-                        """
-                        func \(name)(\(parameterNameWithTypeList))\(returnValueIfNotVoid) {
-                        _\(name)(\(parameterNameWithNameList))
-                        }
-                        """
-                )
-            }
         
         
         
@@ -153,7 +78,7 @@ public struct WitnessingMacro: MemberMacro {
         
         
         
-        
+        let witnessTypeName = makeWitnessTypeName(from: node)
         
         
         let expandedFunctions = functions
@@ -161,23 +86,6 @@ public struct WitnessingMacro: MemberMacro {
                 $0.callsite
             }
             .joined(separator: "\n\n")
-        
-        
-        
-        
-        let witnessTypeName = node
-            .arguments?
-            .as(LabeledExprListSyntax.self)?
-            .first?
-            .as(LabeledExprSyntax.self)?
-            .expression
-            .as(StringLiteralExprSyntax.self)?
-            .segments
-            .first?
-            .as(StringSegmentSyntax.self)?
-            .content
-            .text
-        ?? "Witness"
         
         
         
@@ -203,6 +111,153 @@ public struct WitnessingMacro: MemberMacro {
         
         return [witnessDecl]
     }
+    
+    
+    public static func expansion(
+        of node: AttributeSyntax,
+        attachedTo declaration: some DeclGroupSyntax,
+        providingExtensionsOf type: some TypeSyntaxProtocol,
+        conformingTo protocols: [TypeSyntax],
+        in context: some MacroExpansionContext
+    ) throws -> [ExtensionDeclSyntax] {
+        guard let structDecl = declaration as? StructDeclSyntax else {
+            throw WitnessingError.structOnly
+        }
+
+        let productionName = "production"
+
+        let typeName = structDecl.name.text
+        let witnessTypeName = makeWitnessTypeName(from: node)
+        
+        let functions = makeFunctionDetails(from: structDecl)
+        
+        let expandedProperties = functions
+            .map {
+                "\($0.name): _\(productionName).\($0.name)"
+            }
+            .joined(separator: ",\n")
+        
+        return [
+            try ExtensionDeclSyntax(
+                """
+                extension \(raw: typeName) {
+                private static var _\(raw: productionName): \(raw: typeName) = {
+                Self.init()
+                }()
+
+                static var \(raw: productionName) = \(raw: typeName).\(raw: witnessTypeName)(
+                \(raw: expandedProperties)
+                )
+                }
+                """
+            )
+        ]
+    }
+    
+    
+    
+    
+    private static func makeFunctionDetails(from structDecl: StructDeclSyntax) -> [FunctionDetails] {
+        structDecl.memberBlock.members
+            .compactMap { $0.decl.as(FunctionDeclSyntax.self) }
+            .map {
+                let parameterTypesList = $0
+                    .signature
+                    .parameterClause
+                    .parameters
+                    .compactMap {
+                        $0
+                            .type
+                            .as(IdentifierTypeSyntax.self)?
+                            .name
+                            .text
+                    }
+                    .joined(separator: ", ")
+                
+                
+                
+                let parameterNameWithTypeList = $0
+                    .signature
+                    .parameterClause
+                    .parameters
+                    .compactMap {
+                        guard
+                            let type = $0
+                                .type
+                                .as(IdentifierTypeSyntax.self)?
+                                .name
+                                .text
+                        else {
+                            return nil
+                        }
+                        
+                        let firstName = $0.firstName.text
+                        
+                        return "\(firstName): \(type)"
+                    }
+                    .joined(separator: ", ")
+                
+                
+                
+                let parameterNameWithNameList = $0
+                    .signature
+                    .parameterClause
+                    .parameters
+                    .compactMap { "\($0.firstName.text)" }
+                    .joined(separator: ", ")
+                
+                
+                
+                
+                
+                let returnValue = $0
+                    .signature
+                    .returnClause?
+                    .type
+                    .as(IdentifierTypeSyntax.self)?
+                    .name
+                    .text
+                
+                let name = $0.name.text
+                
+                let returnValueOrVoid = returnValue ?? "Void"
+                let returnValueIfNotVoid = returnValue.flatMap { " -> \($0)" } ?? ""
+                
+                
+                
+                
+                
+                return FunctionDetails(
+                    name: name,
+                    type: "(\(parameterTypesList)) -> \(returnValueOrVoid)",
+                    callsite:
+                        """
+                        func \(name)(\(parameterNameWithTypeList))\(returnValueIfNotVoid) {
+                        _\(name)(\(parameterNameWithNameList))
+                        }
+                        """
+                )
+            }
+    }
+    
+    
+    
+    private static func makeWitnessTypeName(from node: AttributeSyntax) -> String {
+        node
+            .arguments?
+            .as(LabeledExprListSyntax.self)?
+            .first?
+            .as(LabeledExprSyntax.self)?
+            .expression
+            .as(StringLiteralExprSyntax.self)?
+            .segments
+            .first?
+            .as(StringSegmentSyntax.self)?
+            .content
+            .text
+        ?? "Witness"
+    }
+
 }
 
 

@@ -10,6 +10,7 @@ import ProtocolWitnessingMacros
 
 final class ProtocolWitnessingTests: XCTestCase {
     override func invokeTest() {
+//        withMacroTesting(isRecording: true, macros: [
         withMacroTesting(macros: [
             "Witnessing": WitnessingMacro.self,
         ]) {
@@ -17,6 +18,17 @@ final class ProtocolWitnessingTests: XCTestCase {
         }
     }
 }
+
+/*
+ TODO: Updates
+ - function has closure parameters like a completion handler
+ - struct has properties as well as funcs
+ - Function returns explicit void
+ - Weird/unusual formatting?
+ - Using custom args
+ - Add fix it for non-struct type to convert type to a struct
+ - Async/await functions/vars
+ */
 
 // MARK: - Initial sanity checking
 
@@ -32,6 +44,7 @@ extension ProtocolWitnessingTests {
             """
             @Witnessing
             ┬──────────
+            ├─ 🛑 @Witnessing can only be attached to a struct
             ╰─ 🛑 @Witnessing can only be attached to a struct
             class MyClientClass {
             }
@@ -53,12 +66,22 @@ extension ProtocolWitnessingTests {
         } expansion: {
             """
             struct MyClient {
-            
+
                 struct Witness {
                     init() {
-            
+
                     }
                 }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient = {
+                    Self.init()
+                }()
+
+                static var production = MyClient.Witness(
+
+                )
             }
             """
         }
@@ -93,6 +116,16 @@ extension ProtocolWitnessingTests {
                     }
                 }
             }
+
+            extension MyClient {
+                private static var _production: MyClient = {
+                    Self.init()
+                }()
+
+                static var production = MyClient.Witness(
+                    doSomething: _production.doSomething
+                )
+            }
             """
         }
     }
@@ -121,6 +154,16 @@ extension ProtocolWitnessingTests {
                         _doSomething(int)
                     }
                 }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient = {
+                    Self.init()
+                }()
+
+                static var production = MyClient.Witness(
+                    doSomething: _production.doSomething
+                )
             }
             """
         }
@@ -151,6 +194,16 @@ extension ProtocolWitnessingTests {
                     }
                 }
             }
+
+            extension MyClient {
+                private static var _production: MyClient = {
+                    Self.init()
+                }()
+
+                static var production = MyClient.Witness(
+                    doSomething: _production.doSomething
+                )
+            }
             """
         }
     }
@@ -179,6 +232,16 @@ extension ProtocolWitnessingTests {
                         _doSomething(int, float)
                     }
                 }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient = {
+                    Self.init()
+                }()
+
+                static var production = MyClient.Witness(
+                    doSomething: _production.doSomething
+                )
             }
             """
         }
@@ -224,6 +287,17 @@ extension ProtocolWitnessingTests {
                     }
                 }
             }
+
+            extension MyClient {
+                private static var _production: MyClient = {
+                    Self.init()
+                }()
+
+                static var production = MyClient.Witness(
+                    doSomething: _production.doSomething,
+                    doAnotherThing: _production.doAnotherThing
+                )
+            }
             """
         }
     }
@@ -263,6 +337,17 @@ extension ProtocolWitnessingTests {
                         _doAnotherThing(otherArg)
                     }
                 }
+            }
+
+            extension MyWitness {
+                private static var _production: MyWitness = {
+                    Self.init()
+                }()
+
+                static var production = MyWitness.Witness(
+                    doSomething: _production.doSomething,
+                    doAnotherThing: _production.doAnotherThing
+                )
             }
             """
         }
@@ -304,6 +389,17 @@ extension ProtocolWitnessingTests {
                     }
                 }
             }
+
+            extension MyWitness {
+                private static var _production: MyWitness = {
+                    Self.init()
+                }()
+
+                static var production = MyWitness.Witness(
+                    doSomething: _production.doSomething,
+                    doAnotherThing: _production.doAnotherThing
+                )
+            }
             """
         }
     }
@@ -343,6 +439,17 @@ extension ProtocolWitnessingTests {
                         _doAnotherThing(otherArg, anotherArg)
                     }
                 }
+            }
+
+            extension MyWitness {
+                private static var _production: MyWitness = {
+                    Self.init()
+                }()
+
+                static var production = MyWitness.Witness(
+                    doSomething: _production.doSomething,
+                    doAnotherThing: _production.doAnotherThing
+                )
             }
             """
         }
@@ -388,6 +495,17 @@ extension ProtocolWitnessingTests {
                     }
                 }
             }
+
+            extension MyWitness {
+                private static var _production: MyWitness = {
+                    Self.init()
+                }()
+
+                static var production = MyWitness.Witness(
+                    returnsVoid: _production.returnsVoid,
+                    returnsAThing: _production.returnsAThing
+                )
+            }
             """
         }
     }
@@ -432,6 +550,17 @@ extension ProtocolWitnessingTests {
                     }
                 }
             }
+
+            extension MyWitness {
+                private static var _production: MyWitness = {
+                    Self.init()
+                }()
+
+                static var production = MyWitness.Witness(
+                    returnsVoid: _production.returnsVoid,
+                    returnsAThing: _production.returnsAThing
+                )
+            }
             """
         }
     }
@@ -454,6 +583,16 @@ extension ProtocolWitnessingTests {
                     }
                 }
 
+            }
+
+            extension MyWitness {
+                private static var _production: MyWitness = {
+                    Self.init()
+                }()
+
+                static var production = MyWitness.MyCustomWitnessTypeName(
+
+                )
             }
             """
         }
@@ -484,10 +623,55 @@ extension ProtocolWitnessingTests {
                     }
                 }
             }
+
+            extension MyWitness {
+                private static var _production: MyWitness = {
+                    Self.init()
+                }()
+
+                static var production = MyWitness.MyCustomWitnessTypeName(
+                    myFunction: _production.myFunction
+                )
+            }
             """
         }
     }
 }
+
+// MARK: - Assistance
+
+//extension ProtocolWitnessingTests {
+//    func testMacroActualOutputByForcingRecordToTrue() throws {
+//        assertMacro(record: true) {
+//            """
+//            @Witnessing
+//            struct MyClient {
+//            }
+//            """
+//        } expansion: {
+//            """
+//            struct MyClient {
+//
+//                struct Witness {
+//                    init() {
+//
+//                    }
+//                }
+//            }
+//
+//            extension MyClient {
+//                private static var _production = {
+//                    Self.init()
+//                }()
+//
+//                static var production = Witness(
+//
+//                )
+//            }
+//            """
+//        }
+//    }
+//}
 #else
 final class ProtocolWitnessingTests: XCTestCase {
     func testMacro() throws {
@@ -495,11 +679,3 @@ final class ProtocolWitnessingTests: XCTestCase {
     }
 }
 #endif
-
-
-/*
- TODO:
- - Function returns explicit void
- - Weird/unusual formatting?
- - Using custom args
- */
