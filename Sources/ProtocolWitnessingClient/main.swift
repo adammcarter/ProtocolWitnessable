@@ -129,9 +129,14 @@ import ProtocolWitnessing
 
 
 
-
 struct MyClient {
-    func doSomething() -> Void { }
+    func    doSomething ()
+    
+    {
+        
+        /*some logic here*/
+        
+    }
     
     struct Witness {
         var _doSomething: () -> Void
@@ -140,7 +145,7 @@ struct MyClient {
             _doSomething = doSomething
         }
         
-        func doSomething() -> Void {
+        func doSomething() {
             _doSomething()
         }
     }
@@ -161,10 +166,12 @@ extension MyClient {
         )
     }
 }
-//
-//
-//
-//var client = MyClient.production()
+
+
+
+var client = MyClient.production()
+client.doSomething()
+
 //print(client._som)
 //var mock = client
 //mock._someLetProperty = 9
