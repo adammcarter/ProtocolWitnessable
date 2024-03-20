@@ -130,40 +130,37 @@ import ProtocolWitnessing
 
 
 
-//struct MyClient {
-//    let someLetProperty = 532
-//    
-//    func doSomething() { }
-//    
-//    struct Witness {
-//        var _doSomething: () -> Void
-//        
-//        init(doSomething: @escaping () -> Void) {
-//            _doSomething = doSomething
-//        }
-//        
-//        func doSomething() {
-//            _doSomething()
-//        }
-//    }
-//}
-//
-//extension MyClient {
-//    private static var _production: MyClient?
-//    
-//    static func production() -> MyClient.Witness {
-//        let production = _production ?? MyClient()
-//        
-//        if _production == nil {
-//            _production = production
-//        }
-//        
-//        return MyClient.Witness(
-//            doSomething: production.doSomething
-//        )
-//    }
-//}
-//
+struct MyClient {
+    func doSomething() -> Void { }
+    
+    struct Witness {
+        var _doSomething: () -> Void
+        
+        init(doSomething: @escaping () -> Void) {
+            _doSomething = doSomething
+        }
+        
+        func doSomething() -> Void {
+            _doSomething()
+        }
+    }
+}
+
+extension MyClient {
+    private static var _production: MyClient?
+    
+    static func production() -> MyClient.Witness {
+        let production = _production ?? MyClient()
+        
+        if _production == nil {
+            _production = production
+        }
+        
+        return MyClient.Witness(
+            doSomething: production.doSomething
+        )
+    }
+}
 //
 //
 //

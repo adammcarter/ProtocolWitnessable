@@ -21,7 +21,6 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
- - Function returns explicit void
     - Weird/unusual formatting?
  - Async/await functions/vars
  - production() returns non-mutable version with no "_" properties, separate name for witness? `witness()`
@@ -720,6 +719,55 @@ extension ProtocolWitnessingTests {
                         _production = production
                     }
             
+                    return MyClient.Witness(
+                        doSomething: production.doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Formatting
+
+extension ProtocolWitnessingTests {
+    func testMacro_expandsType_whenContainingFunction_andFunctionHasExplicitVoidReturn() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                func doSomething() -> Void { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                func doSomething() -> Void { }
+
+                struct Witness {
+                    var _doSomething: () -> Void
+
+                    init(doSomething: @escaping () -> Void) {
+                        _doSomething = doSomething
+                    }
+
+                    func doSomething() -> Void {
+                        _doSomething()
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
                     return MyClient.Witness(
                         doSomething: production.doSomething
                     )
