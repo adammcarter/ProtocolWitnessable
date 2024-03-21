@@ -126,72 +126,36 @@ struct MyService {
 //Thread.sleep(forTimeInterval: 10)
 
 
-
-
-struct MyClient {
-    var isThing: Bool {
-        get { true }
-        set {
-            let thing = 443
-            let thing2 = thing * (newValue ? 1 : 0)
-            
-            print(thing2)
-        }
-    }
-    
-    struct Witness {
-        var _isThing: Bool
-        
-        var isThing: Bool {
-            get {
-                _isThing
-            }
-            set {
-                let thing = 443
-                let thing2 = thing * (newValue ? 1 : 0)
-                
-                print(thing2)
-            }
-        }
-        
-        init(isThing: Bool) {
-            _isThing = isThing
-        }
-        
-        
-    }
-}
-
-extension MyClient {
-    private static var _production: MyClient?
-    
-    static func production() -> MyClient.Witness {
-        let production = _production ?? MyClient()
-        
-        if _production == nil {
-            _production = production
-        }
-        
-        return MyClient.Witness(
-            isThing: production.isThing
-        )
-    }
-}
-
-
-
-
-import Foundation
-
-
-var client = MyClient.production()
-
-print(client.isThing)
-
-var mock = client
-mock._isThing = false
-
-print(mock.isThing)
+//
+//@Witnessing
+//struct MyClient {
+//    func doSomething() throws {
+//        print("Hello from prod")
+//    }
+//}
+//
+//
+//
+//
+//
+//import Foundation
+//
+//
+//var client = MyClient.production()
+//
+//try client.doSomething()
+//
+//var mock = client
+//mock._doSomething = {
+//    throw MyError.SomeThing
+//}
+//
+//try mock.doSomething()
+//
+//
+//enum MyError: Error {
+//    case SomeThing
+//}
 
 
 //var mock = client

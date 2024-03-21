@@ -452,6 +452,10 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                     .effectSpecifiers?
                     .asyncSpecifier != nil
                 
+                let isThrows = signature
+                    .effectSpecifiers?
+                    .throwsSpecifier != nil
+                
                 let parameterDetails = signature
                     .parameterClause
                     .parameters
@@ -496,22 +500,34 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                 
                 
                 
-                let signatureDecl = if isAsync {
+                let signatureDecl = if isAsync, isThrows {
+                    "(\(parameterTypesList)) async throws"
+                } else if isAsync {
                     "(\(parameterTypesList)) async"
+                } else if isThrows {
+                    "(\(parameterTypesList)) throws"
                 } else {
                     "(\(parameterTypesList))"
                 }
                 
                 
-                let signatureParameterNamesDecl = if isAsync {
+                let signatureParameterNamesDecl = if isAsync, isThrows {
+                    "(\(parameterNameWithTypeList)) async throws"
+                } else if isAsync {
                     "(\(parameterNameWithTypeList)) async"
+                } else if isThrows {
+                    "(\(parameterNameWithTypeList)) throws"
                 } else {
                     "(\(parameterNameWithTypeList))"
                 }
                 
                 
-                let awaitOrEmpty = if isAsync {
+                let tryAwaitOrEmpty = if isAsync, isThrows {
+                    "try await "
+                } else if isAsync {
                     "await "
+                } else if isThrows {
+                    "try "
                 } else {
                     ""
                 }
@@ -522,7 +538,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                     callsite:
                         """
                         func \(name)\(signatureParameterNamesDecl)\(returnValueIfNotVoid) {
-                        \(awaitOrEmpty)_\(name)(\(parameterNameWithNameList))
+                        \(tryAwaitOrEmpty)_\(name)(\(parameterNameWithNameList))
                         }
                         """
                 )

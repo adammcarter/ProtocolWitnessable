@@ -22,7 +22,6 @@ final class ProtocolWitnessingTests: XCTestCase {
 /*
  TODO: Updates
  - throwing:
-    - functions
     - vars/getters
  - when adding multiple macros (eg @MainActor is also on the struct)
  - production() returns non-mutable version with no "_" properties, separate name for witness? `witness()`
@@ -693,6 +692,173 @@ extension ProtocolWitnessingTests {
                     return MyClient.Witness(
                         doSomething: production.doSomething,
                         doAnotherThing: production.doAnotherThing
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Throwing
+
+extension ProtocolWitnessingTests {
+    func testMacro_whenOneFunction_andFunctionIsThrowing() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                func doSomething() throws { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                func doSomething() throws { }
+
+                struct Witness {
+                    var _doSomething: () throws -> Void
+
+                    init(doSomething: @escaping () throws -> Void) {
+                        _doSomething = doSomething
+                    }
+
+                    func doSomething() throws {
+                        try _doSomething()
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        doSomething: production.doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenTwoFunctions_andBothFunctionsAreThrowing() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                func doSomething() throws { }
+            
+                func doSomethingElse() throws { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                func doSomething() throws { }
+
+                func doSomethingElse() throws { }
+
+                struct Witness {
+                    var _doSomething: () throws -> Void
+                    var _doSomethingElse: () throws -> Void
+
+                    init(
+                        doSomething: @escaping () throws -> Void,
+                        doSomethingElse: @escaping () throws -> Void
+                    ) {
+                        _doSomething = doSomething
+                        _doSomethingElse = doSomethingElse
+                    }
+
+                    func doSomething() throws {
+                        try _doSomething()
+                    }
+
+                    func doSomethingElse() throws {
+                        try _doSomethingElse()
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        doSomething: production.doSomething,
+                        doSomethingElse: production.doSomethingElse
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenTwoFunctions_andOneFunctionIsThrowing_andOtherFunctionIsNot() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                func doSomething() { }
+            
+                func doSomethingElse() throws { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                func doSomething() { }
+
+                func doSomethingElse() throws { }
+
+                struct Witness {
+                    var _doSomething: () -> Void
+                    var _doSomethingElse: () throws -> Void
+
+                    init(
+                        doSomething: @escaping () -> Void,
+                        doSomethingElse: @escaping () throws -> Void
+                    ) {
+                        _doSomething = doSomething
+                        _doSomethingElse = doSomethingElse
+                    }
+
+                    func doSomething() {
+                        _doSomething()
+                    }
+
+                    func doSomethingElse() throws {
+                        try _doSomethingElse()
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        doSomething: production.doSomething,
+                        doSomethingElse: production.doSomethingElse
                     )
                 }
             }
