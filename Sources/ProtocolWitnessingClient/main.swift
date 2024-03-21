@@ -125,32 +125,61 @@ struct MyService {
 //
 //Thread.sleep(forTimeInterval: 10)
 
+struct MyClient {
+    var isAsync: Bool {
+        get throws {
+            true
+        }
+    }
+    
+    struct Witness {
+        var _isAsync: () throws -> Bool
+        
+        var isAsync: Bool {
+            get throws {
+                try _isAsync()
+            }
+        }
+        
+        init(isAsync: @escaping () throws -> Bool) {
+            _isAsync = isAsync
+        }
+        
+        
+    }
+}
 
-//
-//@Witnessing
-//struct MyClient {
-//    func doSomething() throws {
-//        print("Hello from prod")
-//    }
-//}
-//
-//
-//
-//
-//
+extension MyClient {
+    private static var _production: MyClient?
+    
+    static func production() throws -> MyClient.Witness {
+        let production = _production ?? MyClient()
+        
+        if _production == nil {
+            _production = production
+        }
+        
+        return MyClient.Witness(
+            isAsync: {
+                try production.isAsync
+            }
+        )
+    }
+}
+
+
+
 //import Foundation
 //
 //
-//var client = MyClient.production()
+//var client = try MyClient.production()
 //
-//try client.doSomething()
+//print(try client.isAsync)
 //
 //var mock = client
-//mock._doSomething = {
-//    throw MyError.SomeThing
-//}
+//mock._isAsync = throw MyError.SomeThing
 //
-//try mock.doSomething()
+//print(try mock.isAsync)
 //
 //
 //enum MyError: Error {

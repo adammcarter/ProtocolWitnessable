@@ -37,7 +37,8 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                     type: $0.type,
                     equals: $0.equals,
                     isEscaping: false,
-                    isAsync: $0.isAsync
+                    isAsync: $0.isAsync,
+                    isThrowing: $0.isThrowing
                 )
             }
             +
@@ -47,7 +48,8 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                     type: $0.type,
                     equals: nil,
                     isEscaping: true,
-                    isAsync: false
+                    isAsync: false,
+                    isThrowing: false
                 )
             }
         ]
@@ -133,10 +135,28 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         let expandedComputedProperties = computedProperties
             .map {
+                let asyncThrows = if $0.isAsync, $0.isThrowing {
+                    " async throws"
+                } else if $0.isAsync {
+                    " async"
+                } else if $0.isThrowing {
+                    " throws"
+                } else {
+                    ""
+                }
+                
+                let getExpression = if $0.isAsync, $0.isThrowing {
+                    "try await _\($0.name)()"
+                } else if $0.isThrowing {
+                    "try _\($0.name)()"
+                } else {
+                    "_\($0.name)"
+                }
+                
                 let lhs = "\($0.letOrVar) \($0.name)"
                 let rhs = "\($0.type)"
-                let getName = "get\($0.isAsync ? " async" : "")"
-                let get = "\(getName) { _\($0.name) }"
+                let getName = "get\(asyncThrows)"
+                let get = "\(getName) { \(getExpression) }"
                 let set = $0.setter.flatMap { "\n\($0)" } ?? ""
                 
                 return """
@@ -214,7 +234,8 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                     type: $0.type,
                     equals: $0.equals,
                     isEscaping: false,
-                    isAsync: $0.isAsync
+                    isAsync: $0.isAsync,
+                    isThrowing: $0.isThrowing
                 )
             }
             +
@@ -224,7 +245,8 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                     type: $0.type,
                     equals: nil,
                     isEscaping: true,
-                    isAsync: false
+                    isAsync: false,
+                    isThrowing: false
                 )
             }
         ]
@@ -247,60 +269,104 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         let expandedProductionProperties = combinedInitParameters
             .map {
-                let async = "\($0.isAsync ? " await" : "")"
-                let propertyName = "\(productionName).\($0.name)"
+                let asyncThrows = if $0.isAsync, $0.isThrowing {
+                    " try await"
+                } else if $0.isAsync {
+                    " await"
+                } else if $0.isThrowing {
+                    " try"
+                } else {
+                    ""
+                }
                 
-                return "\($0.name):\(async) \(propertyName)"
+                let propertyName = "\(productionName).\($0.name)"
+                let value = "\(asyncThrows) \(propertyName)"
+                let rhs = $0.isThrowing ? "{ \(value) }" : value
+                
+                return "\($0.name):\(rhs)"
             }
             .joined(separator: ",\n")
         
         
         
-        let needsAsyncAwait = combinedInitParameters
+        
+        
+        
+        let needsAsync = combinedInitParameters
             .contains { $0.isAsync }
         
-        let asyncSuffix = needsAsyncAwait ? " async" : ""
+        let needsThrowing = combinedInitParameters
+            .contains { $0.isThrowing }
+        
+        let asyncThrowsSuffix = if needsAsync, needsThrowing {
+            " async throws"
+        } else if needsAsync {
+            " async"
+        } else if needsThrowing {
+            " throws"
+        } else {
+            ""
+        }
         
         
+        
+        
+        
+        
+        let functionPrefix = "static func \(productionName)"
+        let functionSuffix = "\(asyncThrowsSuffix) -> \(typeName).\(witnessTypeName)"
         
         let productionFunctionDeclaration = if expandedParameters.isEmpty {
             """
-            static func \(productionName)()\(asyncSuffix) -> \(typeName).\(witnessTypeName) {
+            \(functionPrefix)()\(functionSuffix) {
             """
         } else {
             """
-            static func \(productionName)(
+            \(functionPrefix)(
                 \(expandedParameters)
-            )\(asyncSuffix) -> \(typeName).\(witnessTypeName) {
+            )\(functionSuffix) {
             """
         }
         
         
         
+        
+        
+        
+        let productionPropertyLhs = "let \(productionName) = _\(productionName) ?? \(typeName)"
+        
         let productionPropertyDeclaration = if expandedProperties.isEmpty {
             """
-            let \(productionName) = _\(productionName) ?? \(typeName)()
+            \(productionPropertyLhs)()
             """
         } else {
             """
-            let \(productionName) = _\(productionName) ?? \(typeName)(
+            \(productionPropertyLhs)(
             \(expandedProperties)
             )
             """
         }
         
         
+        
+        
+        
+        let returnDeclarationLhs = "return \(typeName).\(witnessTypeName)"
+        
         let returnDeclaration = if expandedProductionProperties.isEmpty {
             """
-            return \(typeName).\(witnessTypeName)()
+            \(returnDeclarationLhs)()
             """
         } else {
             """
-            return \(typeName).\(witnessTypeName)(
+            \(returnDeclarationLhs)(
             \(expandedProductionProperties)
             )
             """
         }
+        
+        
+        
         
         
         return [
@@ -359,6 +425,12 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                             .compactMap { $0.effectSpecifiers?.asyncSpecifier }
                             .isEmpty == false
                         
+                        let isThrowing = accessorBlock
+                            .accessors
+                            .as(AccessorDeclListSyntax.self)?
+                            .compactMap { $0.effectSpecifiers?.throwsSpecifier }
+                            .isEmpty == false
+                        
                         let setter = accessorBlock
                             .accessors
                             .as(AccessorDeclListSyntax.self)?
@@ -370,7 +442,8 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                             type: type,
                             accessor: accessorBlock.trimmedDescription,
                             setter: setter?.trimmedDescription,
-                            isAsync: isAsync
+                            isAsync: isAsync,
+                            isThrowing: isThrowing
                         )
                     }
             }
@@ -414,6 +487,12 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                             .as(AccessorDeclListSyntax.self)?
                             .compactMap { $0.effectSpecifiers?.asyncSpecifier }
                             .isEmpty == false
+                        
+                        let isThrowing = accessorBlock?
+                            .accessors
+                            .as(AccessorDeclListSyntax.self)?
+                            .compactMap { $0.effectSpecifiers?.throwsSpecifier }
+                            .isEmpty == false
 
                         if let type = binding.typeAnnotation?.type.trimmedDescription {
                             return ParameterDetails(
@@ -421,7 +500,8 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                                 name: binding.pattern.trimmedDescription,
                                 type: type,
                                 equals: nil,
-                                isAsync: isAsync
+                                isAsync: isAsync,
+                                isThrowing: isThrowing
                             )
                         } else if binding.is(PatternBindingSyntax.self) {
                             return ParameterDetails(
@@ -429,7 +509,8 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                                 name: binding.pattern.trimmedDescription,
                                 type: nil,
                                 equals: binding.initializer?.value.trimmedDescription,
-                                isAsync: isAsync
+                                isAsync: isAsync,
+                                isThrowing: isThrowing
                             )
                         } else {
                             return nil
@@ -607,6 +688,7 @@ private struct ParameterDetails {
     let type: String?
     let equals: String?
     let isAsync: Bool
+    let isThrowing: Bool
 }
 
 
@@ -617,6 +699,7 @@ private struct ComputedPropertyDetails {
     let accessor: String
     let setter: String?
     let isAsync: Bool
+    let isThrowing: Bool
 }
 
 
@@ -626,6 +709,7 @@ private struct InitParameterDetails {
     let equals: String?
     let isEscaping: Bool
     let isAsync: Bool
+    let isThrowing: Bool
     
     var escapingType: String? {
         guard let type else { return nil }
@@ -634,11 +718,19 @@ private struct InitParameterDetails {
     }
     
     var rhs: String {
-        type.flatMap { ": \($0)" } ?? equals.flatMap { " = \($0)" } ?? ""
+        if isThrowing {
+            type.flatMap { ": () throws -> \($0)" } ?? ""
+        } else {
+            type.flatMap { ": \($0)" } ?? equals.flatMap { " = \($0)" } ?? ""
+        }
     }
     
     var escapingRhs: String {
-        escapingType.flatMap { ": \($0)" } ?? equals.flatMap { " = \($0)" } ?? ""
+        if isThrowing {
+            type.flatMap { ": @escaping () throws -> \($0)" } ?? ""
+        } else {
+            escapingType.flatMap { ": \($0)" } ?? equals.flatMap { " = \($0)" } ?? ""
+        }
     }
 }
 

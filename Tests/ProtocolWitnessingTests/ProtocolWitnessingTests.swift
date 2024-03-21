@@ -21,8 +21,6 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
- - throwing:
-    - vars/getters
  - when adding multiple macros (eg @MainActor is also on the struct)
  - production() returns non-mutable version with no "_" properties, separate name for witness? `witness()`
  - Nested types
@@ -2099,6 +2097,124 @@ extension ProtocolWitnessingTests {
 
                     return MyClient.Witness(
                         isThing: await production.isThing
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Throwing getter
+
+extension ProtocolWitnessingTests {
+    func testMacro_addsThrowsGetterToWitness_whenPropertyHasThrowsGetter_andSpansOneLineOnly() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var isAsync: Bool {
+                    get throws { true }
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var isAsync: Bool {
+                    get throws { true }
+                }
+
+                struct Witness {
+                    var _isAsync: () throws -> Bool
+
+                    var isAsync: Bool {
+                        get throws {
+                            try _isAsync()
+                        }
+                    }
+
+                    init(isAsync: @escaping () throws -> Bool) {
+                        _isAsync = isAsync
+                    }
+
+
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() throws -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        isAsync: {
+                            try production.isAsync
+                        }
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsThrowsGetterToWitness_whenPropertyHasThrowsGetter_andSpansMultipleLines() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var isAsync: Bool {
+                    get throws { 
+                        true
+                    }
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var isAsync: Bool {
+                    get throws { 
+                        true
+                    }
+                }
+
+                struct Witness {
+                    var _isAsync: () throws -> Bool
+
+                    var isAsync: Bool {
+                        get throws {
+                            try _isAsync()
+                        }
+                    }
+
+                    init(isAsync: @escaping () throws -> Bool) {
+                        _isAsync = isAsync
+                    }
+
+
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() throws -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        isAsync: {
+                            try production.isAsync
+                        }
                     )
                 }
             }
