@@ -128,17 +128,56 @@ struct MyService {
 
 
 
-
-@Witnessing
 struct MyClient {
     var isThing: Bool {
-        let myThing = true
+        get { true }
+        set {
+            let thing = 443
+            let thing2 = thing * (newValue ? 1 : 0)
+            
+            print(thing2)
+        }
+    }
+    
+    struct Witness {
+        var _isThing: Bool
         
-        print(myThing)
+        var isThing: Bool {
+            get {
+                _isThing
+            }
+            set {
+                let thing = 443
+                let thing2 = thing * (newValue ? 1 : 0)
+                
+                print(thing2)
+            }
+        }
         
-        return myThing
+        init(isThing: Bool) {
+            _isThing = isThing
+        }
+        
+        
     }
 }
+
+extension MyClient {
+    private static var _production: MyClient?
+    
+    static func production() -> MyClient.Witness {
+        let production = _production ?? MyClient()
+        
+        if _production == nil {
+            _production = production
+        }
+        
+        return MyClient.Witness(
+            isThing: production.isThing
+        )
+    }
+}
+
 
 
 

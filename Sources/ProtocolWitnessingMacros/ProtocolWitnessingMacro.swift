@@ -135,10 +135,15 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
             .map {
                 let lhs = "\($0.letOrVar) \($0.name)"
                 let rhs = "\($0.type)"
-                let get = "get\($0.isAsync ? " async" : "")"
-                let getter = "\(get) { _\($0.name) }"
+                let getName = "get\($0.isAsync ? " async" : "")"
+                let get = "\(getName) { _\($0.name) }"
+                let set = $0.setter.flatMap { "\n\($0)" } ?? ""
                 
-                return "\(lhs): \(rhs) { \(getter) }"
+                return """
+                    \(lhs): \(rhs) {
+                    \(get)\(set)
+                    }
+                    """
             }
             .joined(separator: "\n\n")
         
@@ -354,11 +359,17 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                             .compactMap { $0.effectSpecifiers?.asyncSpecifier }
                             .isEmpty == false
                         
+                        let setter = accessorBlock
+                            .accessors
+                            .as(AccessorDeclListSyntax.self)?
+                            .first { $0.accessorSpecifier.tokenKind == .keyword(.set) }
+                        
                         return ComputedPropertyDetails(
                             letOrVar: letOrVar,
                             name: binding.pattern.trimmedDescription,
                             type: type,
                             accessor: accessorBlock.trimmedDescription,
+                            setter: setter?.trimmedDescription,
                             isAsync: isAsync
                         )
                     }
@@ -588,6 +599,7 @@ private struct ComputedPropertyDetails {
     let name: String
     let type: String
     let accessor: String
+    let setter: String?
     let isAsync: Bool
 }
 

@@ -21,10 +21,9 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
- - Computed property
-    - AND explicit setter
- - throwing functions/vars
- - computed vars
+ - throwing:
+    - functions
+    - vars/getters
  - when adding multiple macros (eg @MainActor is also on the struct)
  - production() returns non-mutable version with no "_" properties, separate name for witness? `witness()`
  - Nested types
@@ -1543,7 +1542,7 @@ extension ProtocolWitnessingTests {
     }
 }
 
-// MARK: Computed
+// MARK: Getter
 
 extension ProtocolWitnessingTests {
     func testMacro_addsGetterToWitness_whenPropertyHasGetter_andGetterSpansOneLineOnly() throws {
@@ -1763,7 +1762,7 @@ extension ProtocolWitnessingTests {
     }
 }
 
-// MARK: Async computed
+// MARK: Async getter
 
 extension ProtocolWitnessingTests {
     func testMacro_addsAsyncGetterToWitness_whenPropertyHasAsyncGetter_andSpansOneLineOnly() throws {
@@ -1934,6 +1933,201 @@ extension ProtocolWitnessingTests {
 
                     return MyClient.Witness(
                         isThing: await production.isThing
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Setter
+
+extension ProtocolWitnessingTests {
+    func testMacro_addsSetterToWitness_whenPropertyHasGetterAndSetter_andSetterSpansOneLineOnly() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var isThing: Bool {
+                    get { true }
+                    set { print(newValue) }
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var isThing: Bool {
+                    get { true }
+                    set { print(newValue) }
+                }
+
+                struct Witness {
+                    var _isThing: Bool
+
+                    var isThing: Bool {
+                        get {
+                            _isThing
+                        }
+                        set {
+                            print(newValue)
+                        }
+                    }
+
+                    init(isThing: Bool) {
+                        _isThing = isThing
+                    }
+
+
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        isThing: production.isThing
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsSetterToWitness_whenPropertyHasGetterAndSetter_andSetterSpansMultipleLines() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var isThing: Bool {
+                    get { true }
+                    set { 
+                        print(newValue)
+                    }
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var isThing: Bool {
+                    get { true }
+                    set { 
+                        print(newValue)
+                    }
+                }
+
+                struct Witness {
+                    var _isThing: Bool
+
+                    var isThing: Bool {
+                        get {
+                            _isThing
+                        }
+                        set {
+                                    print(newValue)
+                                }
+                    }
+
+                    init(isThing: Bool) {
+                        _isThing = isThing
+                    }
+
+
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        isThing: production.isThing
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsSetterToWitness_whenPropertyHasGetterAndSetter_andSetterIsComplex() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var isThing: Bool {
+                    get { true }
+                    set {
+                        let thing = 443
+                        let thing2 = thing * (newValue ? 1 : 0)
+            
+                        print(thing2)
+                    }
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var isThing: Bool {
+                    get { true }
+                    set {
+                        let thing = 443
+                        let thing2 = thing * (newValue ? 1 : 0)
+
+                        print(thing2)
+                    }
+                }
+
+                struct Witness {
+                    var _isThing: Bool
+
+                    var isThing: Bool {
+                        get {
+                            _isThing
+                        }
+                        set {
+                                    let thing = 443
+                                    let thing2 = thing * (newValue ? 1 : 0)
+
+                                    print(thing2)
+                                }
+                    }
+
+                    init(isThing: Bool) {
+                        _isThing = isThing
+                    }
+
+
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        isThing: production.isThing
                     )
                 }
             }
