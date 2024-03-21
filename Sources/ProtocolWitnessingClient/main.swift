@@ -127,11 +127,18 @@ struct MyService {
 
 
 
+
+
 @Witnessing
 struct MyClient {
-    var isAsync: Bool { true }
+    var isThing: Bool {
+        let myThing = true
+        
+        print(myThing)
+        
+        return myThing
+    }
 }
-
 
 
 
@@ -140,12 +147,12 @@ import Foundation
 
 var client = MyClient.production()
 
-print(client.isAsync)
+print(client.isThing)
 
 var mock = client
-mock._isAsync = false
+mock._isThing = false
 
-print(mock.isAsync)
+print(mock.isThing)
 
 
 //var mock = client

@@ -32,11 +32,23 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         let combinedInitParameters: [InitParameterDetails] = [
             parameters.map {
-                InitParameterDetails(name: $0.name, type: $0.type, equals: $0.equals, isEscaping: false)
+                InitParameterDetails(
+                    name: $0.name, 
+                    type: $0.type,
+                    equals: $0.equals,
+                    isEscaping: false,
+                    isAsync: $0.isAsync
+                )
             }
             +
             functions.map {
-                InitParameterDetails(name: $0.name, type: $0.type, equals: nil, isEscaping: true)
+                InitParameterDetails(
+                    name: $0.name, 
+                    type: $0.type,
+                    equals: nil,
+                    isEscaping: true,
+                    isAsync: false
+                )
             }
         ]
             .flatMap { $0 }
@@ -121,9 +133,14 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         let expandedComputedProperties = computedProperties
             .map {
-                "\($0.letOrVar) \($0.name): \($0.type) { _\($0.name) }"
+                let lhs = "\($0.letOrVar) \($0.name)"
+                let rhs = "\($0.type)"
+                let get = "get\($0.isAsync ? " async" : "")"
+                let getter = "\(get) { _\($0.name) }"
+                
+                return "\(lhs): \(rhs) { \(getter) }"
             }
-            .joined(separator: "\n")
+            .joined(separator: "\n\n")
         
         
         
@@ -191,7 +208,8 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                     name: $0.name, 
                     type: $0.type,
                     equals: $0.equals,
-                    isEscaping: false
+                    isEscaping: false,
+                    isAsync: $0.isAsync
                 )
             }
             +
@@ -200,7 +218,8 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                     name: $0.name,
                     type: $0.type,
                     equals: nil,
-                    isEscaping: true
+                    isEscaping: true,
+                    isAsync: false
                 )
             }
         ]
@@ -223,23 +242,31 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         let expandedProductionProperties = combinedInitParameters
             .map {
-                "\($0.name): \(productionName).\($0.name)"
+                let async = "\($0.isAsync ? " await" : "")"
+                let propertyName = "\(productionName).\($0.name)"
+                
+                return "\($0.name):\(async) \(propertyName)"
             }
             .joined(separator: ",\n")
         
         
         
+        let needsAsyncAwait = combinedInitParameters
+            .contains { $0.isAsync }
+        
+        let asyncSuffix = needsAsyncAwait ? " async" : ""
+        
         
         
         let productionFunctionDeclaration = if expandedParameters.isEmpty {
             """
-            static func \(productionName)() -> \(typeName).\(witnessTypeName) {
+            static func \(productionName)()\(asyncSuffix) -> \(typeName).\(witnessTypeName) {
             """
         } else {
             """
             static func \(productionName)(
                 \(expandedParameters)
-            ) -> \(typeName).\(witnessTypeName) {
+            )\(asyncSuffix) -> \(typeName).\(witnessTypeName) {
             """
         }
         
@@ -321,11 +348,18 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                             return nil
                         }
                         
+                        let isAsync = accessorBlock
+                            .accessors
+                            .as(AccessorDeclListSyntax.self)?
+                            .compactMap { $0.effectSpecifiers?.asyncSpecifier }
+                            .isEmpty == false
+                        
                         return ComputedPropertyDetails(
                             letOrVar: letOrVar,
                             name: binding.pattern.trimmedDescription,
                             type: type,
-                            accessor: accessorBlock.trimmedDescription
+                            accessor: accessorBlock.trimmedDescription,
+                            isAsync: isAsync
                         )
                     }
             }
@@ -354,27 +388,37 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                 return varDecl
                     .bindings
                     .compactMap { binding -> ParameterDetails? in
-                        if 
+                        let accessorBlock = binding.as(PatternBindingSyntax.self)?.accessorBlock
+                        
+                        if
                             includesComputed == false,
-                            binding.as(PatternBindingSyntax.self)?.accessorBlock != nil
+                            accessorBlock != nil
                         {
                             return nil
                         }
                         
                         
+                        let isAsync = accessorBlock?
+                            .accessors
+                            .as(AccessorDeclListSyntax.self)?
+                            .compactMap { $0.effectSpecifiers?.asyncSpecifier }
+                            .isEmpty == false
+
                         if let type = binding.typeAnnotation?.type.trimmedDescription {
                             return ParameterDetails(
                                 letOrVar: letOrVar,
                                 name: binding.pattern.trimmedDescription,
                                 type: type,
-                                equals: nil
+                                equals: nil,
+                                isAsync: isAsync
                             )
                         } else if binding.is(PatternBindingSyntax.self) {
                             return ParameterDetails(
                                 letOrVar: "var",
                                 name: binding.pattern.trimmedDescription,
                                 type: nil,
-                                equals: binding.initializer?.value.trimmedDescription
+                                equals: binding.initializer?.value.trimmedDescription,
+                                isAsync: isAsync
                             )
                         } else {
                             return nil
@@ -535,6 +579,7 @@ private struct ParameterDetails {
     let name: String
     let type: String?
     let equals: String?
+    let isAsync: Bool
 }
 
 
@@ -543,6 +588,7 @@ private struct ComputedPropertyDetails {
     let name: String
     let type: String
     let accessor: String
+    let isAsync: Bool
 }
 
 
@@ -551,6 +597,7 @@ private struct InitParameterDetails {
     let type: String?
     let equals: String?
     let isEscaping: Bool
+    let isAsync: Bool
     
     var escapingType: String? {
         guard let type else { return nil }

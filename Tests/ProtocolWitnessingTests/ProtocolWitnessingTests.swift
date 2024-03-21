@@ -22,9 +22,7 @@ final class ProtocolWitnessingTests: XCTestCase {
 /*
  TODO: Updates
  - Computed property
-    - Explicit getter
     - AND explicit setter
-    - Async/await getter
  - throwing functions/vars
  - computed vars
  - when adding multiple macros (eg @MainActor is also on the struct)
@@ -35,6 +33,7 @@ final class ProtocolWitnessingTests: XCTestCase {
  - Arg for using static var singleton vs _always_ creating on calling `production() {}`
  - Use unique name generator helper for witness type name?
     - Replaces customising Witness type name?
+ - Rename @ProtocolWitness
  */
 
 // MARK: - Initial sanity checking
@@ -1552,23 +1551,25 @@ extension ProtocolWitnessingTests {
             """
             @Witnessing
             struct MyClient {
-                var isAsync: Bool { true }
+                var isThing: Bool { true }
             }
             """
         } expansion: {
             """
             struct MyClient {
-                var isAsync: Bool { true }
+                var isThing: Bool { true }
 
                 struct Witness {
-                    var _isAsync: Bool
-            
-                    var isAsync: Bool {
-                        _isAsync
+                    var _isThing: Bool
+
+                    var isThing: Bool {
+                        get {
+                            _isThing
+                        }
                     }
 
-                    init(isAsync: Bool) {
-                        _isAsync = isAsync
+                    init(isThing: Bool) {
+                        _isThing = isThing
                     }
 
 
@@ -1586,7 +1587,7 @@ extension ProtocolWitnessingTests {
                     }
 
                     return MyClient.Witness(
-                        isAsync: production.isAsync
+                        isThing: production.isThing
                     )
                 }
             }
@@ -1599,7 +1600,7 @@ extension ProtocolWitnessingTests {
             """
             @Witnessing
             struct MyClient {
-                var isAsync: Bool {
+                var isThing: Bool {
                     true
                 }
             }
@@ -1607,19 +1608,21 @@ extension ProtocolWitnessingTests {
         } expansion: {
             """
             struct MyClient {
-                var isAsync: Bool {
+                var isThing: Bool {
                     true
                 }
 
                 struct Witness {
-                    var _isAsync: Bool
+                    var _isThing: Bool
 
-                    var isAsync: Bool {
-                        _isAsync
+                    var isThing: Bool {
+                        get {
+                            _isThing
+                        }
                     }
 
-                    init(isAsync: Bool) {
-                        _isAsync = isAsync
+                    init(isThing: Bool) {
+                        _isThing = isThing
                     }
 
 
@@ -1637,7 +1640,377 @@ extension ProtocolWitnessingTests {
                     }
 
                     return MyClient.Witness(
-                        isAsync: production.isAsync
+                        isThing: production.isThing
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsGetterToWitness_whenPropertyHasGetter_andGetterContainsComplexCode() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var isThing: Bool {
+                    let myThing = true
+            
+                    print(myThing)
+            
+                    return myThing
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var isThing: Bool {
+                    let myThing = true
+
+                    print(myThing)
+
+                    return myThing
+                }
+
+                struct Witness {
+                    var _isThing: Bool
+
+                    var isThing: Bool {
+                        get {
+                            _isThing
+                        }
+                    }
+
+                    init(isThing: Bool) {
+                        _isThing = isThing
+                    }
+
+
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        isThing: production.isThing
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsGetterToWitness_whenPropertyHasGetter_andGetterHasExplicitGetWrapper() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var isThing: Bool { 
+                    get { true }
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var isThing: Bool { 
+                    get { true }
+                }
+
+                struct Witness {
+                    var _isThing: Bool
+
+                    var isThing: Bool {
+                        get {
+                            _isThing
+                        }
+                    }
+
+                    init(isThing: Bool) {
+                        _isThing = isThing
+                    }
+
+
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        isThing: production.isThing
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Async computed
+
+extension ProtocolWitnessingTests {
+    func testMacro_addsAsyncGetterToWitness_whenPropertyHasAsyncGetter_andSpansOneLineOnly() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var isAsync: Bool {
+                    get async { true }
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var isAsync: Bool {
+                    get async { true }
+                }
+
+                struct Witness {
+                    var _isAsync: Bool
+
+                    var isAsync: Bool {
+                        get async {
+                            _isAsync
+                        }
+                    }
+
+                    init(isAsync: Bool) {
+                        _isAsync = isAsync
+                    }
+
+
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() async -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        isAsync: await production.isAsync
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsAsyncGetterToWitness_whenPropertyHasAsyncGetter_andSpansMultipleLines() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var isAsync: Bool {
+                    get async {
+                        true
+                    }
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var isAsync: Bool {
+                    get async {
+                        true
+                    }
+                }
+
+                struct Witness {
+                    var _isAsync: Bool
+
+                    var isAsync: Bool {
+                        get async {
+                            _isAsync
+                        }
+                    }
+
+                    init(isAsync: Bool) {
+                        _isAsync = isAsync
+                    }
+
+
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() async -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        isAsync: await production.isAsync
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsAsyncGetterToWitness_whenPropertyHasAsyncGetter_andGetterContainsComplexCode() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var isThing: Bool {
+                    get async {
+                        let myThing = true
+                
+                        print(myThing)
+                
+                        return myThing
+                    }
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var isThing: Bool {
+                    get async {
+                        let myThing = true
+                
+                        print(myThing)
+                
+                        return myThing
+                    }
+                }
+
+                struct Witness {
+                    var _isThing: Bool
+
+                    var isThing: Bool {
+                        get async {
+                            _isThing
+                        }
+                    }
+
+                    init(isThing: Bool) {
+                        _isThing = isThing
+                    }
+
+
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() async -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        isThing: await production.isThing
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Mix of computed
+
+extension ProtocolWitnessingTests {
+    func testMacro_addsGettersToWitness_whenPropertyHasAsyncGetter_andPropertyAlsoHasNonAsyncGetter() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var isThing: Bool {
+                    get { true }
+                }
+                
+                var isAsync: Bool {
+                    get async { true }
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var isThing: Bool {
+                    get { true }
+                }
+                
+                var isAsync: Bool {
+                    get async { true }
+                }
+
+                struct Witness {
+                    var _isThing: Bool
+                    var _isAsync: Bool
+
+                    var isThing: Bool {
+                        get {
+                            _isThing
+                        }
+                    }
+
+                    var isAsync: Bool {
+                        get async {
+                            _isAsync
+                        }
+                    }
+
+                    init(
+                        isThing: Bool,
+                        isAsync: Bool
+                    ) {
+                        _isThing = isThing
+                        _isAsync = isAsync
+                    }
+
+
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() async -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return MyClient.Witness(
+                        isThing: production.isThing,
+                        isAsync: await production.isAsync
                     )
                 }
             }
