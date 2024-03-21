@@ -3,28 +3,28 @@ import ProtocolWitnessing
 // TODO: 
 
 // @Witnessing(_ typeName: String = "Witness", generatedRealName: String? = "production")
-//@Witnessing
-//////@Witnessing("ChildWitness")
-//struct MyService {
-//    func fetchData() -> Int {
-//        return (100...10_000).randomElement()!
+@Witnessing
+////@Witnessing("ChildWitness")
+struct MyService {
+    func fetchData() -> Int {
+        return (100...10_000).randomElement()!
+    }
+    
+    // < Generated >
+    // Uses typeName arg
+//    struct Witness {
+//        var _fetchData: () -> Int
+//        
+//        init(fetchData: @escaping () -> Int) {
+//            _fetchData = fetchData
+//        }
+//        
+//        func fetchData() -> Int {
+//            _fetchData()
+//        }
 //    }
-//    
-//    // < Generated >
-//    // Uses typeName arg
-////    struct Witness {
-////        var _fetchData: () -> Int
-////        
-////        init(fetchData: @escaping () -> Int) {
-////            _fetchData = fetchData
-////        }
-////        
-////        func fetchData() -> Int {
-////            _fetchData()
-////        }
-////    }
-//    // < / Generated >
-//}
+    // < / Generated >
+}
 
 
 // < Generated > (if generatedRealName not nil)
@@ -127,51 +127,10 @@ import ProtocolWitnessing
 
 
 
+@Witnessing
 struct MyClient {
-    func doSomething() { }
-    
-    func doAnotherThing() async { }
-    
-    struct Witness {
-        var _doSomething: () -> Void
-        var _doAnotherThing: () async -> Void
-        
-        init(
-            doSomething: @escaping () -> Void,
-            doAnotherThing: @escaping () async -> Void
-        ) {
-            _doSomething = doSomething
-            _doAnotherThing = doAnotherThing
-        }
-        
-        func doSomething() {
-            _doSomething()
-        }
-        
-        func doAnotherThing() async {
-            await _doAnotherThing()
-        }
-    }
+    var isAsync: Bool { true }
 }
-
-extension MyClient {
-    private static var _production: MyClient?
-    
-    static func production() -> MyClient.Witness {
-        let production = _production ?? MyClient()
-        
-        if _production == nil {
-            _production = production
-        }
-        
-        return MyClient.Witness(
-            doSomething: production.doSomething,
-            doAnotherThing: production.doAnotherThing
-        )
-    }
-}
-
-
 
 
 
@@ -180,16 +139,22 @@ import Foundation
 
 
 var client = MyClient.production()
-await client.doSomething()
 
+print(client.isAsync)
 
 var mock = client
-mock._doSomething = {
-    print("Mock. Async \(Thread.current)")
-}
+mock._isAsync = false
+
+print(mock.isAsync)
 
 
-await mock.doSomething()
+//var mock = client
+//mock._doSomething = {
+//    print("Mock. Async \(Thread.current)")
+//}
+//
+//
+//await mock.doSomething()
 
 
 //print(client._som)

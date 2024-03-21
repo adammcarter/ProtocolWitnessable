@@ -24,7 +24,9 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         }
         
         
-        let parameters = makeParameterDetails(from: structDecl)
+        
+        
+        let parameters = makeParameterDetails(from: structDecl, includesComputed: true)
         
         let functions = makeFunctionDetails(from: structDecl)
         
@@ -39,6 +41,20 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         ]
             .flatMap { $0 }
             .filter { $0.equals == nil }
+        
+        
+        
+        
+        
+        
+        let computedProperties = makeComputedPropertyDetails(from: structDecl)
+        
+        
+        
+        
+        
+        
+        
         
         let expandedInit: String
         
@@ -92,12 +108,34 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         
         
-        let expandedProperties = combinedInitParameters
+        
+        
+        
+        
+        let expandedInitParameters = combinedInitParameters
             .map {
                 "var _\($0.name)\($0.rhs)"
             }
             .joined(separator: "\n")
         
+        
+        let expandedComputedProperties = computedProperties
+            .map {
+                "\($0.letOrVar) \($0.name): \($0.type) { _\($0.name) }"
+            }
+            .joined(separator: "\n")
+        
+        
+        
+        let expandedPropertiesSeparator = 
+            expandedInitParameters.isEmpty || expandedComputedProperties.isEmpty ? "" : "\n\n"
+        
+        let expandedProperties = [
+            expandedInitParameters,
+            expandedComputedProperties
+        ]
+            .joined(separator: expandedPropertiesSeparator)
+
         
         
         let witnessDecl: DeclSyntax
@@ -112,7 +150,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
             witnessDecl = """
                 struct \(raw: witnessTypeName) {
                     \(raw: expandedProperties)
-                    
+                
                     \(raw: expandedInit)
                     
                     \(raw: expandedFunctions)
@@ -140,12 +178,15 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         let typeName = structDecl.name.text
         let witnessTypeName = makeWitnessTypeName(from: node)
         
-        let parameters = makeParameterDetails(from: structDecl)
+        let staticParameters = makeParameterDetails(from: structDecl, includesComputed: false)
+        
+        
+        let allParameters = makeParameterDetails(from: structDecl, includesComputed: true)
         
         let functions = makeFunctionDetails(from: structDecl)
         
         let combinedInitParameters: [InitParameterDetails] = [
-            parameters.map {
+            allParameters.map {
                 InitParameterDetails(
                     name: $0.name, 
                     type: $0.type,
@@ -166,14 +207,14 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
             .flatMap { $0 }
             .filter { $0.equals == nil }
 
-        let expandedParameters = parameters
+        let expandedParameters = staticParameters
             .filter { $0.equals == nil }
             .map {
                 "\($0.name): \($0.type ?? "")"
             }
             .joined(separator: ",\n")
 
-        let expandedProperties = parameters
+        let expandedProperties = staticParameters
             .filter { $0.equals == nil }
             .map {
                 "\($0.name): \($0.name)"
@@ -254,7 +295,48 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
     
     
     
-    private static func makeParameterDetails(from structDecl: StructDeclSyntax) -> [ParameterDetails] {
+    private static func makeComputedPropertyDetails(from structDecl: StructDeclSyntax) -> [ComputedPropertyDetails] {
+        structDecl
+            .memberBlock
+            .members
+            .compactMap { member -> [ComputedPropertyDetails]? in
+                guard
+                    let varDecl = member
+                        .decl
+                        .as(VariableDeclSyntax.self)
+                else {
+                    return nil
+                }
+                
+                let letOrVar = varDecl.bindingSpecifier.text
+                
+                return varDecl
+                    .bindings
+                    .compactMap { binding -> ComputedPropertyDetails? in
+                        guard 
+                            let pattern = binding.as(PatternBindingSyntax.self),
+                            let type = binding.typeAnnotation?.type.trimmedDescription,
+                            let accessorBlock = pattern.accessorBlock
+                        else {
+                            return nil
+                        }
+                        
+                        return ComputedPropertyDetails(
+                            letOrVar: letOrVar,
+                            name: binding.pattern.trimmedDescription,
+                            type: type,
+                            accessor: accessorBlock.trimmedDescription
+                        )
+                    }
+            }
+            .flatMap { $0 }
+    }
+    
+    
+    
+    
+    
+    private static func makeParameterDetails(from structDecl: StructDeclSyntax, includesComputed: Bool) -> [ParameterDetails] {
         structDecl
             .memberBlock
             .members
@@ -272,7 +354,15 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                 return varDecl
                     .bindings
                     .compactMap { binding -> ParameterDetails? in
-                        if let type = binding.typeAnnotation?.type.description {
+                        if 
+                            includesComputed == false,
+                            binding.as(PatternBindingSyntax.self)?.accessorBlock != nil
+                        {
+                            return nil
+                        }
+                        
+                        
+                        if let type = binding.typeAnnotation?.type.trimmedDescription {
                             return ParameterDetails(
                                 letOrVar: letOrVar,
                                 name: binding.pattern.trimmedDescription,
@@ -445,6 +535,14 @@ private struct ParameterDetails {
     let name: String
     let type: String?
     let equals: String?
+}
+
+
+private struct ComputedPropertyDetails {
+    let letOrVar: String
+    let name: String
+    let type: String
+    let accessor: String
 }
 
 
