@@ -21,14 +21,16 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
- - production() returns non-mutable version with no "_" properties, separate name for witness? `witness()`
- - Nested types
+ - type with only let doesn't wrap the witness value so it's left unaltered. Witness needs to mimic let property and wrap the _ value in its getter
  - Add fix it for non-struct type to convert type to a struct
  - Use SwiftSyntaxMacros builders?
- - Arg for using static var singleton vs _always_ creating on calling `production() {}`
+ - Arg for overriding to not use a singleton and having `production() {}` create a new one each time
+    - How does this work with the function passing in params? Weird we pass stuff in then potentially ignore it and return the singleton...
  - Use unique name generator helper for witness type name?
     - Replaces customising Witness type name?
  - Rename @ProtocolWitness
+ - Customise `witness()` function name with a new macro argument
+ - Enable concurrency checking to "complete" mode - https://forums.swift.org/t/concurrency-checking-in-swift-packages-unsafeflags/61135
  */
 
 // MARK: - Initial sanity checking
@@ -78,14 +80,18 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness()
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness()
                 }
             }
             """
@@ -127,15 +133,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -172,15 +182,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -217,15 +231,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -262,15 +280,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -322,16 +344,20 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething,
-                        doAnotherThing: production.doAnotherThing
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething,
+                        doAnotherThing: doAnotherThing
                     )
                 }
             }
@@ -384,16 +410,20 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething,
-                        doAnotherThing: production.doAnotherThing
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething,
+                        doAnotherThing: doAnotherThing
                     )
                 }
             }
@@ -446,16 +476,20 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething,
-                        doAnotherThing: production.doAnotherThing
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething,
+                        doAnotherThing: doAnotherThing
                     )
                 }
             }
@@ -512,16 +546,20 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething,
-                        doAnotherThing: production.doAnotherThing
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething,
+                        doAnotherThing: doAnotherThing
                     )
                 }
             }
@@ -562,15 +600,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -620,16 +662,20 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething,
-                        doAnotherThing: production.doAnotherThing
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething,
+                        doAnotherThing: doAnotherThing
                     )
                 }
             }
@@ -679,16 +725,20 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething,
-                        doAnotherThing: production.doAnotherThing
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething,
+                        doAnotherThing: doAnotherThing
                     )
                 }
             }
@@ -729,15 +779,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -787,16 +841,20 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething,
-                        doSomethingElse: production.doSomethingElse
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething,
+                        doSomethingElse: doSomethingElse
                     )
                 }
             }
@@ -846,16 +904,20 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething,
-                        doSomethingElse: production.doSomethingElse
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething,
+                        doSomethingElse: doSomethingElse
                     )
                 }
             }
@@ -885,32 +947,36 @@ extension ProtocolWitnessingTests {
                     // Complex logic here...
                     completionHandler()
                 }
-            
+
                 struct Witness {
                     var _doSomething: ((Int) -> Void) -> Void
-            
+
                     init(doSomething: @escaping ((Int) -> Void) -> Void) {
                         _doSomething = doSomething
                     }
-            
+
                     func doSomething(completionHandler: (Int) -> Void) {
                         _doSomething(completionHandler)
                     }
                 }
             }
-            
+
             extension MyClient {
                 private static var _production: MyClient?
-            
-                static func production() -> MyClient.Witness {
+
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
-            
+
                     if _production == nil {
                         _production = production
                     }
-            
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -936,32 +1002,36 @@ extension ProtocolWitnessingTests {
                     // Complex logic here...
                     completionHandler(1234567890)
                 }
-            
+
                 struct Witness {
                     var _doSomething: ((Int) -> Void) -> Void
-            
+
                     init(doSomething: @escaping ((Int) -> Void) -> Void) {
                         _doSomething = doSomething
                     }
-            
+
                     func doSomething(completionHandler: (Int) -> Void) {
                         _doSomething(completionHandler)
                     }
                 }
             }
-            
+
             extension MyClient {
                 private static var _production: MyClient?
-            
-                static func production() -> MyClient.Witness {
+
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
-            
+
                     if _production == nil {
                         _production = production
                     }
-            
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -985,32 +1055,36 @@ extension ProtocolWitnessingTests {
                 func doSomething(completionHandler: @escaping () -> Void) {
                     completionHandler()
                 }
-            
+
                 struct Witness {
                     var _doSomething: (@escaping () -> Void) -> Void
-            
+
                     init(doSomething: @escaping (@escaping () -> Void) -> Void) {
                         _doSomething = doSomething
                     }
-            
+
                     func doSomething(completionHandler: @escaping () -> Void) {
                         _doSomething(completionHandler)
                     }
                 }
             }
-            
+
             extension MyClient {
                 private static var _production: MyClient?
-            
-                static func production() -> MyClient.Witness {
+
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
-            
+
                     if _production == nil {
                         _production = production
                     }
-            
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -1030,32 +1104,36 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething(completionHandler: @escaping (Int) -> Void) { }
-            
+
                 struct Witness {
                     var _doSomething: (@escaping (Int) -> Void) -> Void
-            
+
                     init(doSomething: @escaping (@escaping (Int) -> Void) -> Void) {
                         _doSomething = doSomething
                     }
-            
+
                     func doSomething(completionHandler: @escaping (Int) -> Void) {
                         _doSomething(completionHandler)
                     }
                 }
             }
-            
+
             extension MyClient {
                 private static var _production: MyClient?
-            
-                static func production() -> MyClient.Witness {
+
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
-            
+
                     if _production == nil {
                         _production = production
                     }
-            
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -1096,15 +1174,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -1124,32 +1206,36 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething()   ->   Void { }
-            
+
                 struct Witness {
                     var _doSomething: () -> Void
-            
+
                     init(doSomething: @escaping () -> Void) {
                         _doSomething = doSomething
                     }
-            
+
                     func doSomething() -> Void {
                         _doSomething()
                     }
                 }
             }
-            
+
             extension MyClient {
                 private static var _production: MyClient?
-            
-                static func production() -> MyClient.Witness {
+
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
-            
+
                     if _production == nil {
                         _production = production
                     }
-            
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -1169,32 +1255,36 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func    doSomething()    {    }
-            
+
                 struct Witness {
                     var _doSomething: () -> Void
-            
+
                     init(doSomething: @escaping () -> Void) {
                         _doSomething = doSomething
                     }
-            
+
                     func doSomething() {
                         _doSomething()
                     }
                 }
             }
-            
+
             extension MyClient {
                 private static var _production: MyClient?
-            
-                static func production() -> MyClient.Witness {
+
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
-            
+
                     if _production == nil {
                         _production = production
                     }
-            
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -1237,15 +1327,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -1294,15 +1388,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -1345,7 +1443,7 @@ extension ProtocolWitnessingTests {
 
                 static func production(
                     someLetProperty: Int
-                ) -> MyClient.Witness {
+                ) -> MyClient {
                     let production = _production ?? MyClient(
                         someLetProperty: someLetProperty
                     )
@@ -1354,8 +1452,12 @@ extension ProtocolWitnessingTests {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        someLetProperty: production.someLetProperty
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        someLetProperty: someLetProperty
                     )
                 }
             }
@@ -1392,7 +1494,7 @@ extension ProtocolWitnessingTests {
 
                 static func production(
                     someLetProperty: Int
-                ) -> MyClient.Witness {
+                ) -> MyClient {
                     let production = _production ?? MyClient(
                         someLetProperty: someLetProperty
                     )
@@ -1401,8 +1503,12 @@ extension ProtocolWitnessingTests {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        someLetProperty: production.someLetProperty
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        someLetProperty: someLetProperty
                     )
                 }
             }
@@ -1433,14 +1539,18 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness()
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness()
                 }
             }
             """
@@ -1470,14 +1580,18 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness()
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness()
                 }
             }
             """
@@ -1528,7 +1642,7 @@ extension ProtocolWitnessingTests {
 
                 static func production(
                     someLetProperty: Int
-                ) -> MyClient.Witness {
+                ) -> MyClient {
                     let production = _production ?? MyClient(
                         someLetProperty: someLetProperty
                     )
@@ -1537,9 +1651,13 @@ extension ProtocolWitnessingTests {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        someLetProperty: production.someLetProperty,
-                        doSomething: production.doSomething
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        someLetProperty: someLetProperty,
+                        doSomething: doSomething
                     )
                 }
             }
@@ -1587,7 +1705,7 @@ extension ProtocolWitnessingTests {
 
                 static func production(
                     someLetProperty: Int
-                ) -> MyClient.Witness {
+                ) -> MyClient {
                     let production = _production ?? MyClient(
                         someLetProperty: someLetProperty
                     )
@@ -1596,9 +1714,13 @@ extension ProtocolWitnessingTests {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        someLetProperty: production.someLetProperty,
-                        doSomething: production.doSomething
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        someLetProperty: someLetProperty,
+                        doSomething: doSomething
                     )
                 }
             }
@@ -1639,15 +1761,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -1688,15 +1814,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        doSomething: production.doSomething
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        doSomething: doSomething
                     )
                 }
             }
@@ -1741,15 +1871,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        isThing: production.isThing
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        isThing: isThing
                     )
                 }
             }
@@ -1794,15 +1928,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        isThing: production.isThing
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        isThing: isThing
                     )
                 }
             }
@@ -1855,15 +1993,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        isThing: production.isThing
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        isThing: isThing
                     )
                 }
             }
@@ -1908,15 +2050,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        isThing: production.isThing
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        isThing: isThing
                     )
                 }
             }
@@ -1965,15 +2111,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() async -> MyClient.Witness {
+                static func production() async -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        isAsync: await production.isAsync
+                    return production
+                }
+
+                func witness() async -> MyClient.Witness {
+                    MyClient.Witness(
+                        isAsync: await isAsync
                     )
                 }
             }
@@ -2022,15 +2172,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() async -> MyClient.Witness {
+                static func production() async -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        isAsync: await production.isAsync
+                    return production
+                }
+
+                func witness() async -> MyClient.Witness {
+                    MyClient.Witness(
+                        isAsync: await isAsync
                     )
                 }
             }
@@ -2087,15 +2241,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() async -> MyClient.Witness {
+                static func production() async -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        isThing: await production.isThing
+                    return production
+                }
+
+                func witness() async -> MyClient.Witness {
+                    MyClient.Witness(
+                        isThing: await isThing
                     )
                 }
             }
@@ -2144,16 +2302,20 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() throws -> MyClient.Witness {
+                static func production() throws -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
+                    return production
+                }
+
+                func witness() throws -> MyClient.Witness {
+                    MyClient.Witness(
                         isAsync: {
-                            try production.isAsync
+                            try isAsync
                         }
                     )
                 }
@@ -2203,16 +2365,20 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() throws -> MyClient.Witness {
+                static func production() throws -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
+                    return production
+                }
+
+                func witness() throws -> MyClient.Witness {
+                    MyClient.Witness(
                         isAsync: {
-                            try production.isAsync
+                            try isAsync
                         }
                     )
                 }
@@ -2267,15 +2433,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        isThing: production.isThing
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        isThing: isThing
                     )
                 }
             }
@@ -2329,15 +2499,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        isThing: production.isThing
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        isThing: isThing
                     )
                 }
             }
@@ -2400,15 +2574,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        isThing: production.isThing
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        isThing: isThing
                     )
                 }
             }
@@ -2476,16 +2654,20 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() async -> MyClient.Witness {
+                static func production() async -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        isThing: production.isThing,
-                        isAsync: await production.isAsync
+                    return production
+                }
+
+                func witness() async -> MyClient.Witness {
+                    MyClient.Witness(
+                        isThing: isThing,
+                        isAsync: await isAsync
                     )
                 }
             }
@@ -2515,11 +2697,11 @@ extension ProtocolWitnessingTests {
             struct MyClient {
                 func returnsVoid() { }
                 func returnsAThing() -> Thing { .init() }
-            
+
                 struct Witness {
                     var _returnsVoid: () -> Void
                     var _returnsAThing: () -> Thing
-            
+
                     init(
                         returnsVoid: @escaping () -> Void,
                         returnsAThing: @escaping () -> Thing
@@ -2527,30 +2709,34 @@ extension ProtocolWitnessingTests {
                         _returnsVoid = returnsVoid
                         _returnsAThing = returnsAThing
                     }
-            
+
                     func returnsVoid() {
                         _returnsVoid()
                     }
-            
+
                     func returnsAThing() -> Thing {
                         _returnsAThing()
                     }
                 }
             }
-            
+
             extension MyClient {
                 private static var _production: MyClient?
-            
-                static func production() -> MyClient.Witness {
+
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
-            
+
                     if _production == nil {
                         _production = production
                     }
-            
-                    return MyClient.Witness(
-                        returnsVoid: production.returnsVoid,
-                        returnsAThing: production.returnsAThing
+
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        returnsVoid: returnsVoid,
+                        returnsAThing: returnsAThing
                     )
                 }
             }
@@ -2608,20 +2794,160 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        returnsVoid: production.returnsVoid,
-                        returnsAThing: production.returnsAThing
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        returnsVoid: returnsVoid,
+                        returnsAThing: returnsAThing
                     )
                 }
             }
             """
+        }
+    }
+}
+
+// MARK: Macro killers
+
+extension ProtocolWitnessingTests {
+    func testMacro_expandsCorrectly_whenAddingAllTheThings() throws {
+        assertMacro {
+            #"""
+            enum MyError: Error { case networkIssue }
+
+            @MainActor
+            class Thing {
+                func doStuffHere() {
+                    print("Updating UI")
+                }
+            }
+
+            @Witnessing
+            @MainActor
+            struct MyClient {
+                let id = UUID()
+                var myThing: String
+                let yourName: String
+                
+                func returnsTrue() -> Bool {
+                    true
+                }
+                
+                func returnsVoid() async {
+                    print("doing async stuff for \(yourName)....")
+                    try? await Task.sleep(nanoseconds: 2 * NSEC_PER_SEC)
+                    print("async stuff done")
+                }
+                
+                func returnsAThing() async throws -> Thing {
+                    throw MyError.networkIssue
+                }
+            }
+            """#
+        } expansion: {
+            #"""
+            enum MyError: Error { case networkIssue }
+
+            @MainActor
+            class Thing {
+                func doStuffHere() {
+                    print("Updating UI")
+                }
+            }
+            @MainActor
+            struct MyClient {
+                let id = UUID()
+                var myThing: String
+                let yourName: String
+                
+                func returnsTrue() -> Bool {
+                    true
+                }
+                
+                func returnsVoid() async {
+                    print("doing async stuff for \(yourName)....")
+                    try? await Task.sleep(nanoseconds: 2 * NSEC_PER_SEC)
+                    print("async stuff done")
+                }
+                
+                func returnsAThing() async throws -> Thing {
+                    throw MyError.networkIssue
+                }
+
+                struct Witness {
+                    var _myThing: String
+                    var _yourName: String
+                    var _returnsTrue: () -> Bool
+                    var _returnsVoid: () async -> Void
+                    var _returnsAThing: () async throws -> Thing
+
+                    init(
+                        myThing: String,
+                        yourName: String,
+                        returnsTrue: @escaping () -> Bool,
+                        returnsVoid: @escaping () async -> Void,
+                        returnsAThing: @escaping () async throws -> Thing
+                    ) {
+                        _myThing = myThing
+                        _yourName = yourName
+                        _returnsTrue = returnsTrue
+                        _returnsVoid = returnsVoid
+                        _returnsAThing = returnsAThing
+                    }
+
+                    func returnsTrue() -> Bool {
+                        _returnsTrue()
+                    }
+
+                    func returnsVoid() async {
+                        await _returnsVoid()
+                    }
+
+                    func returnsAThing() async throws -> Thing {
+                        try await _returnsAThing()
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production(
+                    myThing: String,
+                    yourName: String
+                ) -> MyClient {
+                    let production = _production ?? MyClient(
+                        myThing: myThing,
+                        yourName: yourName
+                    )
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        myThing: myThing,
+                        yourName: yourName,
+                        returnsTrue: returnsTrue,
+                        returnsVoid: returnsVoid,
+                        returnsAThing: returnsAThing
+                    )
+                }
+            }
+            """#
         }
     }
 }
@@ -2671,16 +2997,20 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        returnsVoid: production.returnsVoid,
-                        returnsAThing: production.returnsAThing
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        returnsVoid: returnsVoid,
+                        returnsAThing: returnsAThing
                     )
                 }
             }
@@ -2711,14 +3041,18 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.MyCustomWitnessTypeName {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.MyCustomWitnessTypeName()
+                    return production
+                }
+
+                func witness() -> MyClient.MyCustomWitnessTypeName {
+                    MyClient.MyCustomWitnessTypeName()
                 }
             }
             """
@@ -2754,15 +3088,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.MyCustomWitnessTypeName {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.MyCustomWitnessTypeName(
-                        myFunction: production.myFunction
+                    return production
+                }
+
+                func witness() -> MyClient.MyCustomWitnessTypeName {
+                    MyClient.MyCustomWitnessTypeName(
+                        myFunction: myFunction
                     )
                 }
             }
@@ -2803,15 +3141,19 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _production: MyClient?
 
-                static func production() -> MyClient.Witness {
+                static func production() -> MyClient {
                     let production = _production ?? MyClient()
 
                     if _production == nil {
                         _production = production
                     }
 
-                    return MyClient.Witness(
-                        returnsVoid: production.returnsVoid
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        returnsVoid: returnsVoid
                     )
                 }
             }
@@ -2848,15 +3190,104 @@ extension ProtocolWitnessingTests {
             extension MyClient {
                 private static var _live: MyClient?
 
-                static func live() -> MyClient.Witness {
+                static func live() -> MyClient {
                     let live = _live ?? MyClient()
 
                     if _live == nil {
                         _live = live
                     }
 
-                    return MyClient.Witness(
-                        returnsVoid: live.returnsVoid
+                    return live
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        returnsVoid: returnsVoid
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: - Misc.
+
+extension ProtocolWitnessingTests {
+    func testMacro_addsNestedTypes() throws {
+        assertMacro {
+            """
+            @Witnessing
+            struct MyClient {
+                var id: Int = 1
+
+                enum MyError: Error {
+                    case errorOne
+                    case errorTwo
+                }
+
+                func doSomething() throws {
+                    print("Prod id", id)
+
+                    throw MyError.errorTwo
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var id: Int = 1
+
+                enum MyError: Error {
+                    case errorOne
+                    case errorTwo
+                }
+
+                func doSomething() throws {
+                    print("Prod id", id)
+
+                    throw MyError.errorTwo
+                }
+
+                struct Witness {
+                    var _id: Int
+                    var _doSomething: () throws -> Void
+
+                    init(
+                        id: Int,
+                        doSomething: @escaping () throws -> Void
+                    ) {
+                        _id = id
+                        _doSomething = doSomething
+                    }
+
+                    func doSomething() throws {
+                        try _doSomething()
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production(
+                    id: Int
+                ) -> MyClient {
+                    let production = _production ?? MyClient(
+                        id: id
+                    )
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return production
+                }
+
+                func witness() -> MyClient.Witness {
+                    MyClient.Witness(
+                        id: id,
+                        doSomething: doSomething
                     )
                 }
             }

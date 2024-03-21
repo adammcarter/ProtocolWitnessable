@@ -267,27 +267,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
             }
             .joined(separator: ",\n")
         
-        let expandedProductionProperties = combinedInitParameters
-            .map {
-                let asyncThrows = if $0.isAsync, $0.isThrowing {
-                    " try await"
-                } else if $0.isAsync {
-                    " await"
-                } else if $0.isThrowing {
-                    " try"
-                } else {
-                    ""
-                }
-                
-                let propertyName = "\(productionName).\($0.name)"
-                let value = "\(asyncThrows) \(propertyName)"
-                let rhs = $0.isThrowing ? "{ \(value) }" : value
-                
-                return "\($0.name):\(rhs)"
-            }
-            .joined(separator: ",\n")
-        
-        
+
         
         
         
@@ -314,7 +294,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         
         let functionPrefix = "static func \(productionName)"
-        let functionSuffix = "\(asyncThrowsSuffix) -> \(typeName).\(witnessTypeName)"
+        let functionSuffix = "\(asyncThrowsSuffix) -> \(typeName)"
         
         let productionFunctionDeclaration = if expandedParameters.isEmpty {
             """
@@ -333,11 +313,26 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         
         
+        
+        let witnessFunctionPrefix = "func witness"
+        let witnessFunctionSuffix = "\(asyncThrowsSuffix) -> \(typeName).\(witnessTypeName)"
+        
+        let witnessFunctionDeclaration = "\(witnessFunctionPrefix)()\(witnessFunctionSuffix) {"
+        
+        
+        
+        
+        
+        
         let productionPropertyLhs = "let \(productionName) = _\(productionName) ?? \(typeName)"
         
         let productionPropertyDeclaration = if expandedProperties.isEmpty {
             """
             \(productionPropertyLhs)()
+            """
+        } else if expandedProperties.count == 1, let expandedProperty = expandedProperties.first {
+            """
+            \(productionPropertyLhs)(\(expandedProperty))
             """
         } else {
             """
@@ -351,16 +346,24 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         
         
-        let returnDeclarationLhs = "return \(typeName).\(witnessTypeName)"
         
-        let returnDeclaration = if expandedProductionProperties.isEmpty {
+        
+        let expandedProductionPropertiesWithoutProductionNamespace = makeExpandedProductionProperties(
+            fromCombinedInitParameters: combinedInitParameters,
+            productionName: nil
+        )
+        
+        
+        let returnDeclarationLhs = "\(typeName).\(witnessTypeName)"
+        
+        let returnDeclaration = if expandedProductionPropertiesWithoutProductionNamespace.isEmpty {
             """
             \(returnDeclarationLhs)()
             """
         } else {
             """
             \(returnDeclarationLhs)(
-            \(expandedProductionProperties)
+            \(expandedProductionPropertiesWithoutProductionNamespace)
             )
             """
         }
@@ -382,6 +385,10 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                 _\(raw: productionName) = \(raw: productionName)
                 }
                 
+                return \(raw: productionName)
+                }
+                
+                \(raw: witnessFunctionDeclaration)
                 \(raw: returnDeclaration)
                 }
                 }
@@ -390,6 +397,34 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         ]
     }
     
+    
+    
+    
+    
+    private static func makeExpandedProductionProperties(
+        fromCombinedInitParameters combinedInitParameters: [InitParameterDetails],
+        productionName: String?
+    ) -> String {
+        combinedInitParameters
+            .map { parameter -> String in
+                let asyncThrows = if parameter.isAsync, parameter.isThrowing {
+                    " try await"
+                } else if parameter.isAsync {
+                    " await"
+                } else if parameter.isThrowing {
+                    " try"
+                } else {
+                    ""
+                }
+                
+                let propertyName = productionName.flatMap { "\($0).\(parameter.name)" } ?? parameter.name
+                let value = "\(asyncThrows) \(propertyName)"
+                let rhs = parameter.isThrowing ? "{ \(value) }" : value
+                
+                return "\(parameter.name):\(rhs)"
+            }
+            .joined(separator: ",\n")
+    }
     
     
     

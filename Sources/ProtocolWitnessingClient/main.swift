@@ -3,28 +3,28 @@ import ProtocolWitnessing
 // TODO: 
 
 // @Witnessing(_ typeName: String = "Witness", generatedRealName: String? = "production")
-@Witnessing
-////@Witnessing("ChildWitness")
-struct MyService {
-    func fetchData() -> Int {
-        return (100...10_000).randomElement()!
-    }
-    
-    // < Generated >
-    // Uses typeName arg
-//    struct Witness {
-//        var _fetchData: () -> Int
-//        
-//        init(fetchData: @escaping () -> Int) {
-//            _fetchData = fetchData
-//        }
-//        
-//        func fetchData() -> Int {
-//            _fetchData()
-//        }
+//@Witnessing
+//////@Witnessing("ChildWitness")
+//struct MyService {
+//    func fetchData() -> Int {
+//        return (100...10_000).randomElement()!
 //    }
-    // < / Generated >
-}
+//    
+//    // < Generated >
+//    // Uses typeName arg
+////    struct Witness {
+////        var _fetchData: () -> Int
+////        
+////        init(fetchData: @escaping () -> Int) {
+////            _fetchData = fetchData
+////        }
+////        
+////        func fetchData() -> Int {
+////            _fetchData()
+////        }
+////    }
+//    // < / Generated >
+//}
 
 
 // < Generated > (if generatedRealName not nil)
@@ -127,56 +127,52 @@ struct MyService {
 
 
 
-
-
-class Thing {}
-
-@MainActor
 struct MyClient {
-    func returnsVoid() { }
-    func returnsAThing() -> Thing { .init() }
+    let someLetProperty: Int
     
     struct Witness {
-        var _returnsVoid: () -> Void
-        var _returnsAThing: () -> Thing
-        
-        init(
-            returnsVoid: @escaping () -> Void,
-            returnsAThing: @escaping () -> Thing
-        ) {
-            _returnsVoid = returnsVoid
-            _returnsAThing = returnsAThing
+        var someLetProperty: Int {
+            _someLetProperty
         }
         
-        func returnsVoid() {
-            _returnsVoid()
+        var _someLetProperty: Int
+        
+        init(someLetProperty: Int) {
+            _someLetProperty = someLetProperty
         }
         
-        func returnsAThing() -> Thing {
-            _returnsAThing()
-        }
+        
     }
 }
 
 extension MyClient {
     private static var _production: MyClient?
     
-    static func production() -> MyClient.Witness {
-        let production = _production ?? MyClient()
+    static func production(
+        someLetProperty: Int
+    ) -> MyClient {
+        let production = _production ?? MyClient(
+            someLetProperty: someLetProperty
+        )
         
         if _production == nil {
             _production = production
         }
         
-        return MyClient.Witness(
-            returnsVoid: production.returnsVoid,
-            returnsAThing: production.returnsAThing
+        return production
+    }
+    
+    func witness() -> MyClient.Witness {
+        MyClient.Witness(
+            someLetProperty: someLetProperty
         )
     }
 }
 
 
 
+
+//
 //import Foundation
 //
 //
@@ -184,8 +180,8 @@ extension MyClient {
 //
 //print(try client.isAsync)
 //
-//var mock = client
-//mock._isAsync = throw MyError.SomeThing
+//var mock = try client.witness()
+//mock._isAsync = { throw MyError.SomeThing }
 //
 //print(try mock.isAsync)
 //
@@ -193,6 +189,7 @@ extension MyClient {
 //enum MyError: Error {
 //    case SomeThing
 //}
+
 
 
 //var mock = client
