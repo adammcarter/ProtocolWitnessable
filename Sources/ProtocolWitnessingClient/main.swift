@@ -125,34 +125,43 @@ struct MyService {
 //
 //Thread.sleep(forTimeInterval: 10)
 
+
+
+
+
+class Thing {}
+
+@MainActor
 struct MyClient {
-    var isAsync: Bool {
-        get throws {
-            true
-        }
-    }
+    func returnsVoid() { }
+    func returnsAThing() -> Thing { .init() }
     
     struct Witness {
-        var _isAsync: () throws -> Bool
+        var _returnsVoid: () -> Void
+        var _returnsAThing: () -> Thing
         
-        var isAsync: Bool {
-            get throws {
-                try _isAsync()
-            }
+        init(
+            returnsVoid: @escaping () -> Void,
+            returnsAThing: @escaping () -> Thing
+        ) {
+            _returnsVoid = returnsVoid
+            _returnsAThing = returnsAThing
         }
         
-        init(isAsync: @escaping () throws -> Bool) {
-            _isAsync = isAsync
+        func returnsVoid() {
+            _returnsVoid()
         }
         
-        
+        func returnsAThing() -> Thing {
+            _returnsAThing()
+        }
     }
 }
 
 extension MyClient {
     private static var _production: MyClient?
     
-    static func production() throws -> MyClient.Witness {
+    static func production() -> MyClient.Witness {
         let production = _production ?? MyClient()
         
         if _production == nil {
@@ -160,9 +169,8 @@ extension MyClient {
         }
         
         return MyClient.Witness(
-            isAsync: {
-                try production.isAsync
-            }
+            returnsVoid: production.returnsVoid,
+            returnsAThing: production.returnsAThing
         )
     }
 }

@@ -21,7 +21,6 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
- - when adding multiple macros (eg @MainActor is also on the struct)
  - production() returns non-mutable version with no "_" properties, separate name for witness? `witness()`
  - Nested types
  - Add fix it for non-struct type to convert type to a struct
@@ -2497,6 +2496,8 @@ extension ProtocolWitnessingTests {
 
 // MARK: - Mixed
 
+// MARK: Properties and functions
+
 extension ProtocolWitnessingTests {
     func testMacro_addsMixedInit_andMixedProperty_whenMixingFunctionsReturnTypes() throws {
         assertMacro {
@@ -2547,6 +2548,73 @@ extension ProtocolWitnessingTests {
                         _production = production
                     }
             
+                    return MyClient.Witness(
+                        returnsVoid: production.returnsVoid,
+                        returnsAThing: production.returnsAThing
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Multiple macros
+
+extension ProtocolWitnessingTests {
+    func testMacro_expandsWithMainActor_whenAddingMainActorMacro_andWitnessMacro() throws {
+        assertMacro {
+            """
+            class Thing {}
+            
+            @MainActor
+            @Witnessing
+            struct MyClient {
+                func returnsVoid() { }
+                func returnsAThing() -> Thing { .init() }
+            }
+            """
+        } expansion: {
+            """
+            class Thing {}
+
+            @MainActor
+            struct MyClient {
+                func returnsVoid() { }
+                func returnsAThing() -> Thing { .init() }
+
+                struct Witness {
+                    var _returnsVoid: () -> Void
+                    var _returnsAThing: () -> Thing
+
+                    init(
+                        returnsVoid: @escaping () -> Void,
+                        returnsAThing: @escaping () -> Thing
+                    ) {
+                        _returnsVoid = returnsVoid
+                        _returnsAThing = returnsAThing
+                    }
+
+                    func returnsVoid() {
+                        _returnsVoid()
+                    }
+
+                    func returnsAThing() -> Thing {
+                        _returnsAThing()
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _production: MyClient?
+
+                static func production() -> MyClient.Witness {
+                    let production = _production ?? MyClient()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
                     return MyClient.Witness(
                         returnsVoid: production.returnsVoid,
                         returnsAThing: production.returnsAThing
