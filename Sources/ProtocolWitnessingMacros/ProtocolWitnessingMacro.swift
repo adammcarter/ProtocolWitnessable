@@ -689,13 +689,15 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
     
     
     private static func makeWitnessTypeName(from node: AttributeSyntax) -> String {
+        let defaultName = "ProtocolWitness"
+        
         let labeledExpression = node
             .arguments?
             .as(LabeledExprListSyntax.self)?
             .first
         
         guard labeledExpression?.label == nil else {
-            return "Witness"
+            return defaultName
         }
         
         return labeledExpression?
@@ -706,7 +708,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
             .as(StringSegmentSyntax.self)?
             .content
             .text
-        ?? "Witness"
+        ?? defaultName
     }
     
     
