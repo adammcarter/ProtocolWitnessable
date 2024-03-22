@@ -195,10 +195,7 @@ public struct WitnessingMacro: MemberMacro {
         
         let staticParameters = makeParameterDetails(from: structDecl, includesComputed: false)
         
-        
-        let allParameters = makeParameterDetails(from: structDecl, includesComputed: true)
                 
-        
         let expandedParameters = staticParameters
             .filter { $0.equals == nil }
             .map {
