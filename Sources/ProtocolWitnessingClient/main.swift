@@ -126,22 +126,74 @@ import ProtocolWitnessing
 //Thread.sleep(forTimeInterval: 10)
 
 
+import Foundation
 
+enum MyError: Error { case networkIssue }
+
+@MainActor
+class Thing {
+    func doStuffHere() {
+        print("Updating UI")
+    }
+}
+@MainActor
 struct MyClient {
-    let someLetProperty: Int
+    let id = UUID()
+    var myThing: String
+    let yourName: String
+    
+    func returnsTrue() -> Bool {
+        true
+    }
+    
+    func returnsVoid() async {
+        print("doing async stuff for \(yourName)....")
+        try? await Task.sleep(nanoseconds: 2 * NSEC_PER_SEC)
+        print("async stuff done")
+    }
+    
+    func returnsAThing() async throws -> Thing {
+        throw MyError.networkIssue
+    }
     
     struct Witness {
-        var someLetProperty: Int {
-            _someLetProperty
+        var _myThing: String
+        var _yourName: String
+        var _returnsTrue: () -> Bool
+        var _returnsVoid: () async -> Void
+        var _returnsAThing: () async throws -> Thing
+        
+        var yourName: String {
+            get {
+                _yourName
+            }
         }
         
-        var _someLetProperty: Int
-        
-        init(someLetProperty: Int) {
-            _someLetProperty = someLetProperty
+        init(
+            myThing: String,
+            yourName: String,
+            returnsTrue: @escaping () -> Bool,
+            returnsVoid: @escaping () async -> Void,
+            returnsAThing: @escaping () async throws -> Thing
+        ) {
+            _myThing = myThing
+            _yourName = yourName
+            _returnsTrue = returnsTrue
+            _returnsVoid = returnsVoid
+            _returnsAThing = returnsAThing
         }
         
+        func returnsTrue() -> Bool {
+            _returnsTrue()
+        }
         
+        func returnsVoid() async {
+            await _returnsVoid()
+        }
+        
+        func returnsAThing() async throws -> Thing {
+            try await _returnsAThing()
+        }
     }
 }
 
@@ -149,10 +201,12 @@ extension MyClient {
     private static var _production: MyClient?
     
     static func production(
-        someLetProperty: Int
+        myThing: String,
+        yourName: String
     ) -> MyClient {
         let production = _production ?? MyClient(
-            someLetProperty: someLetProperty
+            myThing: myThing,
+            yourName: yourName
         )
         
         if _production == nil {
@@ -164,7 +218,11 @@ extension MyClient {
     
     func witness() -> MyClient.Witness {
         MyClient.Witness(
-            someLetProperty: someLetProperty
+            myThing: myThing,
+            yourName: yourName,
+            returnsTrue: returnsTrue,
+            returnsVoid: returnsVoid,
+            returnsAThing: returnsAThing
         )
     }
 }
@@ -172,24 +230,19 @@ extension MyClient {
 
 
 
-//
-//import Foundation
-//
-//
-//var client = try MyClient.production()
-//
-//print(try client.isAsync)
-//
-//var mock = try client.witness()
-//mock._isAsync = { throw MyError.SomeThing }
-//
-//print(try mock.isAsync)
-//
-//
-//enum MyError: Error {
-//    case SomeThing
-//}
 
+import Foundation
+
+await Task { @MainActor in
+    let client = MyClient.production(myThing: "ddss", yourName: "prod")
+    
+    print(client.yourName)
+    
+    var mock = client.witness()
+    mock._yourName = "mock"
+    
+    print(mock.yourName)
+}.value
 
 
 //var mock = client

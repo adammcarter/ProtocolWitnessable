@@ -204,6 +204,12 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
     }
     
     
+    
+    
+    
+    
+    
+    
     public static func expansion(
         of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
@@ -441,45 +447,61 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                     return nil
                 }
                 
-                let letOrVar = varDecl.bindingSpecifier.text
+                let bindingSpecifier = varDecl.bindingSpecifier
                 
                 return varDecl
                     .bindings
                     .compactMap { binding -> ComputedPropertyDetails? in
-                        guard 
-                            let pattern = binding.as(PatternBindingSyntax.self),
-                            let type = binding.typeAnnotation?.type.trimmedDescription,
-                            let accessorBlock = pattern.accessorBlock
+                        guard
+                            let type = binding.typeAnnotation?.type.trimmedDescription
                         else {
                             return nil
                         }
                         
-                        let isAsync = accessorBlock
-                            .accessors
-                            .as(AccessorDeclListSyntax.self)?
-                            .compactMap { $0.effectSpecifiers?.asyncSpecifier }
-                            .isEmpty == false
+                        if
+                            let pattern = binding.as(PatternBindingSyntax.self),
+                            let accessorBlock = pattern.accessorBlock
+                        {
+                            let isAsync = accessorBlock
+                                .accessors
+                                .as(AccessorDeclListSyntax.self)?
+                                .compactMap { $0.effectSpecifiers?.asyncSpecifier }
+                                .isEmpty == false
+                            
+                            let isThrowing = accessorBlock
+                                .accessors
+                                .as(AccessorDeclListSyntax.self)?
+                                .compactMap { $0.effectSpecifiers?.throwsSpecifier }
+                                .isEmpty == false
+                            
+                            let setter = accessorBlock
+                                .accessors
+                                .as(AccessorDeclListSyntax.self)?
+                                .first { $0.accessorSpecifier.tokenKind == .keyword(.set) }
+                            
+                            return ComputedPropertyDetails(
+                                letOrVar: bindingSpecifier.text,
+                                name: binding.pattern.trimmedDescription,
+                                type: type,
+                                accessor: accessorBlock.trimmedDescription,
+                                setter: setter?.trimmedDescription,
+                                isAsync: isAsync,
+                                isThrowing: isThrowing
+                            )
+                        } else if bindingSpecifier.tokenKind == .keyword(.let) {
+                            return ComputedPropertyDetails(
+                                letOrVar: "var",
+                                name: binding.pattern.trimmedDescription,
+                                type: type,
+                                accessor: "_\(bindingSpecifier.text)",
+                                setter: nil,
+                                isAsync: false,
+                                isThrowing: false
+                            )
+                        } else {
+                            return nil
+                        }
                         
-                        let isThrowing = accessorBlock
-                            .accessors
-                            .as(AccessorDeclListSyntax.self)?
-                            .compactMap { $0.effectSpecifiers?.throwsSpecifier }
-                            .isEmpty == false
-                        
-                        let setter = accessorBlock
-                            .accessors
-                            .as(AccessorDeclListSyntax.self)?
-                            .first { $0.accessorSpecifier.tokenKind == .keyword(.set) }
-                        
-                        return ComputedPropertyDetails(
-                            letOrVar: letOrVar,
-                            name: binding.pattern.trimmedDescription,
-                            type: type,
-                            accessor: accessorBlock.trimmedDescription,
-                            setter: setter?.trimmedDescription,
-                            isAsync: isAsync,
-                            isThrowing: isThrowing
-                        )
                     }
             }
             .flatMap { $0 }

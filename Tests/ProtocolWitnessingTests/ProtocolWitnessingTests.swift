@@ -21,7 +21,6 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
- - type with only let doesn't wrap the witness value so it's left unaltered. Witness needs to mimic let property and wrap the _ value in its getter
  - Add fix it for non-struct type to convert type to a struct
  - Use SwiftSyntaxMacros builders?
  - Arg for overriding to not use a singleton and having `production() {}` create a new one each time
@@ -1430,6 +1429,12 @@ extension ProtocolWitnessingTests {
                 struct Witness {
                     var _someLetProperty: Int
 
+                    var someLetProperty: Int {
+                        get {
+                            _someLetProperty
+                        }
+                    }
+
                     init(someLetProperty: Int) {
                         _someLetProperty = someLetProperty
                     }
@@ -1622,6 +1627,12 @@ extension ProtocolWitnessingTests {
                 struct Witness {
                     var _someLetProperty: Int
                     var _doSomething: () -> Void
+
+                    var someLetProperty: Int {
+                        get {
+                            _someLetProperty
+                        }
+                    }
 
                     init(
                         someLetProperty: Int,
@@ -2889,6 +2900,12 @@ extension ProtocolWitnessingTests {
                     var _returnsTrue: () -> Bool
                     var _returnsVoid: () async -> Void
                     var _returnsAThing: () async throws -> Thing
+
+                    var yourName: String {
+                        get {
+                            _yourName
+                        }
+                    }
 
                     init(
                         myThing: String,
