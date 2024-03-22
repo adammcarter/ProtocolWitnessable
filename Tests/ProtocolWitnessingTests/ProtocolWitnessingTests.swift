@@ -21,7 +21,6 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
- - Add fix it for non-struct type to convert type to a struct
  - Use SwiftSyntaxMacros builders?
  - Arg for overriding to not use a singleton and having `production() {}` create a new one each time
     - How does this work with the function passing in params? Weird we pass stuff in then potentially ignore it and return the singleton...
@@ -45,10 +44,46 @@ extension ProtocolWitnessingTests {
         } diagnostics: {
             """
             @Witnessing
-            ┬──────────
-            ├─ 🛑 @Witnessing can only be attached to a struct
-            ╰─ 🛑 @Witnessing can only be attached to a struct
+            ├─ 🛑 '@Witnessing' can only be attached to a 'struct'
+            │  ✏️ Replace
+            ╰─ 🛑 '@Witnessing' can only be attached to a 'struct'
+               ✏️ Replace
             class MyClientClass {
+            }
+            """
+        } fixes: {
+            """
+            @Witnessing
+            struct MyClientClass {
+            }
+            """
+        } expansion: {
+            """
+            struct MyClientClass {
+
+                struct Witness {
+                    init() {
+
+                    }
+                }
+            }
+
+            extension MyClientClass {
+                private static var _production: MyClientClass?
+
+                static func production() -> MyClientClass {
+                    let production = _production ?? MyClientClass()
+
+                    if _production == nil {
+                        _production = production
+                    }
+
+                    return production
+                }
+
+                func witness() -> MyClientClass.Witness {
+                    MyClientClass.Witness()
+                }
             }
             """
         }

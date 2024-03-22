@@ -2,6 +2,7 @@ import SwiftCompilerPlugin
 import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
+import SwiftDiagnostics
 
 
 @main
@@ -20,7 +21,9 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         guard let structDecl = declaration as? StructDeclSyntax else {
-            throw WitnessingError.structOnly
+            WitnessingDiagnostic.notAStruct.diagnose(in: declaration, for: context)
+            
+            return []
         }
         
         
@@ -218,9 +221,12 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
         guard let structDecl = declaration as? StructDeclSyntax else {
-            throw WitnessingError.structOnly
+            WitnessingDiagnostic.notAStruct.diagnose(in: declaration, for: context)
+            
+            return []
         }
-
+        
+        
         let productionName = makeProductionInstanceName(from: node)
 
         let typeName = structDecl.name.text
@@ -791,12 +797,51 @@ private struct InitParameterDetails {
     }
 }
 
-private enum WitnessingError: Error, CustomStringConvertible {
-    case structOnly
+
+
+private enum WitnessingDiagnostic: String, DiagnosticMessage {
+    case notAStruct
     
-    var description: String {
+    var severity: DiagnosticSeverity { .error }
+    
+    var message: String {
         switch self {
-            case .structOnly: "@Witnessing can only be attached to a struct"
+            case .notAStruct:
+                return "'@Witnessing' can only be attached to a 'struct'"
         }
+    }
+    
+    var diagnosticID: MessageID {
+        MessageID(domain: "WitnessingMacro", id: rawValue)
+    }
+    
+    func diagnose(in node: some DeclGroupSyntax, for context: some MacroExpansionContext) {
+        let name = node.as(ClassDeclSyntax.self)?.name ?? TokenSyntax(stringLiteral: "Name")
+        
+        let newNode = StructDeclSyntax(leadingTrivia: node.leadingTrivia, attributes: node.attributes, modifiers: node.modifiers, structKeyword: "\nstruct ", name: name, genericParameterClause: nil, inheritanceClause: node.inheritanceClause, genericWhereClause: node.genericWhereClause, memberBlock: node.memberBlock, trailingTrivia: node.trailingTrivia)
+        
+        context.diagnose(
+            .init(
+                node: node,
+                message: self,
+                fixIt: .replace(
+                    message: MyFitItMessage.notAStruct,
+                    oldNode: node,
+                    newNode: newNode
+                )
+            )
+        )
+    }
+}
+
+enum MyFitItMessage: FixItMessage {
+    case notAStruct
+    
+    var message: String {
+        "Replace"
+    }
+    
+    var fixItID: MessageID {
+        MessageID(domain: "WitnessingMacro", id: message)
     }
 }

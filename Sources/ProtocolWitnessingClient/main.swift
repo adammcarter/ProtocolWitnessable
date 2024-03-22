@@ -3,28 +3,27 @@ import ProtocolWitnessing
 // TODO: 
 
 // @Witnessing(_ typeName: String = "Witness", generatedRealName: String? = "production")
-//@Witnessing
-//////@Witnessing("ChildWitness")
-//struct MyService {
-//    func fetchData() -> Int {
-//        return (100...10_000).randomElement()!
+@Witnessing
+struct MyService {
+    func fetchData() -> Int {
+        return (100...10_000).randomElement()!
+    }
+    
+    // < Generated >
+    // Uses typeName arg
+//    struct Witness {
+//        var _fetchData: () -> Int
+//        
+//        init(fetchData: @escaping () -> Int) {
+//            _fetchData = fetchData
+//        }
+//        
+//        func fetchData() -> Int {
+//            _fetchData()
+//        }
 //    }
-//    
-//    // < Generated >
-//    // Uses typeName arg
-////    struct Witness {
-////        var _fetchData: () -> Int
-////        
-////        init(fetchData: @escaping () -> Int) {
-////            _fetchData = fetchData
-////        }
-////        
-////        func fetchData() -> Int {
-////            _fetchData()
-////        }
-////    }
-//    // < / Generated >
-//}
+    // < / Generated >
+}
 
 
 // < Generated > (if generatedRealName not nil)
