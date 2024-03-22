@@ -2,8 +2,8 @@ import ProtocolWitnessing
 
 // TODO: 
 
-// @Witnessing(_ typeName: String = "Witness", generatedRealName: String? = "production")
-@Witnessing
+// @ProtocolWitnessing(_ typeName: String = "Witness", generatedRealName: String? = "production")
+@ProtocolWitnessing
 struct MyService {
     func fetchData() -> Int {
         return (100...10_000).randomElement()!
@@ -72,7 +72,7 @@ struct MyService {
 
 //import Foundation
 //
-//@Witnessing
+//@ProtocolWitnessing
 //struct MyComplexClient {
 //    func somethingThatDownloadsData(int: Int, completion: @escaping ([CodedThing]) -> Void) {
 //        let url = URL(string: "https://apple.com")!

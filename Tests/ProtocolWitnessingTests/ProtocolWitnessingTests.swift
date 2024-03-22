@@ -12,7 +12,7 @@ final class ProtocolWitnessingTests: XCTestCase {
     override func invokeTest() {
 //        withMacroTesting(isRecording: true, macros: [
         withMacroTesting(macros: [
-            "Witnessing": WitnessingMacro.self,
+            "ProtocolWitnessing": WitnessingMacro.self,
         ]) {
             super.invokeTest()
         }
@@ -26,7 +26,6 @@ final class ProtocolWitnessingTests: XCTestCase {
     - How does this work with the function passing in params? Weird we pass stuff in then potentially ignore it and return the singleton...
  - Use unique name generator helper for witness type name?
     - Replaces customising Witness type name?
- - Rename @ProtocolWitness
  - Customise `witness()` function name with a new macro argument
  - Enable concurrency checking to "complete" mode - https://forums.swift.org/t/concurrency-checking-in-swift-packages-unsafeflags/61135
  */
@@ -37,23 +36,23 @@ extension ProtocolWitnessingTests {
     func testMacro_throwsError_whenAttachedToClass() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             class MyClientClass {
             }
             """
         } diagnostics: {
             """
-            @Witnessing
-            ├─ 🛑 '@Witnessing' can only be attached to a 'struct'
+            @ProtocolWitnessing
+            ├─ 🛑 '@ProtocolWitnessing' can only be attached to a 'struct'
             │  ✏️ Replace
-            ╰─ 🛑 '@Witnessing' can only be attached to a 'struct'
+            ╰─ 🛑 '@ProtocolWitnessing' can only be attached to a 'struct'
                ✏️ Replace
             class MyClientClass {
             }
             """
         } fixes: {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClientClass {
             }
             """
@@ -96,7 +95,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsEmptyInit_whenEmptyStruct() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
             }
             """
@@ -141,7 +140,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsInitWithVoidToVoidClosure_andPropertyForVoidToVoidClosure_whenOneFunction_andNoArguments_andReturnsVoid() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething() { }
             }
@@ -190,7 +189,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsInitWithParameterToVoidClosure_andPropertyForParameterToVoidClosure_whenOneFunction_andOneArgument_andReturnsVoid() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething(int: Int) { }
             }
@@ -239,7 +238,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsInitWithParameterToReturnValueClosure_andPropertyForParameterToReturnValueClosure_whenOneFunction_andOneArgument_andReturnValue() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething(int: Int) -> Double { 0.5 }
             }
@@ -288,7 +287,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsInitWithParametersToReturnValueClosure_andPropertyForParameterToReturnValueClosure_whenOneFunction_andTwoArguments_andReturnValue() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething(int: Int, float: Float) -> Double { 0.5 }
             }
@@ -341,7 +340,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsInitWithVoidToVoidClosure_andPropertyForVoidToVoidClosure_whenTwoFunctions_andBothHaveNoArguments_andBothReturnsVoid() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething() { }
                 func doAnotherThing() { }
@@ -405,7 +404,7 @@ extension ProtocolWitnessingTests {
             enum MyType {}
             enum OtherType {}
             
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething(arg1: MyType) { }
                 func doAnotherThing(otherArg: OtherType) { }
@@ -471,7 +470,7 @@ extension ProtocolWitnessingTests {
             enum MyType {}
             enum OtherType {}
             
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething(arg1: MyType) -> OtherType { }
                 func doAnotherThing(otherArg: OtherType) -> MyType { }
@@ -539,7 +538,7 @@ extension ProtocolWitnessingTests {
             enum TypeTwo {}
             enum AnotherType {}
             
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething(arg1: MyType, arg2: TypeTwo) -> OtherType { }
                 func doAnotherThing(otherArg: OtherType, anotherArg: AnotherType) -> MyType { }
@@ -608,7 +607,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenOneFunction_andFunctionIsAsync() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething() async { }
             }
@@ -657,7 +656,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenTwoFunctions_andBothFunctionsAreAsync() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething() async { }
             
@@ -720,7 +719,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenTwoFunctions_andOnlyOneFunctionsIsAsync() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething() { }
             
@@ -787,7 +786,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenOneFunction_andFunctionIsThrowing() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething() throws { }
             }
@@ -836,7 +835,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenTwoFunctions_andBothFunctionsAreThrowing() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething() throws { }
             
@@ -899,7 +898,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenTwoFunctions_andOneFunctionIsThrowing_andOtherFunctionIsNot() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething() { }
             
@@ -966,7 +965,7 @@ extension ProtocolWitnessingTests {
     func testMacro_expandsType_whenFunctionParametersContainsVoidToVoidClosure() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething(completionHandler: (Int) -> Void) {
                     // Complex logic here...
@@ -1021,7 +1020,7 @@ extension ProtocolWitnessingTests {
     func testMacro_expandsType_whenFunctionParametersContainsParamToVoidClosure() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething(completionHandler: (Int) -> Void) {
                     // Complex logic here...
@@ -1076,7 +1075,7 @@ extension ProtocolWitnessingTests {
     func testMacro_expandsType_whenFunctionParametersContainsVoidToVoidClosure_andClosureIsEscaping() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething(completionHandler: @escaping () -> Void) {
                     completionHandler()
@@ -1129,7 +1128,7 @@ extension ProtocolWitnessingTests {
     func testMacro_expandsType_whenFunctionParametersContainsParamToVoidClosure_andClosureIsEscaping() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething(completionHandler: @escaping (Int) -> Void) { }
             }
@@ -1182,7 +1181,7 @@ extension ProtocolWitnessingTests {
     func testMacro_expandsType_whenContainingFunction_andFunctionHasExplicitVoidReturn() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething() -> Void { }
             }
@@ -1231,7 +1230,7 @@ extension ProtocolWitnessingTests {
     func testMacro_expandsType_whenContainingFunction_andFunctionHasExtraWhitespaceAroundReturnArrow() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething()   ->   Void { }
             }
@@ -1280,7 +1279,7 @@ extension ProtocolWitnessingTests {
     func testMacro_expandsType_whenContainingFunction_andFunctionHasExtraWhitespaceAroundFunctionName() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func    doSomething()    {    }
             }
@@ -1329,7 +1328,7 @@ extension ProtocolWitnessingTests {
     func testMacro_expandsType_whenContainingFunction_andFunctionHasExtraNewlinesAroundFunctionBody() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func doSomething()
                 { 
@@ -1384,7 +1383,7 @@ extension ProtocolWitnessingTests {
     func testMacro_expandsType_whenContainingFunction_andFunctionHasExtraNewlinesAndWhitespaceEverywhere() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func    doSomething ()
                 
@@ -1451,7 +1450,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andNoFunctions() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 let someLetProperty: Int
             }
@@ -1508,7 +1507,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsInitWithProperty_whenStructHasOneSimpleVarProperty_andNoFunctions_andVarHasNoDefaultValue() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var someLetProperty: Int
             }
@@ -1559,7 +1558,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andNoFunctions_andLetHasDefaultValue() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 let someLetProperty = 10
             }
@@ -1600,7 +1599,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andNoFunctions_andVarHasDefaultValue() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var someLetProperty = 10
             }
@@ -1645,7 +1644,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andOneFunction() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 let someLetProperty: Int
             
@@ -1714,7 +1713,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsInitWithProperty_whenStructHasOneSimpleVarProperty_andOneFunction_andVarHasNoDefaultValue() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var someLetProperty: Int
             
@@ -1777,7 +1776,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andOneFunction_andLetHasDefaultValue() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 let someLetProperty = 532
             
@@ -1830,7 +1829,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andOneFunction_andVarHasDefaultValue() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var someLetProperty = 10
             
@@ -1887,7 +1886,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsGetterToWitness_whenPropertyHasGetter_andGetterSpansOneLineOnly() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var isThing: Bool { true }
             }
@@ -1940,7 +1939,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsGetterToWitness_whenPropertyHasGetter_andGetterSpansMultipleLines() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var isThing: Bool {
                     true
@@ -1997,7 +1996,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsGetterToWitness_whenPropertyHasGetter_andGetterContainsComplexCode() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var isThing: Bool {
                     let myThing = true
@@ -2062,7 +2061,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsGetterToWitness_whenPropertyHasGetter_andGetterHasExplicitGetWrapper() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var isThing: Bool { 
                     get { true }
@@ -2123,7 +2122,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsAsyncGetterToWitness_whenPropertyHasAsyncGetter_andSpansOneLineOnly() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var isAsync: Bool {
                     get async { true }
@@ -2180,7 +2179,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsAsyncGetterToWitness_whenPropertyHasAsyncGetter_andSpansMultipleLines() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var isAsync: Bool {
                     get async {
@@ -2241,7 +2240,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsAsyncGetterToWitness_whenPropertyHasAsyncGetter_andGetterContainsComplexCode() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var isThing: Bool {
                     get async {
@@ -2314,7 +2313,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsThrowsGetterToWitness_whenPropertyHasThrowsGetter_andSpansOneLineOnly() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var isAsync: Bool {
                     get throws { true }
@@ -2373,7 +2372,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsThrowsGetterToWitness_whenPropertyHasThrowsGetter_andSpansMultipleLines() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var isAsync: Bool {
                     get throws { 
@@ -2440,7 +2439,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsSetterToWitness_whenPropertyHasGetterAndSetter_andSetterSpansOneLineOnly() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var isThing: Bool {
                     get { true }
@@ -2502,7 +2501,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsSetterToWitness_whenPropertyHasGetterAndSetter_andSetterSpansMultipleLines() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var isThing: Bool {
                     get { true }
@@ -2568,7 +2567,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsSetterToWitness_whenPropertyHasGetterAndSetter_andSetterIsComplex() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var isThing: Bool {
                     get { true }
@@ -2647,7 +2646,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsGettersToWitness_whenPropertyHasAsyncGetter_andPropertyAlsoHasNonAsyncGetter() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var isThing: Bool {
                     get { true }
@@ -2731,7 +2730,7 @@ extension ProtocolWitnessingTests {
         assertMacro {
             """
             class Thing {}
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func returnsVoid() { }
                 func returnsAThing() -> Thing { .init() }
@@ -2800,7 +2799,7 @@ extension ProtocolWitnessingTests {
             class Thing {}
             
             @MainActor
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func returnsVoid() { }
                 func returnsAThing() -> Thing { .init() }
@@ -2877,7 +2876,7 @@ extension ProtocolWitnessingTests {
                 }
             }
 
-            @Witnessing
+            @ProtocolWitnessing
             @MainActor
             struct MyClient {
                 let id = UUID()
@@ -3012,7 +3011,7 @@ extension ProtocolWitnessingTests {
     func testMacro_usesWitnessForTypeName_whenTypeNameParameterIsNotSet() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func returnsVoid() { }
                 func returnsAThing() -> Thing { }
@@ -3073,7 +3072,7 @@ extension ProtocolWitnessingTests {
     func testMacro_usesCustomTypeName_whenTypeNameParameterIsSet_andTypeHasNoFunctions() throws {
         assertMacro {
             """
-            @Witnessing("MyCustomWitnessTypeName")
+            @ProtocolWitnessing("MyCustomWitnessTypeName")
             struct MyClient {
             
             }
@@ -3114,7 +3113,7 @@ extension ProtocolWitnessingTests {
     func testMacro_usesCustomTypeName_whenTypeNameParameterIsSet_andTypeHasOneFunction() throws {
         assertMacro {
             """
-            @Witnessing("MyCustomWitnessTypeName")
+            @ProtocolWitnessing("MyCustomWitnessTypeName")
             struct MyClient {
                 func myFunction() {}
             }
@@ -3167,7 +3166,7 @@ extension ProtocolWitnessingTests {
     func testMacro_usesProductionForTypeName_whenProductionInstanceNameParameterIsNotSet() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 func returnsVoid() { }
             }
@@ -3216,7 +3215,7 @@ extension ProtocolWitnessingTests {
     func testMacro_usesProductionForTypeNameAsTheInstanceName_whenProductionInstanceNameParameterIsSet() throws {
         assertMacro {
             """
-            @Witnessing(productionInstanceName: "live")
+            @ProtocolWitnessing(productionInstanceName: "live")
             struct MyClient {
                 func returnsVoid() { }
             }
@@ -3269,7 +3268,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsNestedTypes() throws {
         assertMacro {
             """
-            @Witnessing
+            @ProtocolWitnessing
             struct MyClient {
                 var id: Int = 1
 
@@ -3354,7 +3353,7 @@ extension ProtocolWitnessingTests {
 //    func testMacroActualOutputByForcingRecordToTrue() throws {
 //        assertMacro(record: true) {
 //            """
-//            @Witnessing
+//            @ProtocolWitnessing
 //            struct MyClient {
 //            }
 //            """

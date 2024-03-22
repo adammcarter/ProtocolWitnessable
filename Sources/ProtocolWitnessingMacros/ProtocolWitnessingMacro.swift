@@ -807,12 +807,12 @@ private enum WitnessingDiagnostic: String, DiagnosticMessage {
     var message: String {
         switch self {
             case .notAStruct:
-                return "'@Witnessing' can only be attached to a 'struct'"
+                return "'@ProtocolWitnessing' can only be attached to a 'struct'"
         }
     }
     
     var diagnosticID: MessageID {
-        MessageID(domain: "WitnessingMacro", id: rawValue)
+        MessageID(domain: "ProtocolWitnessingMacro", id: rawValue)
     }
     
     func diagnose(in node: some DeclGroupSyntax, for context: some MacroExpansionContext) {
@@ -842,6 +842,6 @@ enum MyFitItMessage: FixItMessage {
     }
     
     var fixItID: MessageID {
-        MessageID(domain: "WitnessingMacro", id: message)
+        MessageID(domain: "ProtocolWitnessingMacro", id: message)
     }
 }
