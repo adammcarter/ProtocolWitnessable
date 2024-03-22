@@ -10,8 +10,8 @@ import ProtocolWitnessingMacros
 
 final class ProtocolWitnessingTests: XCTestCase {
     override func invokeTest() {
-        withMacroTesting(isRecording: true, macros: [
-//        withMacroTesting(macros: [
+//        withMacroTesting(isRecording: true, macros: [
+        withMacroTesting(macros: [
             "ProtocolWitnessing": WitnessingMacro.self,
         ]) {
             super.invokeTest()
@@ -2826,12 +2826,12 @@ extension ProtocolWitnessingTests {
     }
 }
 
-// MARK: - Arguments
+// MARK: - Parameters
 
-// MARK: Custom witness type name
+// MARK: None
 
 extension ProtocolWitnessingTests {
-    func testMacro_usesWitnessForTypeName_whenTypeNameParameterIsNotSet() throws {
+    func testMacro_correctDefaults_whenNoParametersAreSet() throws {
         assertMacro {
             """
             @ProtocolWitnessing
@@ -2887,11 +2887,15 @@ extension ProtocolWitnessingTests {
             """
         }
     }
-    
+}
+
+// MARK: typeName
+
+extension ProtocolWitnessingTests {
     func testMacro_usesCustomTypeName_whenTypeNameParameterIsSet_andTypeHasNoFunctions() throws {
         assertMacro {
             """
-            @ProtocolWitnessing("MyCustomWitnessTypeName")
+            @ProtocolWitnessing(typeName: "MyCustomWitnessTypeName")
             struct MyClient {
             
             }
@@ -2928,7 +2932,7 @@ extension ProtocolWitnessingTests {
     func testMacro_usesCustomTypeName_whenTypeNameParameterIsSet_andTypeHasOneFunction() throws {
         assertMacro {
             """
-            @ProtocolWitnessing("MyCustomWitnessTypeName")
+            @ProtocolWitnessing(typeName: "MyCustomWitnessTypeName")
             struct MyClient {
                 func myFunction() {}
             }
@@ -2971,55 +2975,10 @@ extension ProtocolWitnessingTests {
     }
 }
 
-// MARK: Custom production instance name
+// MARK: productionInstanceName
 
 extension ProtocolWitnessingTests {
-    func testMacro_usesProductionForTypeName_whenProductionInstanceNameParameterIsNotSet() throws {
-        assertMacro {
-            """
-            @ProtocolWitnessing
-            struct MyClient {
-                func returnsVoid() { }
-            }
-            """
-        } expansion: {
-            """
-            struct MyClient {
-                func returnsVoid() { }
-
-                struct ProtocolWitness {
-                    var _returnsVoid: () -> Void
-
-                    init(returnsVoid: @escaping () -> Void) {
-                        _returnsVoid = returnsVoid
-                    }
-
-                    func returnsVoid() {
-                        _returnsVoid()
-                    }
-                }
-            }
-
-            extension MyClient {
-                private static var _production: MyClient?
-
-                static func production() -> MyClient.ProtocolWitness {
-                    let production = _production ?? MyClient()
-
-                    if _production == nil {
-                        _production = production
-                    }
-
-                    return MyClient.ProtocolWitness(
-                        returnsVoid: production.returnsVoid
-                    )
-                }
-            }
-            """
-        }
-    }
-    
-    func testMacro_usesProductionForTypeNameAsTheInstanceName_whenProductionInstanceNameParameterIsSet() throws {
+    func testMacro_usesProductionNameAsTheInstanceName_whenProductionInstanceNameParameterIsSet() throws {
         assertMacro {
             """
             @ProtocolWitnessing(productionInstanceName: "live")
@@ -3056,6 +3015,55 @@ extension ProtocolWitnessingTests {
                     }
 
                     return MyClient.ProtocolWitness(
+                        returnsVoid: live.returnsVoid
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: typeName and productionInstanceName
+
+extension ProtocolWitnessingTests {
+    func testMacro_usesCustomTypeName_andProductionInstanceName_whenBothParametersAreSet() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing(typeName: "MyCustomTypeWitness", productionInstanceName: "live")
+            struct MyClient {
+                func returnsVoid() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                func returnsVoid() { }
+
+                struct MyCustomTypeWitness {
+                    var _returnsVoid: () -> Void
+
+                    init(returnsVoid: @escaping () -> Void) {
+                        _returnsVoid = returnsVoid
+                    }
+
+                    func returnsVoid() {
+                        _returnsVoid()
+                    }
+                }
+            }
+
+            extension MyClient {
+                private static var _live: MyClient?
+
+                static func live() -> MyClient.MyCustomTypeWitness {
+                    let live = _live ?? MyClient()
+
+                    if _live == nil {
+                        _live = live
+                    }
+
+                    return MyClient.MyCustomTypeWitness(
                         returnsVoid: live.returnsVoid
                     )
                 }
