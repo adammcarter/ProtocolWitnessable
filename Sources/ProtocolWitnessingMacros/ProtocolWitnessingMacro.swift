@@ -325,18 +325,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
             )\(functionSuffix) {
             """
         }
-        
-        
-        
-        
-        
-        
-        
-        let witnessFunctionPrefix = "func witness"
-        let witnessFunctionSuffix = "\(asyncThrowsSuffix) -> \(typeName).\(witnessTypeName)"
-        
-        let witnessFunctionDeclaration = "\(witnessFunctionPrefix)()\(witnessFunctionSuffix) {"
-        
+                
         
         
         
