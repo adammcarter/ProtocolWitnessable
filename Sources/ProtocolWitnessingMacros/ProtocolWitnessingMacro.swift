@@ -14,7 +14,7 @@ struct ProtocolWitnessingPlugin: CompilerPlugin {
 
 
 
-public struct WitnessingMacro: MemberMacro, ExtensionMacro {
+public struct WitnessingMacro: MemberMacro {
     /**
             Create the `Witness` inner type
      */
@@ -183,109 +183,37 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
             expandedComputedProperties
         ]
             .joined(separator: expandedPropertiesSeparator)
-
         
         
-        let witnessDecl: DeclSyntax
         
-        if expandedProperties.isEmpty {
-            witnessDecl = """
-                struct \(raw: witnessTypeName) {
-                    \(raw: expandedInit)
-                }
-                """
-        } else {
-            witnessDecl = """
-                struct \(raw: witnessTypeName) {
-                    \(raw: expandedProperties)
-                
-                    \(raw: expandedInit)
-                    
-                    \(raw: expandedFunctions)
-                }
-                """
-        }
         
-        return [witnessDecl]
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    /**
-     Create the extension with `production()` and `witness()`.
-     */
-    public static func expansion(
-        of node: AttributeSyntax,
-        attachedTo declaration: some DeclGroupSyntax,
-        providingExtensionsOf type: some TypeSyntaxProtocol,
-        conformingTo protocols: [TypeSyntax],
-        in context: some MacroExpansionContext
-    ) throws -> [ExtensionDeclSyntax] {
-        guard let structDecl = declaration as? StructDeclSyntax else {
-            WitnessingDiagnostic.notAStruct.diagnose(in: declaration, for: context)
-            
-            return []
-        }
         
         
         let productionName = makeProductionInstanceName(from: node)
-
+        
         let typeName = structDecl.name.text
-        let witnessTypeName = makeWitnessTypeName(from: node)
         
         let staticParameters = makeParameterDetails(from: structDecl, includesComputed: false)
         
         
         let allParameters = makeParameterDetails(from: structDecl, includesComputed: true)
+                
         
-        let functions = makeFunctionDetails(from: structDecl)
-        
-        let combinedInitParameters: [InitParameterDetails] = [
-            allParameters.map {
-                InitParameterDetails(
-                    name: $0.name, 
-                    type: $0.type,
-                    equals: $0.equals,
-                    isEscaping: false,
-                    isAsync: $0.isAsync,
-                    isThrowing: $0.isThrowing
-                )
-            }
-            +
-            functions.map {
-                InitParameterDetails(
-                    name: $0.name,
-                    type: $0.type,
-                    equals: nil,
-                    isEscaping: true,
-                    isAsync: false,
-                    isThrowing: false
-                )
-            }
-        ]
-            .flatMap { $0 }
-            .filter { $0.equals == nil }
-
         let expandedParameters = staticParameters
             .filter { $0.equals == nil }
             .map {
                 "\($0.name): \($0.type ?? "")"
             }
             .joined(separator: ",\n")
-
-        let expandedProperties = staticParameters
+        
+        let expandedPropertiesProduction = staticParameters
             .filter { $0.equals == nil }
             .map {
                 "\($0.name): \($0.name)"
             }
             .joined(separator: ",\n")
         
-
+        
         
         
         
@@ -325,7 +253,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
             )\(functionSuffix) {
             """
         }
-                
+        
         
         
         
@@ -333,18 +261,18 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         let productionPropertyLhs = "let \(productionName) = _\(productionName) ?? \(typeName)"
         
-        let productionPropertyDeclaration = if expandedProperties.isEmpty {
+        let productionPropertyDeclaration = if expandedPropertiesProduction.isEmpty {
             """
             \(productionPropertyLhs)()
             """
-        } else if expandedProperties.count == 1, let expandedProperty = expandedProperties.first {
+        } else if expandedPropertiesProduction.count == 1, let expandedProperty = expandedPropertiesProduction.first {
             """
             \(productionPropertyLhs)(\(expandedProperty))
             """
         } else {
             """
             \(productionPropertyLhs)(
-            \(expandedProperties)
+            \(expandedPropertiesProduction)
             )
             """
         }
@@ -379,25 +307,51 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         
         
-        return [
-            try ExtensionDeclSyntax(
+        let productionValues = """
+            private static var _\(productionName): \(typeName)?
+            
+            \(productionFunctionDeclaration)
+            \(productionPropertyDeclaration)
+            
+            if _\(productionName) == nil {
+            _\(productionName) = \(productionName)
+            }
+            
+            \(returnWitnessInitDeclaration)
+            }
+            """
+        
+        
+        
+        
+
+        
+        
+        let witnessDecl: DeclSyntax
+        
+        if expandedProperties.isEmpty {
+            witnessDecl = """
+                struct \(raw: witnessTypeName) {
+                    \(raw: expandedInit)
+                
+                    \(raw: productionValues)
+                }
                 """
-                extension \(raw: typeName) {
-                private static var _\(raw: productionName): \(raw: typeName)?
+        } else {
+            witnessDecl = """
+                struct \(raw: witnessTypeName) {
+                    \(raw: expandedProperties)
                 
-                \(raw: productionFunctionDeclaration)
-                \(raw: productionPropertyDeclaration)
+                    \(raw: expandedInit)
                 
-                if _\(raw: productionName) == nil {
-                _\(raw: productionName) = \(raw: productionName)
-                }
+                    \(raw: expandedFunctions)
                 
-                \(raw: returnWitnessInitDeclaration)
-                }
+                    \(raw: productionValues)
                 }
                 """
-            )
-        ]
+        }
+        
+        return [witnessDecl]
     }
     
     

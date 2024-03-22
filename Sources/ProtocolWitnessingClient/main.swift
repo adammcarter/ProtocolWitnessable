@@ -159,45 +159,41 @@ import ProtocolWitnessing
 
 //Thread.sleep(forTimeInterval: 10)
 
-
-
 struct MyClient {
-    var someLetProperty: Int
+    var isAsync: Bool {
+        get async {
+            true
+        }
+    }
     
-    struct Witness {
-        var _someLetProperty: Int
+    struct ProtocolWitness {
+        var _isAsync: Bool
         
-        var someLetProperty: Int {
-            get {
-                _someLetProperty
+        var isAsync: Bool {
+            get async {
+                _isAsync
             }
         }
         
-        init(someLetProperty: Int) {
-            _someLetProperty = someLetProperty
+        init(isAsync: Bool) {
+            _isAsync = isAsync
         }
         
         
-    }
-}
-
-extension MyClient {
-    private static var _production: MyClient?
-    
-    static func production(
-        someLetProperty: Int
-    ) -> MyClient.Witness {
-        let production = _production ?? MyClient(
-            someLetProperty: someLetProperty
-        )
         
-        if _production == nil {
-            _production = production
+        private static var _production: MyClient?
+        
+        static func production() async -> MyClient.ProtocolWitness {
+            let production = _production ?? MyClient()
+            
+            if _production == nil {
+                _production = production
+            }
+            
+            return MyClient.ProtocolWitness(
+                isAsync: await production.isAsync
+            )
         }
-        
-        return MyClient.Witness(
-            someLetProperty: production.someLetProperty
-        )
     }
 }
 
