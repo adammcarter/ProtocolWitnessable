@@ -493,7 +493,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                                 isAsync: isAsync,
                                 isThrowing: isThrowing
                             )
-                        } else if bindingSpecifier.tokenKind == .keyword(.let) {
+                        } else if binding.initializer == nil {
                             return ComputedPropertyDetails(
                                 letOrVar: "var",
                                 name: binding.pattern.trimmedDescription,

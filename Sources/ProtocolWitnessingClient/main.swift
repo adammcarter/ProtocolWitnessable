@@ -161,15 +161,54 @@ import ProtocolWitnessing
 
 
 
+struct MyClient {
+    var someLetProperty: Int
+    
+    struct Witness {
+        var _someLetProperty: Int
+        
+        var someLetProperty: Int {
+            get {
+                _someLetProperty
+            }
+        }
+        
+        init(someLetProperty: Int) {
+            _someLetProperty = someLetProperty
+        }
+        
+        
+    }
+}
+
+extension MyClient {
+    private static var _production: MyClient?
+    
+    static func production(
+        someLetProperty: Int
+    ) -> MyClient.Witness {
+        let production = _production ?? MyClient(
+            someLetProperty: someLetProperty
+        )
+        
+        if _production == nil {
+            _production = production
+        }
+        
+        return MyClient.Witness(
+            someLetProperty: production.someLetProperty
+        )
+    }
+}
 
 
 
-//var prod = await MyClient.production()
-//prod._isThing = false
+//var prod = await MyClient.production(someLetProperty: 4)
+//prod._someLetProperty = 4
 //
 //
 //var mock = prod
-//mock._isThing = true
+//mock.some = true
 //
 //mock.somethingThatDownloadsData(int: 3) { things in
 //    print("mock", things)

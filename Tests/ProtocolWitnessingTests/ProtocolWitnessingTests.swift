@@ -21,7 +21,6 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
- - Witness doesn't currently return a getter for vars/lets without an initial value, eg _someLetProperty
  - Thing.Witness -> Thing.Witnessing
  - Erase type for production()?
  - Use SwiftSyntaxMacros builders?
@@ -1419,6 +1418,12 @@ extension ProtocolWitnessingTests {
                 struct Witness {
                     var _someLetProperty: Int
 
+                    var someLetProperty: Int {
+                        get {
+                            _someLetProperty
+                        }
+                    }
+
                     init(someLetProperty: Int) {
                         _someLetProperty = someLetProperty
                     }
@@ -1613,6 +1618,12 @@ extension ProtocolWitnessingTests {
                 struct Witness {
                     var _someLetProperty: Int
                     var _doSomething: () -> Void
+
+                    var someLetProperty: Int {
+                        get {
+                            _someLetProperty
+                        }
+                    }
 
                     init(
                         someLetProperty: Int,
@@ -2745,6 +2756,12 @@ extension ProtocolWitnessingTests {
                     var _returnsTrue: () -> Bool
                     var _returnsVoid: () async -> Void
                     var _returnsAThing: () async throws -> Thing
+
+                    var myThing: String {
+                        get {
+                            _myThing
+                        }
+                    }
 
                     var yourName: String {
                         get {
