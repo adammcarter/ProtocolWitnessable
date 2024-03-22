@@ -15,6 +15,9 @@ struct ProtocolWitnessingPlugin: CompilerPlugin {
 
 
 public struct WitnessingMacro: MemberMacro, ExtensionMacro {
+    /**
+            Create the `Witness` inner type
+     */
     public static func expansion(
         of node: AttributeSyntax,
         providingMembersOf declaration: some DeclGroupSyntax,
@@ -213,6 +216,9 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
     
     
     
+    /**
+     Create the extension with `production()` and `witness()`.
+     */
     public static func expansion(
         of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
@@ -306,7 +312,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         
         let functionPrefix = "static func \(productionName)"
-        let functionSuffix = "\(asyncThrowsSuffix) -> \(typeName)"
+        let functionSuffix = "\(asyncThrowsSuffix) -> \(typeName).\(witnessTypeName)"
         
         let productionFunctionDeclaration = if expandedParameters.isEmpty {
             """
@@ -360,22 +366,22 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         
         
         
-        let expandedProductionPropertiesWithoutProductionNamespace = makeExpandedProductionProperties(
+        let expandedProductionPropertiesWithProductionNamespace = makeExpandedProductionProperties(
             fromCombinedInitParameters: combinedInitParameters,
-            productionName: nil
+            productionName: productionName
         )
         
         
-        let returnDeclarationLhs = "\(typeName).\(witnessTypeName)"
+        let returnWitnessInitDeclarationLhs = "return \(typeName).\(witnessTypeName)"
         
-        let returnDeclaration = if expandedProductionPropertiesWithoutProductionNamespace.isEmpty {
+        let returnWitnessInitDeclaration = if expandedProductionPropertiesWithProductionNamespace.isEmpty {
             """
-            \(returnDeclarationLhs)()
+            \(returnWitnessInitDeclarationLhs)()
             """
         } else {
             """
-            \(returnDeclarationLhs)(
-            \(expandedProductionPropertiesWithoutProductionNamespace)
+            \(returnWitnessInitDeclarationLhs)(
+            \(expandedProductionPropertiesWithProductionNamespace)
             )
             """
         }
@@ -397,11 +403,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                 _\(raw: productionName) = \(raw: productionName)
                 }
                 
-                return \(raw: productionName)
-                }
-                
-                \(raw: witnessFunctionDeclaration)
-                \(raw: returnDeclaration)
+                \(raw: returnWitnessInitDeclaration)
                 }
                 }
                 """

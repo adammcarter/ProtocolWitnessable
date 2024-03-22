@@ -3,27 +3,27 @@ import ProtocolWitnessing
 // TODO: 
 
 // @ProtocolWitnessing(_ typeName: String = "Witness", generatedRealName: String? = "production")
-@ProtocolWitnessing
-struct MyService {
-    func fetchData() -> Int {
-        return (100...10_000).randomElement()!
-    }
-    
-    // < Generated >
-    // Uses typeName arg
-//    struct Witness {
-//        var _fetchData: () -> Int
-//        
-//        init(fetchData: @escaping () -> Int) {
-//            _fetchData = fetchData
-//        }
-//        
-//        func fetchData() -> Int {
-//            _fetchData()
-//        }
+//@ProtocolWitnessing
+//struct MyService {
+//    func fetchData() -> Int {
+//        return (100...10_000).randomElement()!
 //    }
-    // < / Generated >
-}
+//    
+//    // < Generated >
+//    // Uses typeName arg
+////    struct Witness {
+////        var _fetchData: () -> Int
+////        
+////        init(fetchData: @escaping () -> Int) {
+////            _fetchData = fetchData
+////        }
+////        
+////        func fetchData() -> Int {
+////            _fetchData()
+////        }
+////    }
+//    // < / Generated >
+//}
 
 
 // < Generated > (if generatedRealName not nil)
@@ -73,6 +73,7 @@ struct MyService {
 //import Foundation
 //
 //@ProtocolWitnessing
+
 //struct MyComplexClient {
 //    func somethingThatDownloadsData(int: Int, completion: @escaping ([CodedThing]) -> Void) {
 //        let url = URL(string: "https://apple.com")!
@@ -100,6 +101,40 @@ struct MyService {
 //            completion(things)
 //        }.resume()
 //    }
+//    
+//    struct Witness {
+//        var _somethingThatDownloadsData: (Int, @escaping ([CodedThing]) -> Void) -> Void
+//        
+//        init(somethingThatDownloadsData: @escaping (Int, @escaping ([CodedThing]) -> Void) -> Void) {
+//            _somethingThatDownloadsData = somethingThatDownloadsData
+//        }
+//        
+//        func somethingThatDownloadsData(int: Int, completion: @escaping ([CodedThing]) -> Void) {
+//            _somethingThatDownloadsData(int, completion)
+//        }
+//    }
+//}
+//
+//extension MyComplexClient {
+//    private static var _production: MyComplexClient?
+//    
+//    static func production() -> MyComplexClient.Witness {
+//        let production = _production ?? MyComplexClient()
+//        
+//        if _production == nil {
+//            _production = production
+//        }
+//        
+//        return MyComplexClient.Witness(
+//            somethingThatDownloadsData: production.somethingThatDownloadsData
+//        )
+//    }
+//    
+//    func witness() -> Witness {
+//        MyComplexClient.Witness(
+//            somethingThatDownloadsData: somethingThatDownloadsData
+//        )
+//    }
 //}
 //
 //struct CodedThing: Codable {
@@ -113,7 +148,7 @@ struct MyService {
 //}
 //
 //
-//var mock = prod
+//var mock = prod.witness()
 //mock._somethingThatDownloadsData = { _, _ in
 //    print("Hi from _somethingThatDownloadsData mock")
 //}
@@ -121,171 +156,21 @@ struct MyService {
 //mock.somethingThatDownloadsData(int: 3) { things in
 //    print("mock", things)
 //}
-//
+
 //Thread.sleep(forTimeInterval: 10)
 
 
-import Foundation
-
-enum MyError: Error { case networkIssue }
-
-@MainActor
-class Thing {
-    func doStuffHere() {
-        print("Updating UI")
-    }
-}
-@MainActor
-struct MyClient {
-    let id = UUID()
-    var myThing: String
-    let yourName: String
-    
-    func returnsTrue() -> Bool {
-        true
-    }
-    
-    func returnsVoid() async {
-        print("doing async stuff for \(yourName)....")
-        try? await Task.sleep(nanoseconds: 2 * NSEC_PER_SEC)
-        print("async stuff done")
-    }
-    
-    func returnsAThing() async throws -> Thing {
-        throw MyError.networkIssue
-    }
-    
-    struct Witness {
-        var _myThing: String
-        var _yourName: String
-        var _returnsTrue: () -> Bool
-        var _returnsVoid: () async -> Void
-        var _returnsAThing: () async throws -> Thing
-        
-        var yourName: String {
-            get {
-                _yourName
-            }
-        }
-        
-        init(
-            myThing: String,
-            yourName: String,
-            returnsTrue: @escaping () -> Bool,
-            returnsVoid: @escaping () async -> Void,
-            returnsAThing: @escaping () async throws -> Thing
-        ) {
-            _myThing = myThing
-            _yourName = yourName
-            _returnsTrue = returnsTrue
-            _returnsVoid = returnsVoid
-            _returnsAThing = returnsAThing
-        }
-        
-        func returnsTrue() -> Bool {
-            _returnsTrue()
-        }
-        
-        func returnsVoid() async {
-            await _returnsVoid()
-        }
-        
-        func returnsAThing() async throws -> Thing {
-            try await _returnsAThing()
-        }
-    }
-}
-
-extension MyClient {
-    private static var _production: MyClient?
-    
-    static func production(
-        myThing: String,
-        yourName: String
-    ) -> MyClient {
-        let production = _production ?? MyClient(
-            myThing: myThing,
-            yourName: yourName
-        )
-        
-        if _production == nil {
-            _production = production
-        }
-        
-        return production
-    }
-    
-    func witness() -> MyClient.Witness {
-        MyClient.Witness(
-            myThing: myThing,
-            yourName: yourName,
-            returnsTrue: returnsTrue,
-            returnsVoid: returnsVoid,
-            returnsAThing: returnsAThing
-        )
-    }
-}
 
 
 
 
-
-import Foundation
-
-await Task { @MainActor in
-    let client = MyClient.production(myThing: "ddss", yourName: "prod")
-    
-    print(client.yourName)
-    
-    var mock = client.witness()
-    mock._yourName = "mock"
-    
-    print(mock.yourName)
-}.value
-
-
-//var mock = client
-//mock._doSomething = {
-//    print("Mock. Async \(Thread.current)")
-//}
+//var prod = await MyClient.production()
+//prod._isThing = false
 //
 //
-//await mock.doSomething()
-
-
-//print(client._som)
-//var mock = client
-//mock._someLetProperty = 9
-//print(mock._someLetProperty)
-
-
-
-
-
-
-
-
-//var prod = MyClient.live()
-//prod.doSomething { int in
-//    print(int)
-//}
+//var mock = prod
+//mock._isThing = true
 //
-//
-//var preprod = prod
-//preprod._doSomething = { int in
-//    print("preprod")
-//}
-//
-//preprod.doSomething { int in
-//    print("prod: \(int)")
-//}
-//
-//
-//var flakey = prod
-//flakey._doSomething = { closure in
-//    closure(Bool.random() ? 999 : -1)
-//}
-//
-//flakey.doSomething { int in
-//    print("Flakey \(int)")
+//mock.somethingThatDownloadsData(int: 3) { things in
+//    print("mock", things)
 //}
