@@ -464,10 +464,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                             return nil
                         }
                         
-                        if
-                            let pattern = binding.as(PatternBindingSyntax.self),
-                            let accessorBlock = pattern.accessorBlock
-                        {
+                        if let accessorBlock = binding.accessorBlock {
                             let isAsync = accessorBlock
                                 .accessors
                                 .as(AccessorDeclListSyntax.self)?
@@ -535,7 +532,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                 return varDecl
                     .bindings
                     .compactMap { binding -> ParameterDetails? in
-                        let accessorBlock = binding.as(PatternBindingSyntax.self)?.accessorBlock
+                        let accessorBlock = binding.accessorBlock
                         
                         if
                             includesComputed == false,
@@ -566,7 +563,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                                 isAsync: isAsync,
                                 isThrowing: isThrowing
                             )
-                        } else if binding.is(PatternBindingSyntax.self) {
+                        } else {
                             return ParameterDetails(
                                 letOrVar: "var",
                                 name: binding.pattern.trimmedDescription,
@@ -575,8 +572,6 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
                                 isAsync: isAsync,
                                 isThrowing: isThrowing
                             )
-                        } else {
-                            return nil
                         }
                     }
             }
@@ -695,8 +690,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         let labeledExpression = node
             .arguments?
             .as(LabeledExprListSyntax.self)?
-            .first?
-            .as(LabeledExprSyntax.self)
+            .first
         
         guard labeledExpression?.label == nil else {
             return "Witness"
@@ -718,7 +712,7 @@ public struct WitnessingMacro: MemberMacro, ExtensionMacro {
         node
             .arguments?
             .as(LabeledExprListSyntax.self)?
-            .first(where: { $0.as(LabeledExprSyntax.self)?.label?.text == "productionInstanceName" })?
+            .first(where: { $0.label?.text == "productionInstanceName" })?
             .expression
             .as(StringLiteralExprSyntax.self)?
             .segments
