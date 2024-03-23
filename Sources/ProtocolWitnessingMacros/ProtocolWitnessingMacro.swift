@@ -669,7 +669,27 @@ public struct WitnessingMacro: MemberMacro {
     
     private static func makeFunctionDetails(from structDecl: StructDeclSyntax) -> [FunctionDetails] {
         structDecl.memberBlock.members
-            .compactMap { $0.decl.as(FunctionDeclSyntax.self) }
+            .compactMap { member -> FunctionDeclSyntax? in
+                guard
+                    let function = member.decl.as(FunctionDeclSyntax.self)
+                else {
+                    return nil
+                }
+                
+                let canBeWitnessed = 
+                    function
+                    .modifiers
+                    .contains {
+                        $0.name.tokenKind == .keyword(.private)
+                    }
+                    == false
+                
+                guard canBeWitnessed else {
+                    return nil
+                }
+                
+                return function
+            }
             .map {
                 let signature = $0.signature
                 

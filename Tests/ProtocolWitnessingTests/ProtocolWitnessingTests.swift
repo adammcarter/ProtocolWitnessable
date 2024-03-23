@@ -33,6 +33,8 @@ final class ProtocolWitnessingTests: XCTestCase {
     - Replaces customising Witness type name?
  - Customise `witness()` function name with a new macro argument
  - Enable concurrency checking to "complete" mode - https://forums.swift.org/t/concurrency-checking-in-swift-packages-unsafeflags/61135
+ - Use Swift Testing instead of XCTest
+ - Refactor all the stuff
  */
 
 // MARK: - Initial sanity checking
@@ -535,6 +537,92 @@ extension ProtocolWitnessingTests {
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething,
                             doAnotherThing: production.doAnotherThing
+                        )
+                    }
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Private
+
+extension ProtocolWitnessingTests {
+    func testMacro_doesNotIncludePrivateFunction_whenOnlyPrivateFunction() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                private func doSomething() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                private func doSomething() { }
+
+                struct ProtocolWitness {
+                    init() {
+
+                    }
+
+                    private static var _production: MyClient?
+
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+
+                        if _production == nil {
+                            _production = production
+                        }
+
+                        return MyClient.ProtocolWitness()
+                    }
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_doesNotIncludePrivateFunction_whenMixOfInternalAndPrivateFunctions() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                func notSecret() { }
+            
+                private func somethingSecret() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                func notSecret() { }
+
+                private func somethingSecret() { }
+
+                struct ProtocolWitness {
+                    var _notSecret: () -> Void
+
+                    init(notSecret: @escaping () -> Void) {
+                        _notSecret = notSecret
+                    }
+
+                    func notSecret() {
+                        _notSecret()
+                    }
+
+                    private static var _production: MyClient?
+
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+
+                        if _production == nil {
+                            _production = production
+                        }
+
+                        return MyClient.ProtocolWitness(
+                            notSecret: production.notSecret
                         )
                     }
                 }

@@ -212,3 +212,35 @@ import ProtocolWitnessing
 //
 //print(mock.isThing)
 
+
+struct MyClient {
+    func notSecret() { }
+    
+    private func somethingSecret() { }
+    
+    struct ProtocolWitness {
+        var _notSecret: () -> Void
+        
+        init(notSecret: @escaping () -> Void) {
+            _notSecret = notSecret
+        }
+        
+        func notSecret() {
+            _notSecret()
+        }
+        
+        private static var _production: MyClient?
+        
+        static func production() -> MyClient.ProtocolWitness {
+            let production = _production ?? MyClient()
+            
+            if _production == nil {
+                _production = production
+            }
+            
+            return MyClient.ProtocolWitness(
+                notSecret: production.notSecret
+            )
+        }
+    }
+}
