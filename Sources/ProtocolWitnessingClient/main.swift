@@ -163,27 +163,86 @@ import ProtocolWitnessing
 
 
 
+//struct MyClient {
+//    lazy var getSomething: Bool = {
+//        true
+//    }()
+//    
+//    struct ProtocolWitness {
+//        var _getSomething: Bool = {
+//            true
+//        }()
+//        
+//        var getSomething: Bool {
+//            get {
+//                _getSomething
+//            }
+//        }
+//        
+//        init() {
+//            
+//        }
+//        
+//        
+//        
+//        private static var _production: MyClient?
+//        
+//        static func production() -> MyClient.ProtocolWitness {
+//            let production = _production ?? MyClient()
+//            
+//            if _production == nil {
+//                _production = production
+//            }
+//            
+//            return MyClient.ProtocolWitness()
+//        }
+//    }
+//}
+//
+//
+//
+//var prod = MyClient.ProtocolWitness.production()
+//
+//prod.getSomething
+
+
+//var mock = prod
+//mock._getSomething = false
+
+//
+//print(mock.isThing)
+
+
+
+
 struct MyClient {
-    lazy var getSomething: Bool = {
-        true
-    }()
+    var id: Int = 1
+    
+    enum MyError: Error {
+        case errorOne
+        case errorTwo
+    }
+    
+    func doSomething() throws {
+        print("Prod id", id)
+        
+        throw MyError.errorTwo
+    }
     
     struct ProtocolWitness {
-        var _getSomething: Bool = {
-            true
+        var _doSomething: () throws -> Void
+        
+        var id: Int = {
+            1
         }()
         
-        var getSomething: Bool {
-            get {
-                _getSomething
-            }
+        init(doSomething: @escaping () throws -> Void) {
+            _doSomething = doSomething
         }
         
-        init() {
-            
+        func doSomething() throws {
+            try _doSomething()
         }
-        
-        
         
         private static var _production: MyClient?
         
@@ -194,20 +253,9 @@ struct MyClient {
                 _production = production
             }
             
-            return MyClient.ProtocolWitness()
+            return MyClient.ProtocolWitness(
+                doSomething: production.doSomething
+            )
         }
     }
 }
-
-
-
-var prod = MyClient.ProtocolWitness.production()
-
-prod.getSomething
-
-
-var mock = prod
-mock._getSomething = false
-
-//
-//print(mock.isThing)

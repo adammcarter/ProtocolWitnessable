@@ -258,7 +258,7 @@ public struct WitnessingMacro: MemberMacro {
         
         
         
-        let witnessProperties = combinedInitParameters
+        let witnessUnderscoredProperties = combinedInitParameters
             .map {
                 let staticOrEmpty = $0.isStatic ? "static " : ""
                 
@@ -298,21 +298,29 @@ public struct WitnessingMacro: MemberMacro {
                 let get = "\(getName) { \(getExpression) }"
                 let set = $0.setter.flatMap { "\n\($0)" } ?? ""
                 
-                return """
-                    \(lhs): \(rhs) {
-                    \(get)\(set)
-                    }
-                    """
+                if let contents = $0.initializerClosureContents {
+                    return """
+                        \(lhs): \(rhs) = {
+                        \(contents)
+                        }()
+                        """
+                } else {
+                    return """
+                        \(lhs): \(rhs) {
+                        \(get)\(set)
+                        }
+                        """
+                }
             }
             .joined(separator: "\n\n")
         
         
         
         let expandedPropertiesSeparator =
-        witnessProperties.isEmpty || expandedComputedProperties.isEmpty ? "" : "\n\n"
+        witnessUnderscoredProperties.isEmpty || expandedComputedProperties.isEmpty ? "" : "\n\n"
         
         let expandedProperties = [
-            witnessProperties,
+            witnessUnderscoredProperties,
             expandedComputedProperties
         ]
             .joined(separator: expandedPropertiesSeparator)
@@ -464,7 +472,8 @@ public struct WitnessingMacro: MemberMacro {
                                 setter: setter?.trimmedDescription,
                                 isAsync: isAsync,
                                 isThrowing: isThrowing,
-                                isStatic: isStatic
+                                isStatic: isStatic,
+                                initializerClosureContents: nil
                             )
                         } else if
                             binding
@@ -485,7 +494,25 @@ public struct WitnessingMacro: MemberMacro {
                                 setter: nil,
                                 isAsync: false,
                                 isThrowing: false,
-                                isStatic: isStatic
+                                isStatic: isStatic,
+                                initializerClosureContents: nil
+                            )
+                        } else if
+                            let initializerClosureContents = binding
+                                .initializer?
+                                .value
+                                .trimmedDescription
+                        {
+                            return ComputedPropertyDetails(
+                                letOrVar: "var",
+                                name: binding.pattern.trimmedDescription,
+                                type: type,
+                                accessor: "_\(bindingSpecifier.text)",
+                                setter: nil,
+                                isAsync: false,
+                                isThrowing: false,
+                                isStatic: isStatic,
+                                initializerClosureContents: initializerClosureContents
                             )
                         } else if binding.initializer == nil {
                             return ComputedPropertyDetails(
@@ -496,7 +523,8 @@ public struct WitnessingMacro: MemberMacro {
                                 setter: nil,
                                 isAsync: false,
                                 isThrowing: false,
-                                isStatic: isStatic
+                                isStatic: isStatic,
+                                initializerClosureContents: nil
                             )
                         } else {
                             return nil
@@ -563,6 +591,23 @@ public struct WitnessingMacro: MemberMacro {
                 let closureContents = functionCallContents
                     ?? getterClosureContents
                     ?? accessors?.trimmedDescription
+                
+                let initializerValue = member
+                    .decl
+                    .as(VariableDeclSyntax.self)?
+                    .bindings
+                    .first?
+                    .initializer?
+                    .value
+                
+                let needsExplicitWrappingProperty =
+                    initializerValue == nil
+                    ||
+                    initializerValue?.is(FunctionCallExprSyntax.self) == true
+                
+                guard needsExplicitWrappingProperty else {
+                    return nil
+                }
                 
                 return varDecl
                     .bindings
@@ -795,6 +840,7 @@ private struct ComputedPropertyDetails {
     let isAsync: Bool
     let isThrowing: Bool
     let isStatic: Bool
+    let initializerClosureContents: String?
 }
 
 

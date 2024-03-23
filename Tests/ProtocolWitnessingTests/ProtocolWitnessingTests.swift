@@ -2871,8 +2871,6 @@ extension ProtocolWitnessingTests {
     func testMacro_expandsCorrectly_whenAddingAllTheThings() throws {
         assertMacro {
             #"""
-            enum MyError: Error { case networkIssue }
-
             @MainActor
             class Thing {
                 func doStuffHere() {
@@ -2880,12 +2878,28 @@ extension ProtocolWitnessingTests {
                 }
             }
 
-            @ProtocolWitnessing
+            @ProtocolWitnessing(typeName: "MyClientWitness")
             @MainActor
             struct MyClient {
-                let id = UUID()
+                let id = "some_id"
                 var myThing: String
                 let yourName: String
+                
+                var one: Int = 1
+                
+                var two: Int = {
+                    2
+                }()
+                
+                static var strings: [String] = [
+                    "a", "b", "c"
+                ]
+                
+                lazy var moreStrings: [String] = {
+                    [
+                        "x", "y", "z"
+                    ]
+                }()
                 
                 func returnsTrue() -> Bool {
                     true
@@ -2893,19 +2907,29 @@ extension ProtocolWitnessingTests {
                 
                 func returnsVoid() async {
                     print("doing async stuff for \(yourName)....")
-                    try? await Task.sleep(nanoseconds: 2 * NSEC_PER_SEC)
+                    try? await Task.sleep(nanoseconds: 2_000_000_000)
                     print("async stuff done")
                 }
                 
                 func returnsAThing() async throws -> Thing {
                     throw MyError.networkIssue
+                }
+                
+                func fetchData(completionHandler: (Int) throws -> Void) rethrows {
+                    try completionHandler(10)
+                }
+                
+                enum MyError: Error { case networkIssue }
+            }
+
+            extension MyClient {
+                func doSomethingElse() {
+                    // This function won't be seen by the macro declared on the original struct
                 }
             }
             """#
         } expansion: {
             #"""
-            enum MyError: Error { case networkIssue }
-
             @MainActor
             class Thing {
                 func doStuffHere() {
@@ -2914,9 +2938,25 @@ extension ProtocolWitnessingTests {
             }
             @MainActor
             struct MyClient {
-                let id = UUID()
+                let id = "some_id"
                 var myThing: String
                 let yourName: String
+                
+                var one: Int = 1
+                
+                var two: Int = {
+                    2
+                }()
+                
+                static var strings: [String] = [
+                    "a", "b", "c"
+                ]
+                
+                lazy var moreStrings: [String] = {
+                    [
+                        "x", "y", "z"
+                    ]
+                }()
                 
                 func returnsTrue() -> Bool {
                     true
@@ -2924,20 +2964,35 @@ extension ProtocolWitnessingTests {
                 
                 func returnsVoid() async {
                     print("doing async stuff for \(yourName)....")
-                    try? await Task.sleep(nanoseconds: 2 * NSEC_PER_SEC)
+                    try? await Task.sleep(nanoseconds: 2_000_000_000)
                     print("async stuff done")
                 }
                 
                 func returnsAThing() async throws -> Thing {
                     throw MyError.networkIssue
                 }
+                
+                func fetchData(completionHandler: (Int) throws -> Void) rethrows {
+                    try completionHandler(10)
+                }
+                
+                enum MyError: Error { case networkIssue }
 
-                struct ProtocolWitness {
+                struct MyClientWitness {
                     var _myThing: String
                     var _yourName: String
+                    var _two: Int = {
+                        2
+                    }()
+                    var _moreStrings: [String] = {
+                        [
+                                    "x", "y", "z"
+                                ]
+                    }()
                     var _returnsTrue: () -> Bool
                     var _returnsVoid: () async -> Void
                     var _returnsAThing: () async throws -> Thing
+                    var _fetchData: ((Int) throws -> Void) throws -> Void
 
                     var myThing: String {
                         get {
@@ -2951,18 +3006,42 @@ extension ProtocolWitnessingTests {
                         }
                     }
 
+                    var one: Int = {
+                        1
+                    }()
+
+                    var two: Int {
+                        get {
+                            _two
+                        }
+                    }
+
+                    static var strings: [String] = {
+                        [
+                                "a", "b", "c"
+                            ]
+                    }()
+
+                    var moreStrings: [String] {
+                        get {
+                            _moreStrings
+                        }
+                    }
+
                     init(
                         myThing: String,
                         yourName: String,
                         returnsTrue: @escaping () -> Bool,
                         returnsVoid: @escaping () async -> Void,
-                        returnsAThing: @escaping () async throws -> Thing
+                        returnsAThing: @escaping () async throws -> Thing,
+                        fetchData: @escaping ((Int) throws -> Void) throws -> Void
                     ) {
                         _myThing = myThing
                         _yourName = yourName
                         _returnsTrue = returnsTrue
                         _returnsVoid = returnsVoid
                         _returnsAThing = returnsAThing
+                        _fetchData = fetchData
                     }
 
                     func returnsTrue() -> Bool {
@@ -2977,12 +3056,16 @@ extension ProtocolWitnessingTests {
                         try await _returnsAThing()
                     }
 
+                    func fetchData(completionHandler: (Int) throws -> Void) throws {
+                        try _fetchData(completionHandler)
+                    }
+
                     private static var _production: MyClient?
 
                     static func production(
                         myThing: String,
                     yourName: String
-                    ) -> MyClient.ProtocolWitness {
+                    ) -> MyClient.MyClientWitness {
                         let production = _production ?? MyClient(
                             myThing: myThing,
                             yourName: yourName
@@ -2992,14 +3075,21 @@ extension ProtocolWitnessingTests {
                             _production = production
                         }
 
-                        return MyClient.ProtocolWitness(
+                        return MyClient.MyClientWitness(
                             myThing: production.myThing,
                             yourName: production.yourName,
                             returnsTrue: production.returnsTrue,
                             returnsVoid: production.returnsVoid,
-                            returnsAThing: production.returnsAThing
+                            returnsAThing: production.returnsAThing,
+                            fetchData: production.fetchData
                         )
                     }
+                }
+            }
+
+            extension MyClient {
+                func doSomethingElse() {
+                    // This function won't be seen by the macro declared on the original struct
                 }
             }
             """#
@@ -3283,14 +3373,13 @@ extension ProtocolWitnessingTests {
                 }
 
                 struct ProtocolWitness {
-                    var _id: Int
                     var _doSomething: () throws -> Void
 
-                    init(
-                        id: Int,
-                        doSomething: @escaping () throws -> Void
-                    ) {
-                        _id = id
+                    var id: Int = {
+                        1
+                    }()
+
+                    init(doSomething: @escaping () throws -> Void) {
                         _doSomething = doSomething
                     }
 
@@ -3300,19 +3389,14 @@ extension ProtocolWitnessingTests {
 
                     private static var _production: MyClient?
 
-                    static func production(
-                        id: Int
-                    ) -> MyClient.ProtocolWitness {
-                        let production = _production ?? MyClient(
-                            id: id
-                        )
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
 
                         if _production == nil {
                             _production = production
                         }
 
                         return MyClient.ProtocolWitness(
-                            id: production.id,
                             doSomething: production.doSomething
                         )
                     }
@@ -3325,38 +3409,62 @@ extension ProtocolWitnessingTests {
 
 // MARK: - Assistance
 
-//extension ProtocolWitnessingTests {
-//    func testMacroActualOutputByForcingRecordToTrue() throws {
-//        assertMacro(record: true) {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//
-//                struct Witness {
-//                    init() {
-//
-//                    }
-//                }
-//            }
-//
-//            extension MyClient {
-//                private static var _production = {
-//                    Self.init()
-//                }()
-//
-//                static var production = Witness(
-//
-//                )
-//            }
-//            """
-//        }
-//    }
-//}
+extension ProtocolWitnessingTests {
+    func testMacroActualOutputByForcingRecordToTrue() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                var one: Int = 1
+            
+                static var strings: [String] = [
+                    "a", "b", "c"
+                ]
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var one: Int = 1
+
+                static var strings: [String] = [
+                    "a", "b", "c"
+                ]
+
+                struct ProtocolWitness {
+                    var one: Int = {
+                        1
+                    }()
+
+                    static var strings: [String] = {
+                        [
+                                "a", "b", "c"
+                            ]
+                    }()
+
+                    init() {
+
+                    }
+
+
+
+                    private static var _production: MyClient?
+
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+
+                        if _production == nil {
+                            _production = production
+                        }
+
+                        return MyClient.ProtocolWitness()
+                    }
+                }
+            }
+            """
+        }
+    }
+}
 #else
 final class ProtocolWitnessingTests: XCTestCase {
     func testMacro() throws {
