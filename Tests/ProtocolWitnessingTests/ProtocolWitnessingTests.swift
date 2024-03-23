@@ -21,8 +21,10 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
- - Get functions from extensions of the same type
  - Ignore private vars/functions within type
+    - Add public accessor when public
+    - Add internal accessor when explicitly internal
+ - Add support for attaching to actors and classes?
  - Erase type for production()?
  - Use SwiftSyntaxMacros builders?
  - Arg for overriding to not use a singleton and having `production() {}` create a new one each time
@@ -2358,37 +2360,121 @@ extension ProtocolWitnessingTests {
 
 // MARK: Lazy var
 
-//extension ProtocolWitnessingTests {
-//    func testMacro_epxandsMacro_whenFunctionIsInExtensionOfTheSameType() throws {
-//        assertMacro {
-//            """
-//            struct MyClient { }
-//            
-//            @ProtocolWitnessing
-//            extension MyClient {
-//                func doSomething() { }
-//            }
-//            """
-//        }
-//    }
-//}
-//
-//// MARK: Lazy static var
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_epxandsMacro_whenFunctionIsInExtensionOfTheSameType() throws {
-//        assertMacro {
-//            """
-//            struct MyClient { }
-//            
-//            @ProtocolWitnessing
-//            extension MyClient {
-//                func doSomething() { }
-//            }
-//            """
-//        }
-//    }
-//}
+extension ProtocolWitnessingTests {
+    func testMacro_expandsMacro_whenLazyVar() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                lazy var getSomething: Bool = {
+                    true
+                }()
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                lazy var getSomething: Bool = {
+                    true
+                }()
+
+                struct ProtocolWitness {
+                    var _getSomething: Bool = {
+                        true
+                    }()
+
+                    var getSomething: Bool {
+                        get {
+                            _getSomething
+                        }
+                    }
+
+                    init() {
+
+                    }
+
+
+
+                    private static var _production: MyClient?
+
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+
+                        if _production == nil {
+                            _production = production
+                        }
+
+                        return MyClient.ProtocolWitness()
+                    }
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_expandsMacro_whenLazyVar_andComplexContents() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                lazy var getSomething: Bool = {
+                    let thing = true
+                    
+                    print("thing", thing)
+
+                    return thing
+                }()
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                lazy var getSomething: Bool = {
+                    let thing = true
+                    
+                    print("thing", thing)
+
+                    return thing
+                }()
+
+                struct ProtocolWitness {
+                    var _getSomething: Bool = {
+                        let thing = true
+
+                                print("thing", thing)
+
+                                return thing
+                    }()
+
+                    var getSomething: Bool {
+                        get {
+                            _getSomething
+                        }
+                    }
+
+                    init() {
+
+                    }
+
+
+
+                    private static var _production: MyClient?
+
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+
+                        if _production == nil {
+                            _production = production
+                        }
+
+                        return MyClient.ProtocolWitness()
+                    }
+                }
+            }
+            """
+        }
+    }
+}
 
 // MARK: Setter
 

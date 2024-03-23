@@ -160,23 +160,22 @@ import ProtocolWitnessing
 //Thread.sleep(forTimeInterval: 10)
 
 
+
+
+
 struct MyClient {
-    var isThing: Bool {
-        get { true }
-        set { print(newValue) }
-    }
+    lazy var getSomething: Bool = {
+        true
+    }()
     
     struct ProtocolWitness {
-        var _isThing: Bool = {
+        var _getSomething: Bool = {
             true
         }()
         
-        var isThing: Bool {
+        var getSomething: Bool {
             get {
-                _isThing
-            }
-            set {
-                print(newValue)
+                _getSomething
             }
         }
         
@@ -202,14 +201,13 @@ struct MyClient {
 
 
 
+var prod = MyClient.ProtocolWitness.production()
+
+prod.getSomething
 
 
+var mock = prod
+mock._getSomething = false
 
-//var prod = MyClient.ProtocolWitness.production()
-//
-//print(prod.isThing)
-//
-//var mock = prod
-//mock._isThing = false
 //
 //print(mock.isThing)

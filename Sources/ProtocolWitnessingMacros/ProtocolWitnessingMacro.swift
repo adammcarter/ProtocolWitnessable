@@ -69,70 +69,7 @@ public struct WitnessingMacro: MemberMacro {
         
         
         
-        
-        
-        
-        
-        
-        let expandedInitParameters = combinedInitParameters
-            .map {
-                let staticOrEmpty = $0.isStatic ? "static " : ""
                 
-                return "\(staticOrEmpty)var _\($0.name)\($0.rhs)"
-            }
-            .joined(separator: "\n")
-        
-        
-        
-        
-        let computedProperties = makeComputedPropertyDetails(from: structDecl)
-        
-        let expandedComputedProperties = computedProperties
-            .map {
-                let asyncThrows = if $0.isAsync, $0.isThrowing {
-                    " async throws"
-                } else if $0.isAsync {
-                    " async"
-                } else if $0.isThrowing {
-                    " throws"
-                } else {
-                    ""
-                }
-                
-                let getExpression = if $0.isAsync, $0.isThrowing {
-                    "try await _\($0.name)()"
-                } else if $0.isThrowing {
-                    "try _\($0.name)()"
-                } else {
-                    "_\($0.name)"
-                }
-                
-                let staticOrEmpty = $0.isStatic ? "static " : ""
-                let lhs = "\(staticOrEmpty)\($0.letOrVar) \($0.name)"
-                let rhs = "\($0.type)"
-                let getName = "get\(asyncThrows)"
-                let get = "\(getName) { \(getExpression) }"
-                let set = $0.setter.flatMap { "\n\($0)" } ?? ""
-                
-                return """
-                    \(lhs): \(rhs) {
-                    \(get)\(set)
-                    }
-                    """
-            }
-            .joined(separator: "\n\n")
-        
-        
-        
-        let expandedPropertiesSeparator = 
-            expandedInitParameters.isEmpty || expandedComputedProperties.isEmpty ? "" : "\n\n"
-        
-        let expandedProperties = [
-            expandedInitParameters,
-            expandedComputedProperties
-        ]
-            .joined(separator: expandedPropertiesSeparator)
-        
         
         
         
@@ -314,7 +251,86 @@ public struct WitnessingMacro: MemberMacro {
         
         
         
-        let productionValues = """
+        
+        
+        
+        
+        
+        
+        
+        let witnessProperties = combinedInitParameters
+            .map {
+                let staticOrEmpty = $0.isStatic ? "static " : ""
+                
+                return "\(staticOrEmpty)var _\($0.name)\($0.rhs)"
+            }
+            .joined(separator: "\n")
+        
+        
+        
+        
+        let computedProperties = makeComputedPropertyDetails(from: structDecl)
+        
+        let expandedComputedProperties = computedProperties
+            .map {
+                let asyncThrows = if $0.isAsync, $0.isThrowing {
+                    " async throws"
+                } else if $0.isAsync {
+                    " async"
+                } else if $0.isThrowing {
+                    " throws"
+                } else {
+                    ""
+                }
+                
+                let getExpression = if $0.isAsync, $0.isThrowing {
+                    "try await _\($0.name)()"
+                } else if $0.isThrowing {
+                    "try _\($0.name)()"
+                } else {
+                    "_\($0.name)"
+                }
+                
+                let staticOrEmpty = $0.isStatic ? "static " : ""
+                let lhs = "\(staticOrEmpty)\($0.letOrVar) \($0.name)"
+                let rhs = "\($0.type)"
+                let getName = "get\(asyncThrows)"
+                let get = "\(getName) { \(getExpression) }"
+                let set = $0.setter.flatMap { "\n\($0)" } ?? ""
+                
+                return """
+                    \(lhs): \(rhs) {
+                    \(get)\(set)
+                    }
+                    """
+            }
+            .joined(separator: "\n\n")
+        
+        
+        
+        let expandedPropertiesSeparator =
+        witnessProperties.isEmpty || expandedComputedProperties.isEmpty ? "" : "\n\n"
+        
+        let expandedProperties = [
+            witnessProperties,
+            expandedComputedProperties
+        ]
+            .joined(separator: expandedPropertiesSeparator)
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        let productionType = """
             private static var _\(productionName): \(typeName)?
             
             \(productionFunctionDeclaration)
@@ -341,7 +357,7 @@ public struct WitnessingMacro: MemberMacro {
                 struct \(raw: witnessTypeName) {
                     \(raw: expandedInit)
                 
-                    \(raw: productionValues)
+                    \(raw: productionType)
                 }
                 """
         } else {
@@ -353,7 +369,7 @@ public struct WitnessingMacro: MemberMacro {
                 
                     \(raw: expandedFunctions)
                 
-                    \(raw: productionValues)
+                    \(raw: productionType)
                 }
                 """
         }
@@ -450,6 +466,27 @@ public struct WitnessingMacro: MemberMacro {
                                 isThrowing: isThrowing,
                                 isStatic: isStatic
                             )
+                        } else if
+                            binding
+                                .initializer?
+                                .value
+                                .as(FunctionCallExprSyntax.self)?
+                                .calledExpression
+                                .as(ClosureExprSyntax.self)?
+                                .statements
+                                .trimmedDescription
+                                != nil
+                        {
+                            return ComputedPropertyDetails(
+                                letOrVar: "var",
+                                name: binding.pattern.trimmedDescription,
+                                type: type,
+                                accessor: "_\(bindingSpecifier.text)",
+                                setter: nil,
+                                isAsync: false,
+                                isThrowing: false,
+                                isStatic: isStatic
+                            )
                         } else if binding.initializer == nil {
                             return ComputedPropertyDetails(
                                 letOrVar: "var",
@@ -510,7 +547,22 @@ public struct WitnessingMacro: MemberMacro {
                     .statements
                     .trimmedDescription
                 
-                let closureContents = getterClosureContents ?? accessors?.trimmedDescription
+                let functionCallContents = member
+                    .decl
+                    .as(VariableDeclSyntax.self)?
+                    .bindings
+                    .first?
+                    .initializer?
+                    .value
+                    .as(FunctionCallExprSyntax.self)?
+                    .calledExpression
+                    .as(ClosureExprSyntax.self)?
+                    .statements
+                    .trimmedDescription
+                
+                let closureContents = functionCallContents
+                    ?? getterClosureContents
+                    ?? accessors?.trimmedDescription
                 
                 return varDecl
                     .bindings
@@ -519,7 +571,7 @@ public struct WitnessingMacro: MemberMacro {
                         
                         if
                             includesComputed == false,
-                            accessorBlock != nil
+                            accessorBlock != nil || closureContents != nil
                         {
                             return nil
                         }
