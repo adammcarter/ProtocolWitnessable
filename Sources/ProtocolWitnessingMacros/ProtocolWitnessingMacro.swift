@@ -182,8 +182,10 @@ public struct WitnessingMacro: MemberMacro {
         
         
         
+        let isMainActor = declGroupIsMainActor(structDecl)
+        let mainActorOrEmpty = isMainActor ? "@MainActor\n" : ""
         
-        let functionPrefix = "static func \(productionName)"
+        let functionPrefix = "\(mainActorOrEmpty)static func \(productionName)"
         let functionSuffix = "\(asyncThrowsSuffix) -> \(typeName).\(witnessTypeName)"
         
         let productionFunctionDeclaration = if expandedParameters.isEmpty {
@@ -803,6 +805,20 @@ public struct WitnessingMacro: MemberMacro {
         ?? "production"
     }
 
+    
+    
+    
+    private static func declGroupIsMainActor(_ decl: some DeclGroupSyntax) -> Bool {
+        decl
+            .attributes
+            .contains {  $0
+                .as(AttributeSyntax.self)?
+                .attributeName
+                .as(IdentifierTypeSyntax.self)?
+                .name
+                .tokenKind == .identifier("MainActor")
+            } == true
+    }
 }
 
 

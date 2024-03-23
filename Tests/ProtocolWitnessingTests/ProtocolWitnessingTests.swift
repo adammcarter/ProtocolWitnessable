@@ -2737,6 +2737,46 @@ extension ProtocolWitnessingTests {
     }
 }
 
+// MARK: - Actors
+
+// MARK: MainActor
+
+extension ProtocolWitnessingTests {
+    func testMacro_setsWitnessAsMainActor_whenStructIsMainActor() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            @MainActor
+            struct MyClient { }
+            """
+        } expansion: {
+            """
+            @MainActor
+            struct MyClient { 
+
+                struct ProtocolWitness {
+                    init() {
+
+                    }
+
+                    private static var _production: MyClient?
+
+                    @MainActor
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+
+                        if _production == nil {
+                            _production = production
+                        }
+
+                        return MyClient.ProtocolWitness()
+                    }
+                }}
+            """
+        }
+    }
+}
+
 // MARK: - Mixed
 
 // MARK: Properties and functions
@@ -2803,12 +2843,12 @@ extension ProtocolWitnessingTests {
 // MARK: Multiple macros
 
 extension ProtocolWitnessingTests {
-    func testMacro_expandsWithMainActor_whenAddingMainActorMacro_andWitnessMacro() throws {
+    func testMacro_expandsWithAttribute_whenAddingExtraAttributes() throws {
         assertMacro {
             """
             class Thing {}
             
-            @MainActor
+            @SomeAttribute
             @ProtocolWitnessing
             struct MyClient {
                 func returnsVoid() { }
@@ -2819,7 +2859,7 @@ extension ProtocolWitnessingTests {
             """
             class Thing {}
 
-            @MainActor
+            @SomeAttribute
             struct MyClient {
                 func returnsVoid() { }
                 func returnsAThing() -> Thing { .init() }
@@ -2865,7 +2905,7 @@ extension ProtocolWitnessingTests {
     }
 }
 
-// MARK: Macro killers
+// MARK: Macro killers 🔫
 
 extension ProtocolWitnessingTests {
     func testMacro_expandsCorrectly_whenAddingAllTheThings() throws {
@@ -3062,6 +3102,7 @@ extension ProtocolWitnessingTests {
 
                     private static var _production: MyClient?
 
+                    @MainActor
                     static func production(
                         myThing: String,
                     yourName: String
