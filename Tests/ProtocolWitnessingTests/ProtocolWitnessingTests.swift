@@ -10,7 +10,7 @@ import ProtocolWitnessingMacros
 
 final class ProtocolWitnessingTests: XCTestCase {
     override func invokeTest() {
-//        withMacroTesting(isRecording: true, macros: [
+        //        withMacroTesting(isRecording: true, macros: [
         withMacroTesting(macros: [
             "ProtocolWitnessing": WitnessingMacro.self,
         ]) {
@@ -22,15 +22,15 @@ final class ProtocolWitnessingTests: XCTestCase {
 /*
  TODO: Updates
  - Ignore private vars/functions within type
-    - Add public accessor when public
-    - Add internal accessor when explicitly internal
+ - Add public accessor when public
+ - Add internal accessor when explicitly internal
  - Add support for attaching to actors and classes?
  - Erase type for production()?
  - Use SwiftSyntaxMacros builders?
  - Arg for overriding to not use a singleton and having `production() {}` create a new one each time
-    - How does this work with the function passing in params? Weird we pass stuff in then potentially ignore it and return the singleton...
+ - How does this work with the function passing in params? Weird we pass stuff in then potentially ignore it and return the singleton...
  - Use unique name generator helper for witness type name?
-    - Replaces customising Witness type name?
+ - Replaces customising Witness type name?
  - Customise `witness()` function name with a new macro argument
  - Enable concurrency checking to "complete" mode - https://forums.swift.org/t/concurrency-checking-in-swift-packages-unsafeflags/61135
  - Use Swift Testing instead of XCTest
@@ -64,21 +64,21 @@ extension ProtocolWitnessingTests {
         } expansion: {
             """
             struct MyClientClass {
-
+            
                 struct ProtocolWitness {
                     init() {
-
+            
                     }
-
+            
                     private static var _production: MyClientClass?
-
+            
                     static func production() -> MyClientClass.ProtocolWitness {
                         let production = _production ?? MyClientClass()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClientClass.ProtocolWitness()
                     }
                 }
@@ -101,21 +101,21 @@ extension ProtocolWitnessingTests {
         } expansion: {
             """
             struct MyClient {
-
+            
                 struct ProtocolWitness {
                     init() {
-
+            
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -142,27 +142,27 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething() { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () -> Void
-
+            
                     init(doSomething: @escaping () -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething() {
                         _doSomething()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -172,7 +172,7 @@ extension ProtocolWitnessingTests {
             """
         }
     }
-
+    
     func testMacro_addsInitWithParameterToVoidClosure_andPropertyForParameterToVoidClosure_whenOneFunction_andOneArgument_andReturnsVoid() throws {
         assertMacro {
             """
@@ -185,27 +185,27 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething(int: Int) { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: (Int) -> Void
-
+            
                     init(doSomething: @escaping (Int) -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething(int: Int) {
                         _doSomething(int)
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -228,27 +228,27 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething(int: Int) -> Double { 0.5 }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: (Int) -> Double
-
+            
                     init(doSomething: @escaping (Int) -> Double) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething(int: Int) -> Double {
                         _doSomething(int)
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -271,27 +271,27 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething(int: Int, float: Float) -> Double { 0.5 }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: (Int, Float) -> Double
-
+            
                     init(doSomething: @escaping (Int, Float) -> Double) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething(int: Int, float: Float) -> Double {
                         _doSomething(int, float)
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -320,11 +320,11 @@ extension ProtocolWitnessingTests {
             struct MyClient {
                 func doSomething() { }
                 func doAnotherThing() { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () -> Void
                     var _doAnotherThing: () -> Void
-
+            
                     init(
                         doSomething: @escaping () -> Void,
                         doAnotherThing: @escaping () -> Void
@@ -332,24 +332,24 @@ extension ProtocolWitnessingTests {
                         _doSomething = doSomething
                         _doAnotherThing = doAnotherThing
                     }
-
+            
                     func doSomething() {
                         _doSomething()
                     }
-
+            
                     func doAnotherThing() {
                         _doAnotherThing()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething,
                             doAnotherThing: production.doAnotherThing
@@ -380,11 +380,11 @@ extension ProtocolWitnessingTests {
             struct MyClient {
                 func doSomething(arg1: MyType) { }
                 func doAnotherThing(otherArg: OtherType) { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: (MyType) -> Void
                     var _doAnotherThing: (OtherType) -> Void
-
+            
                     init(
                         doSomething: @escaping (MyType) -> Void,
                         doAnotherThing: @escaping (OtherType) -> Void
@@ -392,24 +392,24 @@ extension ProtocolWitnessingTests {
                         _doSomething = doSomething
                         _doAnotherThing = doAnotherThing
                     }
-
+            
                     func doSomething(arg1: MyType) {
                         _doSomething(arg1)
                     }
-
+            
                     func doAnotherThing(otherArg: OtherType) {
                         _doAnotherThing(otherArg)
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething,
                             doAnotherThing: production.doAnotherThing
@@ -440,11 +440,11 @@ extension ProtocolWitnessingTests {
             struct MyClient {
                 func doSomething(arg1: MyType) -> OtherType { }
                 func doAnotherThing(otherArg: OtherType) -> MyType { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: (MyType) -> OtherType
                     var _doAnotherThing: (OtherType) -> MyType
-
+            
                     init(
                         doSomething: @escaping (MyType) -> OtherType,
                         doAnotherThing: @escaping (OtherType) -> MyType
@@ -452,24 +452,24 @@ extension ProtocolWitnessingTests {
                         _doSomething = doSomething
                         _doAnotherThing = doAnotherThing
                     }
-
+            
                     func doSomething(arg1: MyType) -> OtherType {
                         _doSomething(arg1)
                     }
-
+            
                     func doAnotherThing(otherArg: OtherType) -> MyType {
                         _doAnotherThing(otherArg)
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething,
                             doAnotherThing: production.doAnotherThing
@@ -504,11 +504,11 @@ extension ProtocolWitnessingTests {
             struct MyClient {
                 func doSomething(arg1: MyType, arg2: TypeTwo) -> OtherType { }
                 func doAnotherThing(otherArg: OtherType, anotherArg: AnotherType) -> MyType { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: (MyType, TypeTwo) -> OtherType
                     var _doAnotherThing: (OtherType, AnotherType) -> MyType
-
+            
                     init(
                         doSomething: @escaping (MyType, TypeTwo) -> OtherType,
                         doAnotherThing: @escaping (OtherType, AnotherType) -> MyType
@@ -516,24 +516,24 @@ extension ProtocolWitnessingTests {
                         _doSomething = doSomething
                         _doAnotherThing = doAnotherThing
                     }
-
+            
                     func doSomething(arg1: MyType, arg2: TypeTwo) -> OtherType {
                         _doSomething(arg1, arg2)
                     }
-
+            
                     func doAnotherThing(otherArg: OtherType, anotherArg: AnotherType) -> MyType {
                         _doAnotherThing(otherArg, anotherArg)
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething,
                             doAnotherThing: production.doAnotherThing
@@ -561,21 +561,21 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 private func doSomething() { }
-
+            
                 struct ProtocolWitness {
                     init() {
-
+            
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -598,31 +598,343 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func notSecret() { }
-
+            
                 private func somethingSecret() { }
-
+            
                 struct ProtocolWitness {
                     var _notSecret: () -> Void
-
+            
                     init(notSecret: @escaping () -> Void) {
                         _notSecret = notSecret
                     }
-
+            
                     func notSecret() {
                         _notSecret()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             notSecret: production.notSecret
+                        )
+                    }
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Internal
+
+extension ProtocolWitnessingTests {
+    func testMacro_includesFunction_whenExplicitlySetAsInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                internal func doSomething() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                internal func doSomething() { }
+            
+                struct ProtocolWitness {
+                    internal var _doSomething: () -> Void
+            
+                    init(doSomething: @escaping () -> Void) {
+                        _doSomething = doSomething
+                    }
+            
+                    internal func doSomething() {
+                        _doSomething()
+                    }
+            
+                    private static var _production: MyClient?
+            
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+            
+                        if _production == nil {
+                            _production = production
+                        }
+            
+                        return MyClient.ProtocolWitness(
+                            doSomething: production.doSomething
+                        )
+                    }
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_includesFunction_whenMix_andOneIsExplicitlySetAsInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                internal func explicitInternalDoSomething() { }
+            
+                func doSomething() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                internal func explicitInternalDoSomething() { }
+            
+                func doSomething() { }
+            
+                struct ProtocolWitness {
+                    internal var _explicitInternalDoSomething: () -> Void
+                    var _doSomething: () -> Void
+            
+                    init(
+                        explicitInternalDoSomething: @escaping () -> Void,
+                        doSomething: @escaping () -> Void
+                    ) {
+                        _explicitInternalDoSomething = explicitInternalDoSomething
+                        _doSomething = doSomething
+                    }
+            
+                    internal func explicitInternalDoSomething() {
+                        _explicitInternalDoSomething()
+                    }
+            
+                    func doSomething() {
+                        _doSomething()
+                    }
+            
+                    private static var _production: MyClient?
+            
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+            
+                        if _production == nil {
+                            _production = production
+                        }
+            
+                        return MyClient.ProtocolWitness(
+                            explicitInternalDoSomething: production.explicitInternalDoSomething,
+                            doSomething: production.doSomething
+                        )
+                    }
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Public
+
+extension ProtocolWitnessingTests {
+    func testMacro_includesFunction_whenSetAsPublic() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                public func doSomething() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                public func doSomething() { }
+            
+                struct ProtocolWitness {
+                    public var _doSomething: () -> Void
+            
+                    init(doSomething: @escaping () -> Void) {
+                        _doSomething = doSomething
+                    }
+            
+                    public func doSomething() {
+                        _doSomething()
+                    }
+            
+                    private static var _production: MyClient?
+            
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+            
+                        if _production == nil {
+                            _production = production
+                        }
+            
+                        return MyClient.ProtocolWitness(
+                            doSomething: production.doSomething
+                        )
+                    }
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_includesFunction_whenMix_andOneIsSetAsPublic() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                public func explicitPublicDoSomething() { }
+            
+                func doSomething() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                public func explicitPublicDoSomething() { }
+            
+                func doSomething() { }
+            
+                struct ProtocolWitness {
+                    public var _explicitPublicDoSomething: () -> Void
+                    var _doSomething: () -> Void
+            
+                    init(
+                        explicitPublicDoSomething: @escaping () -> Void,
+                        doSomething: @escaping () -> Void
+                    ) {
+                        _explicitPublicDoSomething = explicitPublicDoSomething
+                        _doSomething = doSomething
+                    }
+            
+                    public func explicitPublicDoSomething() {
+                        _explicitPublicDoSomething()
+                    }
+            
+                    func doSomething() {
+                        _doSomething()
+                    }
+            
+                    private static var _production: MyClient?
+            
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+            
+                        if _production == nil {
+                            _production = production
+                        }
+            
+                        return MyClient.ProtocolWitness(
+                            explicitPublicDoSomething: production.explicitPublicDoSomething,
+                            doSomething: production.doSomething
+                        )
+                    }
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Open
+
+extension ProtocolWitnessingTests {
+    func testMacro_includesFunction_whenSetAsOpen() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                open func doSomething() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                open func doSomething() { }
+            
+                struct ProtocolWitness {
+                    open var _doSomething: () -> Void
+            
+                    init(doSomething: @escaping () -> Void) {
+                        _doSomething = doSomething
+                    }
+            
+                    open func doSomething() {
+                        _doSomething()
+                    }
+            
+                    private static var _production: MyClient?
+            
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+            
+                        if _production == nil {
+                            _production = production
+                        }
+            
+                        return MyClient.ProtocolWitness(
+                            doSomething: production.doSomething
+                        )
+                    }
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_includesFunction_whenMix_andOneIsSetAsOpen() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                open func explicitPublicDoSomething() { }
+            
+                func doSomething() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                open func explicitPublicDoSomething() { }
+            
+                func doSomething() { }
+            
+                struct ProtocolWitness {
+                    open var _explicitPublicDoSomething: () -> Void
+                    var _doSomething: () -> Void
+            
+                    init(
+                        explicitPublicDoSomething: @escaping () -> Void,
+                        doSomething: @escaping () -> Void
+                    ) {
+                        _explicitPublicDoSomething = explicitPublicDoSomething
+                        _doSomething = doSomething
+                    }
+            
+                    open func explicitPublicDoSomething() {
+                        _explicitPublicDoSomething()
+                    }
+            
+                    func doSomething() {
+                        _doSomething()
+                    }
+            
+                    private static var _production: MyClient?
+            
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+            
+                        if _production == nil {
+                            _production = production
+                        }
+            
+                        return MyClient.ProtocolWitness(
+                            explicitPublicDoSomething: production.explicitPublicDoSomething,
+                            doSomething: production.doSomething
                         )
                     }
                 }
@@ -647,27 +959,27 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething() async { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () async -> Void
-
+            
                     init(doSomething: @escaping () async -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething() async {
                         await _doSomething()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -692,13 +1004,13 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething() async { }
-
+            
                 func doAnotherThing() async { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () async -> Void
                     var _doAnotherThing: () async -> Void
-
+            
                     init(
                         doSomething: @escaping () async -> Void,
                         doAnotherThing: @escaping () async -> Void
@@ -706,24 +1018,24 @@ extension ProtocolWitnessingTests {
                         _doSomething = doSomething
                         _doAnotherThing = doAnotherThing
                     }
-
+            
                     func doSomething() async {
                         await _doSomething()
                     }
-
+            
                     func doAnotherThing() async {
                         await _doAnotherThing()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething,
                             doAnotherThing: production.doAnotherThing
@@ -749,13 +1061,13 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething() { }
-
+            
                 func doAnotherThing() async { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () -> Void
                     var _doAnotherThing: () async -> Void
-
+            
                     init(
                         doSomething: @escaping () -> Void,
                         doAnotherThing: @escaping () async -> Void
@@ -763,24 +1075,24 @@ extension ProtocolWitnessingTests {
                         _doSomething = doSomething
                         _doAnotherThing = doAnotherThing
                     }
-
+            
                     func doSomething() {
                         _doSomething()
                     }
-
+            
                     func doAnotherThing() async {
                         await _doAnotherThing()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething,
                             doAnotherThing: production.doAnotherThing
@@ -808,27 +1120,27 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething() throws { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () throws -> Void
-
+            
                     init(doSomething: @escaping () throws -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething() throws {
                         try _doSomething()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -853,13 +1165,13 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething() throws { }
-
+            
                 func doSomethingElse() throws { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () throws -> Void
                     var _doSomethingElse: () throws -> Void
-
+            
                     init(
                         doSomething: @escaping () throws -> Void,
                         doSomethingElse: @escaping () throws -> Void
@@ -867,24 +1179,24 @@ extension ProtocolWitnessingTests {
                         _doSomething = doSomething
                         _doSomethingElse = doSomethingElse
                     }
-
+            
                     func doSomething() throws {
                         try _doSomething()
                     }
-
+            
                     func doSomethingElse() throws {
                         try _doSomethingElse()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething,
                             doSomethingElse: production.doSomethingElse
@@ -910,13 +1222,13 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething() { }
-
+            
                 func doSomethingElse() throws { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () -> Void
                     var _doSomethingElse: () throws -> Void
-
+            
                     init(
                         doSomething: @escaping () -> Void,
                         doSomethingElse: @escaping () throws -> Void
@@ -924,24 +1236,24 @@ extension ProtocolWitnessingTests {
                         _doSomething = doSomething
                         _doSomethingElse = doSomethingElse
                     }
-
+            
                     func doSomething() {
                         _doSomething()
                     }
-
+            
                     func doSomethingElse() throws {
                         try _doSomethingElse()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething,
                             doSomethingElse: production.doSomethingElse
@@ -975,27 +1287,27 @@ extension ProtocolWitnessingTests {
                     // Complex logic here...
                     completionHandler()
                 }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: ((Int) -> Void) -> Void
-
+            
                     init(doSomething: @escaping ((Int) -> Void) -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething(completionHandler: (Int) -> Void) {
                         _doSomething(completionHandler)
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -1024,27 +1336,27 @@ extension ProtocolWitnessingTests {
                     // Complex logic here...
                     completionHandler(1234567890)
                 }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: ((Int) -> Void) -> Void
-
+            
                     init(doSomething: @escaping ((Int) -> Void) -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething(completionHandler: (Int) -> Void) {
                         _doSomething(completionHandler)
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -1071,27 +1383,27 @@ extension ProtocolWitnessingTests {
                 func doSomething(completionHandler: @escaping () -> Void) {
                     completionHandler()
                 }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: (@escaping () -> Void) -> Void
-
+            
                     init(doSomething: @escaping (@escaping () -> Void) -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething(completionHandler: @escaping () -> Void) {
                         _doSomething(completionHandler)
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -1114,27 +1426,27 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething(completionHandler: @escaping (Int) -> Void) { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: (@escaping (Int) -> Void) -> Void
-
+            
                     init(doSomething: @escaping (@escaping (Int) -> Void) -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething(completionHandler: @escaping (Int) -> Void) {
                         _doSomething(completionHandler)
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -1161,27 +1473,27 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething() -> Void { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () -> Void
-
+            
                     init(doSomething: @escaping () -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething() -> Void {
                         _doSomething()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -1204,27 +1516,27 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething()   ->   Void { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () -> Void
-
+            
                     init(doSomething: @escaping () -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething() -> Void {
                         _doSomething()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -1247,27 +1559,27 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func    doSomething()    {    }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () -> Void
-
+            
                     init(doSomething: @escaping () -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething() {
                         _doSomething()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -1284,7 +1596,7 @@ extension ProtocolWitnessingTests {
             @ProtocolWitnessing
             struct MyClient {
                 func doSomething()
-                { 
+                {
                     /*some logic here*/
                 }
             }
@@ -1293,30 +1605,30 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func doSomething()
-                { 
+                {
                     /*some logic here*/
                 }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () -> Void
-
+            
                     init(doSomething: @escaping () -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething() {
                         _doSomething()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -1351,27 +1663,27 @@ extension ProtocolWitnessingTests {
                     /*some logic here*/
                     
                 }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () -> Void
-
+            
                     init(doSomething: @escaping () -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething() {
                         _doSomething()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -1400,35 +1712,35 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 let someLetProperty: Int
-
+            
                 struct ProtocolWitness {
                     var _someLetProperty: Int
-
+            
                     var someLetProperty: Int {
                         get {
                             _someLetProperty
                         }
                     }
-
+            
                     init(someLetProperty: Int) {
                         _someLetProperty = someLetProperty
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production(
                         someLetProperty: Int
                     ) -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient(
                             someLetProperty: someLetProperty
                         )
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             someLetProperty: production.someLetProperty
                         )
@@ -1451,35 +1763,35 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 var someLetProperty: Int
-
+            
                 struct ProtocolWitness {
                     var _someLetProperty: Int
-
+            
                     var someLetProperty: Int {
                         get {
                             _someLetProperty
                         }
                     }
-
+            
                     init(someLetProperty: Int) {
                         _someLetProperty = someLetProperty
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production(
                         someLetProperty: Int
                     ) -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient(
                             someLetProperty: someLetProperty
                         )
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             someLetProperty: production.someLetProperty
                         )
@@ -1502,21 +1814,21 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 let someLetProperty = 10
-
+            
                 struct ProtocolWitness {
                     init() {
-
+            
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -1537,21 +1849,21 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 var someLetProperty = 10
-
+            
                 struct ProtocolWitness {
                     init() {
-
+            
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -1578,19 +1890,19 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 let someLetProperty: Int
-
+            
                 func doSomething() { }
-
+            
                 struct ProtocolWitness {
                     var _someLetProperty: Int
                     var _doSomething: () -> Void
-
+            
                     var someLetProperty: Int {
                         get {
                             _someLetProperty
                         }
                     }
-
+            
                     init(
                         someLetProperty: Int,
                         doSomething: @escaping () -> Void
@@ -1598,24 +1910,24 @@ extension ProtocolWitnessingTests {
                         _someLetProperty = someLetProperty
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething() {
                         _doSomething()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production(
                         someLetProperty: Int
                     ) -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient(
                             someLetProperty: someLetProperty
                         )
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             someLetProperty: production.someLetProperty,
                             doSomething: production.doSomething
@@ -1641,19 +1953,19 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 var someLetProperty: Int
-
+            
                 func doSomething() { }
-
+            
                 struct ProtocolWitness {
                     var _someLetProperty: Int
                     var _doSomething: () -> Void
-
+            
                     var someLetProperty: Int {
                         get {
                             _someLetProperty
                         }
                     }
-
+            
                     init(
                         someLetProperty: Int,
                         doSomething: @escaping () -> Void
@@ -1661,24 +1973,24 @@ extension ProtocolWitnessingTests {
                         _someLetProperty = someLetProperty
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething() {
                         _doSomething()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production(
                         someLetProperty: Int
                     ) -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient(
                             someLetProperty: someLetProperty
                         )
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             someLetProperty: production.someLetProperty,
                             doSomething: production.doSomething
@@ -1704,29 +2016,29 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 let someLetProperty = 532
-
+            
                 func doSomething() { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () -> Void
-
+            
                     init(doSomething: @escaping () -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething() {
                         _doSomething()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -1751,32 +2063,361 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 var someLetProperty = 10
-
+            
                 func doSomething() { }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () -> Void
-
+            
                     init(doSomething: @escaping () -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething() {
                         _doSomething()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
+                    }
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Private
+
+extension ProtocolWitnessingTests {
+    func testMacro_doesNotIncludePrivateProperty_whenOnlyPrivateProperty() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                private var somethingPrivate = true
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                private var somethingPrivate = true
+            
+                struct ProtocolWitness {
+                    init() {
+            
+                    }
+            
+                    private static var _production: MyClient?
+            
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+            
+                        if _production == nil {
+                            _production = production
+                        }
+            
+                        return MyClient.ProtocolWitness()
+                    }
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_doesNotIncludePrivateProperty_whenMixingPrivateProperty() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                var somethingNotPrivate = true
+            
+                private var somethingPrivate = true
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                var somethingNotPrivate = true
+            
+                private var somethingPrivate = true
+            
+                struct ProtocolWitness {
+                    var somethingNotPrivate = true
+            
+                    init() {
+            
+                    }
+            
+                    private static var _production: MyClient?
+            
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+            
+                        if _production == nil {
+                            _production = production
+                        }
+            
+                        return MyClient.ProtocolWitness()
+                    }
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Internal
+
+extension ProtocolWitnessingTests {
+    func testMacro_includesProperty_whenExplicitlySetAsInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                internal var somethingInternal = true
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                internal var somethingInternal = true
+            
+                struct ProtocolWitness {
+                    internal var somethingInternal = true
+            
+                    init() {
+            
+                    }
+            
+                    private static var _production: MyClient?
+            
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+            
+                        if _production == nil {
+                            _production = production
+                        }
+            
+                        return MyClient.ProtocolWitness()
+                    }
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_includesProperty_whenMix_andOneIsExplicitlySetAsInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                internal var somethingInternal = true
+            
+                var somethingInternal = true
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                internal var somethingInternal = true
+            
+                var somethingInternal = true
+            
+                struct ProtocolWitness {
+                    internal var somethingInternal = true
+                    var somethingInternal = true
+            
+                    init() {
+            
+                    }
+            
+                    private static var _production: MyClient?
+            
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+            
+                        if _production == nil {
+                            _production = production
+                        }
+            
+                        return MyClient.ProtocolWitness()
+                    }
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Public
+
+extension ProtocolWitnessingTests {
+    func testMacro_includesProperty_whenSetAsPublic() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                public var somethingPublic = true
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                public var somethingPublic = true
+            
+                struct ProtocolWitness {
+                    public var somethingPublic = true
+            
+                    init() {
+            
+                    }
+            
+                    private static var _production: MyClient?
+            
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+            
+                        if _production == nil {
+                            _production = production
+                        }
+            
+                        return MyClient.ProtocolWitness()
+                    }
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_includesProperty_whenMix_andOneIsSetAsPublic() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                public var somethingPublic = true
+            
+                var somethingInternal = true
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                public var somethingPublic = true
+            
+                var somethingInternal = true
+            
+                struct ProtocolWitness {
+                    public var somethingPublic = true
+                    var somethingInternal = true
+            
+                    init() {
+            
+                    }
+            
+                    private static var _production: MyClient?
+            
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+            
+                        if _production == nil {
+                            _production = production
+                        }
+            
+                        return MyClient.ProtocolWitness()
+                    }
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Open
+
+extension ProtocolWitnessingTests {
+    func testMacro_includesProperty_whenSetAsOpen() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                open var somethingOpen = true
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                open var somethingOpen = true
+            
+                struct ProtocolWitness {
+                    open var somethingOpen = true
+            
+                    init() {
+            
+                    }
+            
+                    private static var _production: MyClient?
+            
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+            
+                        if _production == nil {
+                            _production = production
+                        }
+            
+                        return MyClient.ProtocolWitness()
+                    }
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_includesProperty_whenMix_andOneIsSetAsOpen() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                open var somethingOpen = true
+            
+                var somethingElse = true
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                open var somethingOpen = true
+            
+                var somethingElse = true
+            
+                struct ProtocolWitness {
+                    open var somethingOpen = true
+                    var somethingElse = true
+            
+                    init() {
+            
+                    }
+            
+                    private static var _production: MyClient?
+            
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+            
+                        if _production == nil {
+                            _production = production
+                        }
+            
+                        return MyClient.ProtocolWitness()
                     }
                 }
             }
@@ -1800,7 +2441,7 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 var isThing: Bool { true }
-
+            
                 struct ProtocolWitness {
                     var _isThing: Bool = {
                         true
@@ -1813,20 +2454,20 @@ extension ProtocolWitnessingTests {
                     }
 
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -1851,33 +2492,33 @@ extension ProtocolWitnessingTests {
                 var isThing: Bool {
                     true
                 }
-
+            
                 struct ProtocolWitness {
                     var _isThing: Bool = {
                         true
                     }()
-
+            
                     var isThing: Bool {
                         get {
                             _isThing
                         }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -1905,42 +2546,42 @@ extension ProtocolWitnessingTests {
             struct MyClient {
                 var isThing: Bool {
                     let myThing = true
-
+            
                     print(myThing)
-
+            
                     return myThing
                 }
-
+            
                 struct ProtocolWitness {
                     var _isThing: Bool = {
                         let myThing = true
-
+            
                                 print(myThing)
-
+            
                                 return myThing
                     }()
-
+            
                     var isThing: Bool {
                         get {
                             _isThing
                         }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -1954,7 +2595,7 @@ extension ProtocolWitnessingTests {
             """
             @ProtocolWitnessing
             struct MyClient {
-                var isThing: Bool { 
+                var isThing: Bool {
                     get { true }
                 }
             }
@@ -1962,36 +2603,36 @@ extension ProtocolWitnessingTests {
         } expansion: {
             """
             struct MyClient {
-                var isThing: Bool { 
+                var isThing: Bool {
                     get { true }
                 }
-
+            
                 struct ProtocolWitness {
                     var _isThing: Bool = {
                         true
                     }()
-
+            
                     var isThing: Bool {
                         get {
                             _isThing
                         }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -2020,33 +2661,33 @@ extension ProtocolWitnessingTests {
                 var isAsync: Bool {
                     get async { true }
                 }
-
+            
                 struct ProtocolWitness {
                     var _isAsync: Bool = {
                         true
                     }()
-
+            
                     var isAsync: Bool {
                         get async {
                             _isAsync
                         }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -2075,33 +2716,33 @@ extension ProtocolWitnessingTests {
                         true
                     }
                 }
-
+            
                 struct ProtocolWitness {
                     var _isAsync: Bool = {
                         true
                     }()
-
+            
                     var isAsync: Bool {
                         get async {
                             _isAsync
                         }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -2138,37 +2779,37 @@ extension ProtocolWitnessingTests {
                         return myThing
                     }
                 }
-
+            
                 struct ProtocolWitness {
                     var _isThing: Bool = {
                         let myThing = true
-
+            
                                     print(myThing)
-
+            
                                     return myThing
                     }()
-
+            
                     var isThing: Bool {
                         get async {
                             _isThing
                         }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -2197,33 +2838,33 @@ extension ProtocolWitnessingTests {
                 var isAsync: Bool {
                     get throws { true }
                 }
-
+            
                 struct ProtocolWitness {
                     var _isAsync: () throws -> Bool = {
                         true
                     }
-
+            
                     var isAsync: Bool {
                         get throws {
                             try _isAsync()
                         }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -2238,7 +2879,7 @@ extension ProtocolWitnessingTests {
             @ProtocolWitnessing
             struct MyClient {
                 var isAsync: Bool {
-                    get throws { 
+                    get throws {
                         true
                     }
                 }
@@ -2248,37 +2889,37 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 var isAsync: Bool {
-                    get throws { 
+                    get throws {
                         true
                     }
                 }
-
+            
                 struct ProtocolWitness {
                     var _isAsync: () throws -> Bool = {
                         true
                     }
-
+            
                     var isAsync: Bool {
                         get throws {
                             try _isAsync()
                         }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -2303,33 +2944,33 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 static var returnSomething: [String] { [] }
-
+            
                 struct ProtocolWitness {
                     static var _returnSomething: [String] = {
                         []
                     }()
-
+            
                     static var returnSomething: [String] {
                         get {
                             _returnSomething
                         }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -2354,33 +2995,33 @@ extension ProtocolWitnessingTests {
                 static var returnSomething: [String] {
                     get { [] }
                 }
-
+            
                 struct ProtocolWitness {
                     static var _returnSomething: [String] = {
                         []
                     }()
-
+            
                     static var returnSomething: [String] {
                         get {
                             _returnSomething
                         }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -2407,12 +3048,12 @@ extension ProtocolWitnessingTests {
                     get { [] }
                     set { print(newValue) }
                 }
-
+            
                 struct ProtocolWitness {
                     static var _returnSomething: [String] = {
                         []
                     }()
-
+            
                     static var returnSomething: [String] {
                         get {
                             _returnSomething
@@ -2421,22 +3062,22 @@ extension ProtocolWitnessingTests {
                             print(newValue)
                         }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -2465,33 +3106,33 @@ extension ProtocolWitnessingTests {
                 lazy var getSomething: Bool = {
                     true
                 }()
-
+            
                 struct ProtocolWitness {
                     var _getSomething: Bool = {
                         true
                     }()
-
+            
                     var getSomething: Bool {
                         get {
                             _getSomething
                         }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -2509,7 +3150,7 @@ extension ProtocolWitnessingTests {
                     let thing = true
                     
                     print("thing", thing)
-
+            
                     return thing
                 }()
             }
@@ -2521,40 +3162,40 @@ extension ProtocolWitnessingTests {
                     let thing = true
                     
                     print("thing", thing)
-
+            
                     return thing
                 }()
-
+            
                 struct ProtocolWitness {
                     var _getSomething: Bool = {
                         let thing = true
-
+            
                                 print("thing", thing)
-
+            
                                 return thing
                     }()
-
+            
                     var getSomething: Bool {
                         get {
                             _getSomething
                         }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -2585,12 +3226,12 @@ extension ProtocolWitnessingTests {
                     get { true }
                     set { print(newValue) }
                 }
-
+            
                 struct ProtocolWitness {
                     var _isThing: Bool = {
                         true
                     }()
-
+            
                     var isThing: Bool {
                         get {
                             _isThing
@@ -2599,22 +3240,22 @@ extension ProtocolWitnessingTests {
                             print(newValue)
                         }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -2630,7 +3271,7 @@ extension ProtocolWitnessingTests {
             struct MyClient {
                 var isThing: Bool {
                     get { true }
-                    set { 
+                    set {
                         print(newValue)
                     }
                 }
@@ -2641,16 +3282,16 @@ extension ProtocolWitnessingTests {
             struct MyClient {
                 var isThing: Bool {
                     get { true }
-                    set { 
+                    set {
                         print(newValue)
                     }
                 }
-
+            
                 struct ProtocolWitness {
                     var _isThing: Bool = {
                         true
                     }()
-
+            
                     var isThing: Bool {
                         get {
                             _isThing
@@ -2659,22 +3300,22 @@ extension ProtocolWitnessingTests {
                                     print(newValue)
                                 }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -2707,16 +3348,16 @@ extension ProtocolWitnessingTests {
                     set {
                         let thing = 443
                         let thing2 = thing * (newValue ? 1 : 0)
-
+            
                         print(thing2)
                     }
                 }
-
+            
                 struct ProtocolWitness {
                     var _isThing: Bool = {
                         true
                     }()
-
+            
                     var isThing: Bool {
                         get {
                             _isThing
@@ -2724,26 +3365,26 @@ extension ProtocolWitnessingTests {
                         set {
                                     let thing = 443
                                     let thing2 = thing * (newValue ? 1 : 0)
-
+            
                                     print(thing2)
                                 }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -2780,7 +3421,7 @@ extension ProtocolWitnessingTests {
                 var isAsync: Bool {
                     get async { true }
                 }
-
+            
                 struct ProtocolWitness {
                     var _isThing: Bool = {
                         true
@@ -2788,34 +3429,34 @@ extension ProtocolWitnessingTests {
                     var _isAsync: Bool = {
                         true
                     }()
-
+            
                     var isThing: Bool {
                         get {
                             _isThing
                         }
                     }
-
+            
                     var isAsync: Bool {
                         get async {
                             _isAsync
                         }
                     }
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }
@@ -2886,11 +3527,11 @@ extension ProtocolWitnessingTests {
             struct MyClient {
                 func returnsVoid() { }
                 func returnsAThing() -> Thing { .init() }
-
+            
                 struct ProtocolWitness {
                     var _returnsVoid: () -> Void
                     var _returnsAThing: () -> Thing
-
+            
                     init(
                         returnsVoid: @escaping () -> Void,
                         returnsAThing: @escaping () -> Thing
@@ -2898,24 +3539,24 @@ extension ProtocolWitnessingTests {
                         _returnsVoid = returnsVoid
                         _returnsAThing = returnsAThing
                     }
-
+            
                     func returnsVoid() {
                         _returnsVoid()
                     }
-
+            
                     func returnsAThing() -> Thing {
                         _returnsAThing()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             returnsVoid: production.returnsVoid,
                             returnsAThing: production.returnsAThing
@@ -2946,16 +3587,16 @@ extension ProtocolWitnessingTests {
         } expansion: {
             """
             class Thing {}
-
+            
             @SomeAttribute
             struct MyClient {
                 func returnsVoid() { }
                 func returnsAThing() -> Thing { .init() }
-
+            
                 struct ProtocolWitness {
                     var _returnsVoid: () -> Void
                     var _returnsAThing: () -> Thing
-
+            
                     init(
                         returnsVoid: @escaping () -> Void,
                         returnsAThing: @escaping () -> Thing
@@ -2963,24 +3604,24 @@ extension ProtocolWitnessingTests {
                         _returnsVoid = returnsVoid
                         _returnsAThing = returnsAThing
                     }
-
+            
                     func returnsVoid() {
                         _returnsVoid()
                     }
-
+            
                     func returnsAThing() -> Thing {
                         _returnsAThing()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             returnsVoid: production.returnsVoid,
                             returnsAThing: production.returnsAThing
@@ -3005,7 +3646,7 @@ extension ProtocolWitnessingTests {
                     print("Updating UI")
                 }
             }
-
+            
             @ProtocolWitnessing(typeName: "MyClientWitness")
             @MainActor
             struct MyClient {
@@ -3049,7 +3690,7 @@ extension ProtocolWitnessingTests {
                 
                 enum MyError: Error { case networkIssue }
             }
-
+            
             extension MyClient {
                 func doSomethingElse() {
                     // This function won't be seen by the macro declared on the original struct
@@ -3105,7 +3746,7 @@ extension ProtocolWitnessingTests {
                 }
                 
                 enum MyError: Error { case networkIssue }
-
+            
                 struct MyClientWitness {
                     var _myThing: String
                     var _yourName: String
@@ -3121,41 +3762,41 @@ extension ProtocolWitnessingTests {
                     var _returnsVoid: () async -> Void
                     var _returnsAThing: () async throws -> Thing
                     var _fetchData: ((Int) throws -> Void) throws -> Void
-
+            
                     var myThing: String {
                         get {
                             _myThing
                         }
                     }
-
+            
                     var yourName: String {
                         get {
                             _yourName
                         }
                     }
-
+            
                     var one: Int = {
                         1
                     }()
-
+            
                     var two: Int {
                         get {
                             _two
                         }
                     }
-
+            
                     static var strings: [String] = {
                         [
                                 "a", "b", "c"
                             ]
                     }()
-
+            
                     var moreStrings: [String] {
                         get {
                             _moreStrings
                         }
                     }
-
+            
                     init(
                         myThing: String,
                         yourName: String,
@@ -3171,25 +3812,25 @@ extension ProtocolWitnessingTests {
                         _returnsAThing = returnsAThing
                         _fetchData = fetchData
                     }
-
+            
                     func returnsTrue() -> Bool {
                         _returnsTrue()
                     }
-
+            
                     func returnsVoid() async {
                         await _returnsVoid()
                     }
-
+            
                     func returnsAThing() async throws -> Thing {
                         try await _returnsAThing()
                     }
-
+            
                     func fetchData(completionHandler: (Int) throws -> Void) throws {
                         try _fetchData(completionHandler)
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     @MainActor
                     static func production(
                         myThing: String,
@@ -3199,11 +3840,11 @@ extension ProtocolWitnessingTests {
                             myThing: myThing,
                             yourName: yourName
                         )
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.MyClientWitness(
                             myThing: production.myThing,
                             yourName: production.yourName,
@@ -3215,7 +3856,7 @@ extension ProtocolWitnessingTests {
                     }
                 }
             }
-
+            
             extension MyClient {
                 func doSomethingElse() {
                     // This function won't be seen by the macro declared on the original struct
@@ -3245,11 +3886,11 @@ extension ProtocolWitnessingTests {
             struct MyClient {
                 func returnsVoid() { }
                 func returnsAThing() -> Thing { }
-
+            
                 struct ProtocolWitness {
                     var _returnsVoid: () -> Void
                     var _returnsAThing: () -> Thing
-
+            
                     init(
                         returnsVoid: @escaping () -> Void,
                         returnsAThing: @escaping () -> Thing
@@ -3257,24 +3898,24 @@ extension ProtocolWitnessingTests {
                         _returnsVoid = returnsVoid
                         _returnsAThing = returnsAThing
                     }
-
+            
                     func returnsVoid() {
                         _returnsVoid()
                     }
-
+            
                     func returnsAThing() -> Thing {
                         _returnsAThing()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             returnsVoid: production.returnsVoid,
                             returnsAThing: production.returnsAThing
@@ -3301,25 +3942,25 @@ extension ProtocolWitnessingTests {
         } expansion: {
             """
             struct MyClient {
-
+            
                 struct MyCustomWitnessTypeName {
                     init() {
-
+            
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.MyCustomWitnessTypeName {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.MyCustomWitnessTypeName()
                     }
                 }
-
+            
             }
             """
         }
@@ -3337,27 +3978,27 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func myFunction() {}
-
+            
                 struct MyCustomWitnessTypeName {
                     var _myFunction: () -> Void
-
+            
                     init(myFunction: @escaping () -> Void) {
                         _myFunction = myFunction
                     }
-
+            
                     func myFunction() {
                         _myFunction()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.MyCustomWitnessTypeName {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.MyCustomWitnessTypeName(
                             myFunction: production.myFunction
                         )
@@ -3384,27 +4025,27 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func returnsVoid() { }
-
+            
                 struct ProtocolWitness {
                     var _returnsVoid: () -> Void
-
+            
                     init(returnsVoid: @escaping () -> Void) {
                         _returnsVoid = returnsVoid
                     }
-
+            
                     func returnsVoid() {
                         _returnsVoid()
                     }
-
+            
                     private static var _live: MyClient?
-
+            
                     static func live() -> MyClient.ProtocolWitness {
                         let live = _live ?? MyClient()
-
+            
                         if _live == nil {
                             _live = live
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             returnsVoid: live.returnsVoid
                         )
@@ -3431,27 +4072,27 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 func returnsVoid() { }
-
+            
                 struct MyCustomTypeWitness {
                     var _returnsVoid: () -> Void
-
+            
                     init(returnsVoid: @escaping () -> Void) {
                         _returnsVoid = returnsVoid
                     }
-
+            
                     func returnsVoid() {
                         _returnsVoid()
                     }
-
+            
                     private static var _live: MyClient?
-
+            
                     static func live() -> MyClient.MyCustomTypeWitness {
                         let live = _live ?? MyClient()
-
+            
                         if _live == nil {
                             _live = live
                         }
-
+            
                         return MyClient.MyCustomTypeWitness(
                             returnsVoid: live.returnsVoid
                         )
@@ -3472,15 +4113,15 @@ extension ProtocolWitnessingTests {
             @ProtocolWitnessing
             struct MyClient {
                 var id: Int = 1
-
+            
                 enum MyError: Error {
                     case errorOne
                     case errorTwo
                 }
-
+            
                 func doSomething() throws {
                     print("Prod id", id)
-
+            
                     throw MyError.errorTwo
                 }
             }
@@ -3489,42 +4130,42 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 var id: Int = 1
-
+            
                 enum MyError: Error {
                     case errorOne
                     case errorTwo
                 }
-
+            
                 func doSomething() throws {
                     print("Prod id", id)
-
+            
                     throw MyError.errorTwo
                 }
-
+            
                 struct ProtocolWitness {
                     var _doSomething: () throws -> Void
-
+            
                     var id: Int = {
                         1
                     }()
-
+            
                     init(doSomething: @escaping () throws -> Void) {
                         _doSomething = doSomething
                     }
-
+            
                     func doSomething() throws {
                         try _doSomething()
                     }
-
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness(
                             doSomething: production.doSomething
                         )
@@ -3555,37 +4196,37 @@ extension ProtocolWitnessingTests {
             """
             struct MyClient {
                 var one: Int = 1
-
+            
                 static var strings: [String] = [
                     "a", "b", "c"
                 ]
-
+            
                 struct ProtocolWitness {
                     var one: Int = {
                         1
                     }()
-
+            
                     static var strings: [String] = {
                         [
                                 "a", "b", "c"
                             ]
                     }()
-
+            
                     init() {
-
+            
                     }
-
-
-
+            
+            
+            
                     private static var _production: MyClient?
-
+            
                     static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
-
+            
                         if _production == nil {
                             _production = production
                         }
-
+            
                         return MyClient.ProtocolWitness()
                     }
                 }

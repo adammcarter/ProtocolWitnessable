@@ -39,7 +39,8 @@ public struct WitnessingMacro: MemberMacro {
         let combinedInitParameters: [InitParameterDetails] = [
             parameters.map {
                 InitParameterDetails(
-                    name: $0.name, 
+                    modifier: $0.modifier,
+                    name: $0.name,
                     type: $0.type,
                     equals: $0.equals,
                     isEscaping: false,
@@ -52,7 +53,8 @@ public struct WitnessingMacro: MemberMacro {
             +
             functions.map {
                 InitParameterDetails(
-                    name: $0.name, 
+                    modifier: $0.modifier,
+                    name: $0.name,
                     type: $0.type,
                     equals: nil,
                     isEscaping: true,
@@ -64,7 +66,6 @@ public struct WitnessingMacro: MemberMacro {
             }
         ]
             .flatMap { $0 }
-            .filter { $0.equals == nil }
         
         
         
@@ -124,7 +125,9 @@ public struct WitnessingMacro: MemberMacro {
         
         let expandedFunctions = functions
             .map {
-                $0.callsite
+                let modifierOrEmpty = $0.modifier.flatMap { "\($0) " } ?? ""
+                
+                return "\(modifierOrEmpty)\($0.callsite)"
             }
             .joined(separator: "\n\n")
         
@@ -263,8 +266,9 @@ public struct WitnessingMacro: MemberMacro {
         let witnessUnderscoredProperties = combinedInitParameters
             .map {
                 let staticOrEmpty = $0.isStatic ? "static " : ""
+                let modifierOrEmpty = $0.modifier.flatMap { "\($0) " } ?? ""
                 
-                return "\(staticOrEmpty)var _\($0.name)\($0.rhs)"
+                return "\(staticOrEmpty)\(modifierOrEmpty)var _\($0.name)\($0.rhs)"
             }
             .joined(separator: "\n")
         
@@ -554,6 +558,35 @@ public struct WitnessingMacro: MemberMacro {
                     return nil
                 }
                 
+                
+                let initializerValue = member
+                    .decl
+                    .as(VariableDeclSyntax.self)?
+                    .bindings
+                    .first?
+                    .initializer?
+                    .value
+                
+                let needsExplicitWrappingProperty =
+                initializerValue == nil
+                ||
+                initializerValue?.is(FunctionCallExprSyntax.self) == true
+                
+                guard needsExplicitWrappingProperty else {
+                    return nil
+                }
+
+                
+                let modifier = structDecl
+                    .modifiers
+                    .first {
+                        $0.name.tokenKind == .keyword(.internal)
+                        || $0.name.tokenKind == .keyword(.public)
+                        || $0.name.tokenKind == .keyword(.open)
+                    }?
+                    .name
+                    .trimmedDescription
+                
                 let letOrVar = varDecl.bindingSpecifier.text
                 
                 let isStatic = member
@@ -594,23 +627,6 @@ public struct WitnessingMacro: MemberMacro {
                     ?? getterClosureContents
                     ?? accessors?.trimmedDescription
                 
-                let initializerValue = member
-                    .decl
-                    .as(VariableDeclSyntax.self)?
-                    .bindings
-                    .first?
-                    .initializer?
-                    .value
-                
-                let needsExplicitWrappingProperty =
-                    initializerValue == nil
-                    ||
-                    initializerValue?.is(FunctionCallExprSyntax.self) == true
-                
-                guard needsExplicitWrappingProperty else {
-                    return nil
-                }
-                
                 return varDecl
                     .bindings
                     .compactMap { binding -> ParameterDetails? in
@@ -638,6 +654,7 @@ public struct WitnessingMacro: MemberMacro {
 
                         if let type = binding.typeAnnotation?.type.trimmedDescription {
                             return ParameterDetails(
+                                modifier: modifier,
                                 letOrVar: letOrVar,
                                 name: binding.pattern.trimmedDescription,
                                 type: type,
@@ -649,6 +666,7 @@ public struct WitnessingMacro: MemberMacro {
                             )
                         } else {
                             return ParameterDetails(
+                                modifier: modifier,
                                 letOrVar: "var",
                                 name: binding.pattern.trimmedDescription,
                                 type: nil,
@@ -691,6 +709,17 @@ public struct WitnessingMacro: MemberMacro {
                 return function
             }
             .map {
+                let modifier = $0
+                    .modifiers
+                    .first {
+                        $0.name.tokenKind == .keyword(.internal)
+                        || $0.name.tokenKind == .keyword(.public)
+                        || $0.name.tokenKind == .keyword(.open)
+                    }?
+                    .name
+                    .trimmedDescription
+                
+                
                 let signature = $0.signature
                 
                 let isAsync = signature
@@ -778,6 +807,7 @@ public struct WitnessingMacro: MemberMacro {
                 }
                 
                 return FunctionDetails(
+                    modifier: modifier,
                     name: name,
                     type: "\(signatureDecl) -> \(returnValueOrVoid)",
                     callsite:
@@ -843,6 +873,7 @@ public struct WitnessingMacro: MemberMacro {
 
 
 private struct FunctionDetails {
+    let modifier: String?
     let name: String
     let type: String
     let callsite: String
@@ -856,6 +887,7 @@ private struct ClosureParameterDetails {
 
 
 private struct ParameterDetails {
+    let modifier: String?
     let letOrVar: String
     let name: String
     let type: String?
@@ -881,6 +913,7 @@ private struct ComputedPropertyDetails {
 
 
 private struct InitParameterDetails {
+    let modifier: String?
     let name: String
     let type: String?
     let equals: String?
