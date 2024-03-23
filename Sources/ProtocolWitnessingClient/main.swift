@@ -159,53 +159,57 @@ import ProtocolWitnessing
 
 //Thread.sleep(forTimeInterval: 10)
 
+
 struct MyClient {
-    var isAsync: Bool {
-        get async {
-            true
-        }
+    var isThing: Bool {
+        get { true }
+        set { print(newValue) }
     }
     
     struct ProtocolWitness {
-        var _isAsync: Bool
+        var _isThing: Bool = {
+            true
+        }()
         
-        var isAsync: Bool {
-            get async {
-                _isAsync
+        var isThing: Bool {
+            get {
+                _isThing
+            }
+            set {
+                print(newValue)
             }
         }
         
-        init(isAsync: Bool) {
-            _isAsync = isAsync
+        init() {
+            
         }
         
         
         
         private static var _production: MyClient?
         
-        static func production() async -> MyClient.ProtocolWitness {
+        static func production() -> MyClient.ProtocolWitness {
             let production = _production ?? MyClient()
             
             if _production == nil {
                 _production = production
             }
             
-            return MyClient.ProtocolWitness(
-                isAsync: await production.isAsync
-            )
+            return MyClient.ProtocolWitness()
         }
     }
 }
 
 
 
-//var prod = await MyClient.production(someLetProperty: 4)
-//prod._someLetProperty = 4
+
+
+
+//var prod = MyClient.ProtocolWitness.production()
 //
+//print(prod.isThing)
 //
 //var mock = prod
-//mock.some = true
+//mock._isThing = false
 //
-//mock.somethingThatDownloadsData(int: 3) { things in
-//    print("mock", things)
-//}
+//print(mock.isThing)

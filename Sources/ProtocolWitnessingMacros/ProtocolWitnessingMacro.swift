@@ -44,7 +44,9 @@ public struct WitnessingMacro: MemberMacro {
                     equals: $0.equals,
                     isEscaping: false,
                     isAsync: $0.isAsync,
-                    isThrowing: $0.isThrowing
+                    isThrowing: $0.isThrowing,
+                    isStatic: $0.isStatic,
+                    closureContents: $0.closureContents
                 )
             }
             +
@@ -55,7 +57,9 @@ public struct WitnessingMacro: MemberMacro {
                     equals: nil,
                     isEscaping: true,
                     isAsync: false,
-                    isThrowing: false
+                    isThrowing: false,
+                    isStatic: false,
+                    closureContents: nil
                 )
             }
         ]
@@ -67,77 +71,21 @@ public struct WitnessingMacro: MemberMacro {
         
         
         
-        let computedProperties = makeComputedPropertyDetails(from: structDecl)
-        
-        
-        
-        
-        
-        
-        
-        
-        let expandedInit: String
-        
-        if combinedInitParameters.isEmpty {
-            expandedInit =
-                """
-                init() {
-                
-                }
-                """
-        } else if
-            combinedInitParameters.count == 1,
-            let parameter = combinedInitParameters.first
-        {
-            expandedInit =
-                """
-                init(\(parameter.name)\(parameter.escapingRhs)) {
-                _\(parameter.name) = \(parameter.name)
-                }
-                """
-        } else {
-            let args = combinedInitParameters
-                .map { "\($0.name)\($0.escapingRhs)" }
-                .joined(separator: ",\n")
-            
-            let assigns = combinedInitParameters
-                .map { "_\($0.name) = \($0.name)" }
-                .joined(separator: "\n")
-            
-            expandedInit = 
-                """
-                init(
-                \(args)
-                ) {
-                \(assigns)
-                }
-                """
-        }
-        
-        
-        
-        let witnessTypeName = makeWitnessTypeName(from: node)
-        
-        
-        let expandedFunctions = functions
-            .map {
-                $0.callsite
-            }
-            .joined(separator: "\n\n")
-        
-        
-        
-        
-        
         
         
         
         let expandedInitParameters = combinedInitParameters
             .map {
-                "var _\($0.name)\($0.rhs)"
+                let staticOrEmpty = $0.isStatic ? "static " : ""
+                
+                return "\(staticOrEmpty)var _\($0.name)\($0.rhs)"
             }
             .joined(separator: "\n")
         
+        
+        
+        
+        let computedProperties = makeComputedPropertyDetails(from: structDecl)
         
         let expandedComputedProperties = computedProperties
             .map {
@@ -159,7 +107,8 @@ public struct WitnessingMacro: MemberMacro {
                     "_\($0.name)"
                 }
                 
-                let lhs = "\($0.letOrVar) \($0.name)"
+                let staticOrEmpty = $0.isStatic ? "static " : ""
+                let lhs = "\(staticOrEmpty)\($0.letOrVar) \($0.name)"
                 let rhs = "\($0.type)"
                 let getName = "get\(asyncThrows)"
                 let get = "\(getName) { \(getExpression) }"
@@ -183,6 +132,67 @@ public struct WitnessingMacro: MemberMacro {
             expandedComputedProperties
         ]
             .joined(separator: expandedPropertiesSeparator)
+        
+        
+        
+        
+        
+        
+        
+        let initParameters = combinedInitParameters
+            .filter { $0.closureContents == nil }
+        
+        let expandedInit: String
+        
+        if initParameters.isEmpty {
+            expandedInit =
+                """
+                init() {
+                
+                }
+                """
+        } else if
+            initParameters.count == 1,
+            let parameter = initParameters.first
+        {
+            expandedInit =
+                """
+                init(\(parameter.name)\(parameter.escapingRhs)) {
+                _\(parameter.name) = \(parameter.name)
+                }
+                """
+        } else {
+            let args = initParameters
+                .map { "\($0.name)\($0.escapingRhs)" }
+                .joined(separator: ",\n")
+            
+            let assigns = initParameters
+                .map { "_\($0.name) = \($0.name)" }
+                .joined(separator: "\n")
+            
+            expandedInit =
+                """
+                init(
+                \(args)
+                ) {
+                \(assigns)
+                }
+                """
+        }
+        
+        
+        
+        let witnessTypeName = makeWitnessTypeName(from: node)
+        
+        
+        let expandedFunctions = functions
+            .map {
+                $0.callsite
+            }
+            .joined(separator: "\n\n")
+        
+        
+        
         
         
         
@@ -215,10 +225,10 @@ public struct WitnessingMacro: MemberMacro {
         
         
         
-        let needsAsync = combinedInitParameters
+        let needsAsync = initParameters
             .contains { $0.isAsync }
         
-        let needsThrowing = combinedInitParameters
+        let needsThrowing = initParameters
             .contains { $0.isThrowing }
         
         let asyncThrowsSuffix = if needsAsync, needsThrowing {
@@ -281,7 +291,7 @@ public struct WitnessingMacro: MemberMacro {
         
         
         let expandedProductionPropertiesWithProductionNamespace = makeExpandedProductionProperties(
-            fromCombinedInitParameters: combinedInitParameters,
+            fromCombinedInitParameters: initParameters,
             productionName: productionName
         )
         
@@ -397,6 +407,12 @@ public struct WitnessingMacro: MemberMacro {
                 
                 let bindingSpecifier = varDecl.bindingSpecifier
                 
+                let isStatic = member
+                    .decl
+                    .as(VariableDeclSyntax.self)?
+                    .modifiers
+                    .contains { $0.name.tokenKind == .keyword(.static) } == true
+
                 return varDecl
                     .bindings
                     .compactMap { binding -> ComputedPropertyDetails? in
@@ -431,7 +447,8 @@ public struct WitnessingMacro: MemberMacro {
                                 accessor: accessorBlock.trimmedDescription,
                                 setter: setter?.trimmedDescription,
                                 isAsync: isAsync,
-                                isThrowing: isThrowing
+                                isThrowing: isThrowing,
+                                isStatic: isStatic
                             )
                         } else if binding.initializer == nil {
                             return ComputedPropertyDetails(
@@ -441,7 +458,8 @@ public struct WitnessingMacro: MemberMacro {
                                 accessor: "_\(bindingSpecifier.text)",
                                 setter: nil,
                                 isAsync: false,
-                                isThrowing: false
+                                isThrowing: false,
+                                isStatic: isStatic
                             )
                         } else {
                             return nil
@@ -470,6 +488,29 @@ public struct WitnessingMacro: MemberMacro {
                 }
                 
                 let letOrVar = varDecl.bindingSpecifier.text
+                
+                let isStatic = member
+                    .decl
+                    .as(VariableDeclSyntax.self)?
+                    .modifiers
+                    .contains { $0.name.tokenKind == .keyword(.static) } == true
+                
+                let accessors = member
+                    .decl
+                    .as(VariableDeclSyntax.self)?
+                    .bindings
+                    .first?
+                    .accessorBlock?
+                    .accessors
+                
+                let getterClosureContents = accessors?
+                    .as(AccessorDeclListSyntax.self)?
+                    .first?
+                    .body?
+                    .statements
+                    .trimmedDescription
+                
+                let closureContents = getterClosureContents ?? accessors?.trimmedDescription
                 
                 return varDecl
                     .bindings
@@ -503,7 +544,9 @@ public struct WitnessingMacro: MemberMacro {
                                 type: type,
                                 equals: nil,
                                 isAsync: isAsync,
-                                isThrowing: isThrowing
+                                isThrowing: isThrowing,
+                                isStatic: isStatic,
+                                closureContents: closureContents
                             )
                         } else {
                             return ParameterDetails(
@@ -512,7 +555,9 @@ public struct WitnessingMacro: MemberMacro {
                                 type: nil,
                                 equals: binding.initializer?.value.trimmedDescription,
                                 isAsync: isAsync,
-                                isThrowing: isThrowing
+                                isThrowing: isThrowing,
+                                isStatic: isStatic,
+                                closureContents: closureContents
                             )
                         }
                     }
@@ -684,6 +729,8 @@ private struct ParameterDetails {
     let equals: String?
     let isAsync: Bool
     let isThrowing: Bool
+    let isStatic: Bool
+    let closureContents: String?
 }
 
 
@@ -695,6 +742,7 @@ private struct ComputedPropertyDetails {
     let setter: String?
     let isAsync: Bool
     let isThrowing: Bool
+    let isStatic: Bool
 }
 
 
@@ -705,6 +753,8 @@ private struct InitParameterDetails {
     let isEscaping: Bool
     let isAsync: Bool
     let isThrowing: Bool
+    let isStatic: Bool
+    let closureContents: String?
     
     var escapingType: String? {
         guard let type else { return nil }
@@ -714,17 +764,29 @@ private struct InitParameterDetails {
     
     var rhs: String {
         if isThrowing {
-            type.flatMap { ": () throws -> \($0)" } ?? ""
+            let typeRhs = closureContents.flatMap { " = { \($0) }" } ?? ""
+            
+            return type.flatMap { ": () throws -> \($0)\(typeRhs)" } ?? ""
         } else {
-            type.flatMap { ": \($0)" } ?? equals.flatMap { " = \($0)" } ?? ""
+            let typeRhs = closureContents.flatMap { " = { \($0) }()" } ?? ""
+            
+            return type.flatMap { ": \($0)\(typeRhs)" }
+                ?? equals.flatMap { " = \($0)" }
+                ?? ""
         }
     }
     
     var escapingRhs: String {
         if isThrowing {
-            type.flatMap { ": @escaping () throws -> \($0)" } ?? ""
+            let typeRhs = closureContents.flatMap { " = { \($0) }" } ?? ""
+            
+            return type.flatMap { ": @escaping () throws -> \($0)\(typeRhs)" } ?? ""
         } else {
-            escapingType.flatMap { ": \($0)" } ?? equals.flatMap { " = \($0)" } ?? ""
+            let typeRhs = closureContents.flatMap { " = { \($0) }()" } ?? ""
+            
+            return escapingType.flatMap { ": \($0)\(typeRhs)" }
+                ?? equals.flatMap { " = \($0)" }
+                ?? ""
         }
     }
 }

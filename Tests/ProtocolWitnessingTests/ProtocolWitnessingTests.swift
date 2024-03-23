@@ -21,6 +21,8 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
+ - Get functions from extensions of the same type
+ - Ignore private vars/functions within type
  - Erase type for production()?
  - Use SwiftSyntaxMacros builders?
  - Arg for overriding to not use a singleton and having `production() {}` create a new one each time
@@ -1710,7 +1712,9 @@ extension ProtocolWitnessingTests {
                 var isThing: Bool { true }
 
                 struct ProtocolWitness {
-                    var _isThing: Bool
+                    var _isThing: Bool = {
+                        true
+                    }()
 
                     var isThing: Bool {
                         get {
@@ -1718,8 +1722,8 @@ extension ProtocolWitnessingTests {
                         }
                     }
 
-                    init(isThing: Bool) {
-                        _isThing = isThing
+                    init() {
+
                     }
 
 
@@ -1733,9 +1737,7 @@ extension ProtocolWitnessingTests {
                             _production = production
                         }
 
-                        return MyClient.ProtocolWitness(
-                            isThing: production.isThing
-                        )
+                        return MyClient.ProtocolWitness()
                     }
                 }
             }
@@ -1761,7 +1763,9 @@ extension ProtocolWitnessingTests {
                 }
 
                 struct ProtocolWitness {
-                    var _isThing: Bool
+                    var _isThing: Bool = {
+                        true
+                    }()
 
                     var isThing: Bool {
                         get {
@@ -1769,8 +1773,8 @@ extension ProtocolWitnessingTests {
                         }
                     }
 
-                    init(isThing: Bool) {
-                        _isThing = isThing
+                    init() {
+
                     }
 
 
@@ -1784,9 +1788,7 @@ extension ProtocolWitnessingTests {
                             _production = production
                         }
 
-                        return MyClient.ProtocolWitness(
-                            isThing: production.isThing
-                        )
+                        return MyClient.ProtocolWitness()
                     }
                 }
             }
@@ -1820,7 +1822,13 @@ extension ProtocolWitnessingTests {
                 }
 
                 struct ProtocolWitness {
-                    var _isThing: Bool
+                    var _isThing: Bool = {
+                        let myThing = true
+
+                                print(myThing)
+
+                                return myThing
+                    }()
 
                     var isThing: Bool {
                         get {
@@ -1828,8 +1836,8 @@ extension ProtocolWitnessingTests {
                         }
                     }
 
-                    init(isThing: Bool) {
-                        _isThing = isThing
+                    init() {
+
                     }
 
 
@@ -1843,9 +1851,7 @@ extension ProtocolWitnessingTests {
                             _production = production
                         }
 
-                        return MyClient.ProtocolWitness(
-                            isThing: production.isThing
-                        )
+                        return MyClient.ProtocolWitness()
                     }
                 }
             }
@@ -1871,7 +1877,9 @@ extension ProtocolWitnessingTests {
                 }
 
                 struct ProtocolWitness {
-                    var _isThing: Bool
+                    var _isThing: Bool = {
+                        true
+                    }()
 
                     var isThing: Bool {
                         get {
@@ -1879,8 +1887,8 @@ extension ProtocolWitnessingTests {
                         }
                     }
 
-                    init(isThing: Bool) {
-                        _isThing = isThing
+                    init() {
+
                     }
 
 
@@ -1894,9 +1902,7 @@ extension ProtocolWitnessingTests {
                             _production = production
                         }
 
-                        return MyClient.ProtocolWitness(
-                            isThing: production.isThing
-                        )
+                        return MyClient.ProtocolWitness()
                     }
                 }
             }
@@ -1926,7 +1932,9 @@ extension ProtocolWitnessingTests {
                 }
 
                 struct ProtocolWitness {
-                    var _isAsync: Bool
+                    var _isAsync: Bool = {
+                        true
+                    }()
 
                     var isAsync: Bool {
                         get async {
@@ -1934,24 +1942,22 @@ extension ProtocolWitnessingTests {
                         }
                     }
 
-                    init(isAsync: Bool) {
-                        _isAsync = isAsync
+                    init() {
+
                     }
 
 
 
                     private static var _production: MyClient?
 
-                    static func production() async -> MyClient.ProtocolWitness {
+                    static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
 
                         if _production == nil {
                             _production = production
                         }
 
-                        return MyClient.ProtocolWitness(
-                            isAsync: await production.isAsync
-                        )
+                        return MyClient.ProtocolWitness()
                     }
                 }
             }
@@ -1981,7 +1987,9 @@ extension ProtocolWitnessingTests {
                 }
 
                 struct ProtocolWitness {
-                    var _isAsync: Bool
+                    var _isAsync: Bool = {
+                        true
+                    }()
 
                     var isAsync: Bool {
                         get async {
@@ -1989,24 +1997,22 @@ extension ProtocolWitnessingTests {
                         }
                     }
 
-                    init(isAsync: Bool) {
-                        _isAsync = isAsync
+                    init() {
+
                     }
 
 
 
                     private static var _production: MyClient?
 
-                    static func production() async -> MyClient.ProtocolWitness {
+                    static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
 
                         if _production == nil {
                             _production = production
                         }
 
-                        return MyClient.ProtocolWitness(
-                            isAsync: await production.isAsync
-                        )
+                        return MyClient.ProtocolWitness()
                     }
                 }
             }
@@ -2044,7 +2050,13 @@ extension ProtocolWitnessingTests {
                 }
 
                 struct ProtocolWitness {
-                    var _isThing: Bool
+                    var _isThing: Bool = {
+                        let myThing = true
+
+                                    print(myThing)
+
+                                    return myThing
+                    }()
 
                     var isThing: Bool {
                         get async {
@@ -2052,24 +2064,22 @@ extension ProtocolWitnessingTests {
                         }
                     }
 
-                    init(isThing: Bool) {
-                        _isThing = isThing
+                    init() {
+
                     }
 
 
 
                     private static var _production: MyClient?
 
-                    static func production() async -> MyClient.ProtocolWitness {
+                    static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
 
                         if _production == nil {
                             _production = production
                         }
 
-                        return MyClient.ProtocolWitness(
-                            isThing: await production.isThing
-                        )
+                        return MyClient.ProtocolWitness()
                     }
                 }
             }
@@ -2099,7 +2109,9 @@ extension ProtocolWitnessingTests {
                 }
 
                 struct ProtocolWitness {
-                    var _isAsync: () throws -> Bool
+                    var _isAsync: () throws -> Bool = {
+                        true
+                    }
 
                     var isAsync: Bool {
                         get throws {
@@ -2107,26 +2119,22 @@ extension ProtocolWitnessingTests {
                         }
                     }
 
-                    init(isAsync: @escaping () throws -> Bool) {
-                        _isAsync = isAsync
+                    init() {
+
                     }
 
 
 
                     private static var _production: MyClient?
 
-                    static func production() throws -> MyClient.ProtocolWitness {
+                    static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
 
                         if _production == nil {
                             _production = production
                         }
 
-                        return MyClient.ProtocolWitness(
-                            isAsync: {
-                                try production.isAsync
-                            }
-                        )
+                        return MyClient.ProtocolWitness()
                     }
                 }
             }
@@ -2156,7 +2164,9 @@ extension ProtocolWitnessingTests {
                 }
 
                 struct ProtocolWitness {
-                    var _isAsync: () throws -> Bool
+                    var _isAsync: () throws -> Bool = {
+                        true
+                    }
 
                     var isAsync: Bool {
                         get throws {
@@ -2164,26 +2174,22 @@ extension ProtocolWitnessingTests {
                         }
                     }
 
-                    init(isAsync: @escaping () throws -> Bool) {
-                        _isAsync = isAsync
+                    init() {
+
                     }
 
 
 
                     private static var _production: MyClient?
 
-                    static func production() throws -> MyClient.ProtocolWitness {
+                    static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
 
                         if _production == nil {
                             _production = production
                         }
 
-                        return MyClient.ProtocolWitness(
-                            isAsync: {
-                                try production.isAsync
-                            }
-                        )
+                        return MyClient.ProtocolWitness()
                     }
                 }
             }
@@ -2191,6 +2197,198 @@ extension ProtocolWitnessingTests {
         }
     }
 }
+
+// MARK: Static var
+
+extension ProtocolWitnessingTests {
+    func testMacro_expandsMacro_whenStaticVarGetter() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                static var returnSomething: [String] { [] }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                static var returnSomething: [String] { [] }
+
+                struct ProtocolWitness {
+                    static var _returnSomething: [String] = {
+                        []
+                    }()
+
+                    static var returnSomething: [String] {
+                        get {
+                            _returnSomething
+                        }
+                    }
+
+                    init() {
+
+                    }
+
+
+
+                    private static var _production: MyClient?
+
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+
+                        if _production == nil {
+                            _production = production
+                        }
+
+                        return MyClient.ProtocolWitness()
+                    }
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_expandsMacro_whenStaticVarGetter_andExplicitGetter() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                static var returnSomething: [String] {
+                    get { [] }
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                static var returnSomething: [String] {
+                    get { [] }
+                }
+
+                struct ProtocolWitness {
+                    static var _returnSomething: [String] = {
+                        []
+                    }()
+
+                    static var returnSomething: [String] {
+                        get {
+                            _returnSomething
+                        }
+                    }
+
+                    init() {
+
+                    }
+
+
+
+                    private static var _production: MyClient?
+
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+
+                        if _production == nil {
+                            _production = production
+                        }
+
+                        return MyClient.ProtocolWitness()
+                    }
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_expandsMacro_whenStaticVarGetter_andExplicitGetter_andSetter() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                static var returnSomething: [String] {
+                    get { [] }
+                    set { print(newValue) }
+                }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                static var returnSomething: [String] {
+                    get { [] }
+                    set { print(newValue) }
+                }
+
+                struct ProtocolWitness {
+                    static var _returnSomething: [String] = {
+                        []
+                    }()
+
+                    static var returnSomething: [String] {
+                        get {
+                            _returnSomething
+                        }
+                        set {
+                            print(newValue)
+                        }
+                    }
+
+                    init() {
+
+                    }
+
+
+
+                    private static var _production: MyClient?
+
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+
+                        if _production == nil {
+                            _production = production
+                        }
+
+                        return MyClient.ProtocolWitness()
+                    }
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Lazy var
+
+//extension ProtocolWitnessingTests {
+//    func testMacro_epxandsMacro_whenFunctionIsInExtensionOfTheSameType() throws {
+//        assertMacro {
+//            """
+//            struct MyClient { }
+//            
+//            @ProtocolWitnessing
+//            extension MyClient {
+//                func doSomething() { }
+//            }
+//            """
+//        }
+//    }
+//}
+//
+//// MARK: Lazy static var
+//
+//extension ProtocolWitnessingTests {
+//    func testMacro_epxandsMacro_whenFunctionIsInExtensionOfTheSameType() throws {
+//        assertMacro {
+//            """
+//            struct MyClient { }
+//            
+//            @ProtocolWitnessing
+//            extension MyClient {
+//                func doSomething() { }
+//            }
+//            """
+//        }
+//    }
+//}
 
 // MARK: Setter
 
@@ -2215,7 +2413,9 @@ extension ProtocolWitnessingTests {
                 }
 
                 struct ProtocolWitness {
-                    var _isThing: Bool
+                    var _isThing: Bool = {
+                        true
+                    }()
 
                     var isThing: Bool {
                         get {
@@ -2226,8 +2426,8 @@ extension ProtocolWitnessingTests {
                         }
                     }
 
-                    init(isThing: Bool) {
-                        _isThing = isThing
+                    init() {
+
                     }
 
 
@@ -2241,9 +2441,7 @@ extension ProtocolWitnessingTests {
                             _production = production
                         }
 
-                        return MyClient.ProtocolWitness(
-                            isThing: production.isThing
-                        )
+                        return MyClient.ProtocolWitness()
                     }
                 }
             }
@@ -2275,7 +2473,9 @@ extension ProtocolWitnessingTests {
                 }
 
                 struct ProtocolWitness {
-                    var _isThing: Bool
+                    var _isThing: Bool = {
+                        true
+                    }()
 
                     var isThing: Bool {
                         get {
@@ -2286,8 +2486,8 @@ extension ProtocolWitnessingTests {
                                 }
                     }
 
-                    init(isThing: Bool) {
-                        _isThing = isThing
+                    init() {
+
                     }
 
 
@@ -2301,9 +2501,7 @@ extension ProtocolWitnessingTests {
                             _production = production
                         }
 
-                        return MyClient.ProtocolWitness(
-                            isThing: production.isThing
-                        )
+                        return MyClient.ProtocolWitness()
                     }
                 }
             }
@@ -2341,7 +2539,9 @@ extension ProtocolWitnessingTests {
                 }
 
                 struct ProtocolWitness {
-                    var _isThing: Bool
+                    var _isThing: Bool = {
+                        true
+                    }()
 
                     var isThing: Bool {
                         get {
@@ -2355,8 +2555,8 @@ extension ProtocolWitnessingTests {
                                 }
                     }
 
-                    init(isThing: Bool) {
-                        _isThing = isThing
+                    init() {
+
                     }
 
 
@@ -2370,9 +2570,7 @@ extension ProtocolWitnessingTests {
                             _production = production
                         }
 
-                        return MyClient.ProtocolWitness(
-                            isThing: production.isThing
-                        )
+                        return MyClient.ProtocolWitness()
                     }
                 }
             }
@@ -2410,8 +2608,12 @@ extension ProtocolWitnessingTests {
                 }
 
                 struct ProtocolWitness {
-                    var _isThing: Bool
-                    var _isAsync: Bool
+                    var _isThing: Bool = {
+                        true
+                    }()
+                    var _isAsync: Bool = {
+                        true
+                    }()
 
                     var isThing: Bool {
                         get {
@@ -2425,29 +2627,22 @@ extension ProtocolWitnessingTests {
                         }
                     }
 
-                    init(
-                        isThing: Bool,
-                        isAsync: Bool
-                    ) {
-                        _isThing = isThing
-                        _isAsync = isAsync
+                    init() {
+
                     }
 
 
 
                     private static var _production: MyClient?
 
-                    static func production() async -> MyClient.ProtocolWitness {
+                    static func production() -> MyClient.ProtocolWitness {
                         let production = _production ?? MyClient()
 
                         if _production == nil {
                             _production = production
                         }
 
-                        return MyClient.ProtocolWitness(
-                            isThing: production.isThing,
-                            isAsync: await production.isAsync
-                        )
+                        return MyClient.ProtocolWitness()
                     }
                 }
             }
