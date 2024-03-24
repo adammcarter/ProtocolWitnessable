@@ -920,661 +920,159 @@ extension ProtocolWitnessingTests {
     }
 }
 
-//// MARK: Private
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_doesNotIncludePrivateFunction_whenOnlyPrivateFunction() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                private func doSomething() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                private func doSomething() { }
-//            
-//                struct ProtocolWitness {
-//                    init() {
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_doesNotIncludePrivateFunction_whenMixOfInternalAndPrivateFunctions() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func notSecret() { }
-//            
-//                private func somethingSecret() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func notSecret() { }
-//            
-//                private func somethingSecret() { }
-//            
-//                struct ProtocolWitness {
-//                    var _notSecret: () -> Void
-//            
-//                    init(notSecret: @escaping () -> Void) {
-//                        _notSecret = notSecret
-//                    }
-//            
-//                    func notSecret() {
-//                        _notSecret()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            notSecret: production.notSecret
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
-//// MARK: Internal
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_includesFunction_whenExplicitlySetAsInternal() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                internal func doSomething() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                internal func doSomething() { }
-//            
-//                struct ProtocolWitness {
-//                    internal var _doSomething: () -> Void
-//            
-//                    init(doSomething: @escaping () -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    internal func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_includesFunction_whenMix_andOneIsExplicitlySetAsInternal() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                internal func explicitInternalDoSomething() { }
-//            
-//                func doSomething() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                internal func explicitInternalDoSomething() { }
-//            
-//                func doSomething() { }
-//            
-//                struct ProtocolWitness {
-//                    internal var _explicitInternalDoSomething: () -> Void
-//            
-//                    var _doSomething: () -> Void
-//            
-//                    init(
-//                        explicitInternalDoSomething: @escaping () -> Void,
-//                        doSomething: @escaping () -> Void
-//                    ) {
-//                        _explicitInternalDoSomething = explicitInternalDoSomething
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    internal func explicitInternalDoSomething() {
-//                        _explicitInternalDoSomething()
-//                    }
-//            
-//                    func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            explicitInternalDoSomething: production.explicitInternalDoSomething,
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
-//// MARK: Public
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_includesFunction_whenSetAsPublic() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                public func doSomething() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                public func doSomething() { }
-//            
-//                struct ProtocolWitness {
-//                    public var _doSomething: () -> Void
-//            
-//                    init(doSomething: @escaping () -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    public func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_includesFunction_whenMix_andOneIsSetAsPublic() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                public func explicitPublicDoSomething() { }
-//            
-//                func doSomething() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                public func explicitPublicDoSomething() { }
-//            
-//                func doSomething() { }
-//            
-//                struct ProtocolWitness {
-//                    public var _explicitPublicDoSomething: () -> Void
-//            
-//                    var _doSomething: () -> Void
-//            
-//                    init(
-//                        explicitPublicDoSomething: @escaping () -> Void,
-//                        doSomething: @escaping () -> Void
-//                    ) {
-//                        _explicitPublicDoSomething = explicitPublicDoSomething
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    public func explicitPublicDoSomething() {
-//                        _explicitPublicDoSomething()
-//                    }
-//            
-//                    func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            explicitPublicDoSomething: production.explicitPublicDoSomething,
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
-//// MARK: Static
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_includesFunction_whenStatic() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                static func doSomething() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                static func doSomething() { }
-//
-//                struct ProtocolWitness {
-//                    static var _doSomething: () -> Void
-//
-//                    init() {
-//                    }
-//
-//                    static func doSomething() {
-//                        _doSomething()
-//                    }
-//
-//                    private static var _production: MyClient?
-//
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_includesFunction_whenStatic_andExplicitAccessor() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                static func doSomething() { }
-//                public static func doSomethingElse() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                static func doSomething() { }
-//                public static func doSomethingElse() { }
-//
-//                struct ProtocolWitness {
-//                    static var _doSomething: () -> Void
-//
-//                    public static var _doSomethingElse: () -> Void
-//
-//                    init() {
-//                    }
-//
-//                    static func doSomething() {
-//                        _doSomething()
-//                    }
-//
-//                    public static func doSomethingElse() {
-//                        _doSomethingElse()
-//                    }
-//
-//                    private static var _production: MyClient?
-//
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
-//// MARK: Open
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_includesFunction_whenSetAsOpen() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                open func doSomething() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                open func doSomething() { }
-//            
-//                struct ProtocolWitness {
-//                    open var _doSomething: () -> Void
-//            
-//                    init(doSomething: @escaping () -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    open func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_includesFunction_whenMix_andOneIsSetAsOpen() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                open func explicitPublicDoSomething() { }
-//            
-//                func doSomething() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                open func explicitPublicDoSomething() { }
-//            
-//                func doSomething() { }
-//            
-//                struct ProtocolWitness {
-//                    open var _explicitPublicDoSomething: () -> Void
-//            
-//                    var _doSomething: () -> Void
-//            
-//                    init(
-//                        explicitPublicDoSomething: @escaping () -> Void,
-//                        doSomething: @escaping () -> Void
-//                    ) {
-//                        _explicitPublicDoSomething = explicitPublicDoSomething
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    open func explicitPublicDoSomething() {
-//                        _explicitPublicDoSomething()
-//                    }
-//            
-//                    func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            explicitPublicDoSomething: production.explicitPublicDoSomething,
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
-//// MARK: Async/await
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_whenOneFunction_andFunctionIsAsync() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething() async { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething() async { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: () async -> Void
-//            
-//                    init(doSomething: @escaping () async -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething() async {
-//                        await _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_whenTwoFunctions_andBothFunctionsAreAsync() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething() async { }
-//            
-//                func doAnotherThing() async { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething() async { }
-//            
-//                func doAnotherThing() async { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: () async -> Void
-//            
-//                    var _doAnotherThing: () async -> Void
-//            
-//                    init(
-//                        doSomething: @escaping () async -> Void,
-//                        doAnotherThing: @escaping () async -> Void
-//                    ) {
-//                        _doSomething = doSomething
-//                        _doAnotherThing = doAnotherThing
-//                    }
-//            
-//                    func doSomething() async {
-//                        await _doSomething()
-//                    }
-//            
-//                    func doAnotherThing() async {
-//                        await _doAnotherThing()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething,
-//                            doAnotherThing: production.doAnotherThing
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_whenTwoFunctions_andOnlyOneFunctionsIsAsync() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething() { }
-//            
-//                func doAnotherThing() async { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething() { }
-//            
-//                func doAnotherThing() async { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: () -> Void
-//            
-//                    var _doAnotherThing: () async -> Void
-//            
-//                    init(
-//                        doSomething: @escaping () -> Void,
-//                        doAnotherThing: @escaping () async -> Void
-//                    ) {
-//                        _doSomething = doSomething
-//                        _doAnotherThing = doAnotherThing
-//                    }
-//            
-//                    func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    func doAnotherThing() async {
-//                        await _doAnotherThing()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething,
-//                            doAnotherThing: production.doAnotherThing
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
+// MARK: Async/await
+
+extension ProtocolWitnessingTests {
+    func testMacro_whenOneFunction_andFunctionIsAsync() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething() async
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething() async
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() async {
+                    await _doSomething()
+                }
+
+                var _doSomething: () async -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () async -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenTwoFunctions_andBothFunctionsAreAsync() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething() async
+            
+                func doAnotherThing() async
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething() async
+
+                func doAnotherThing() async
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() async {
+                    await _doSomething()
+                }
+
+                var _doSomething: () async -> Void
+
+                func doAnotherThing() async {
+                    await _doAnotherThing()
+                }
+
+                var _doAnotherThing: () async -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () async -> Void,
+                    doAnotherThing: @escaping () async -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doAnotherThing: doAnotherThing
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doAnotherThing: doAnotherThing
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenTwoFunctions_andOnlyOneFunctionsIsAsync() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething()
+            
+                func doAnotherThing() async
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething()
+
+                func doAnotherThing() async
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() {
+                    _doSomething()
+                }
+
+                var _doSomething: () -> Void
+
+                func doAnotherThing() async {
+                    await _doAnotherThing()
+                }
+
+                var _doAnotherThing: () async -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () -> Void,
+                    doAnotherThing: @escaping () async -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doAnotherThing: doAnotherThing
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doAnotherThing: doAnotherThing
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
 //// MARK: Throwing
 //
 //extension ProtocolWitnessingTests {
