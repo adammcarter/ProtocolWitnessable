@@ -41,19 +41,6 @@ final class ProtocolWitnessingTests: XCTestCase {
 // MARK: - Attachment checking
 
 extension ProtocolWitnessingTests {
-    func testMacro_doesNotThrowError_whenAttachedToProtocol() throws {
-        assertMacro {
-            """
-            @ProtocolWitnessing
-            protocol MyClient { }
-            """
-        } expansion: {
-            """
-            protocol MyClient { }
-            """
-        }
-    }
-    
     func testMacro_throwsError_whenAttachedToStruct() throws {
         assertMacro {
             """
@@ -119,42 +106,105 @@ extension ProtocolWitnessingTests {
     }
 }
 
-//// MARK: - Bare minimum
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_addsEmptyInit_whenEmptyStruct() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//
-//                struct ProtocolWitness {
-//                    init() {
-//                    }
-//
-//                    private static var _production: MyClient?
-//
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
+// MARK: - Empty structure
+
+extension ProtocolWitnessingTests {
+    func testMacro_createsEmptyStruct_andEmptyExtensionOnProtocol_whenProtocolIsEmpty_andProtocolIsImplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient { }
+            """
+        } expansion: {
+            """
+            protocol MyClient { }
+            
+            struct MyClientProtocolWitness: MyClient {
+            }
+            
+            extension MyClient {
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsEmptyStruct_andEmptyExtensionOnProtocol_whenProtocolIsEmpty_andProtocolIsExplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            internal protocol MyClient { }
+            """
+        } expansion: {
+            """
+            internal protocol MyClient { }
+            
+            internal struct MyClientProtocolWitness: MyClient {
+            }
+            
+            internal extension MyClient {
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsEmptyStruct_andEmptyExtensionOnProtocol_whenProtocolIsEmpty_andProtocolIsExplicitlyPublic() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            public protocol MyClient { }
+            """
+        } expansion: {
+            """
+            public protocol MyClient { }
+            
+            public struct MyClientProtocolWitness: MyClient {
+            }
+            
+            public extension MyClient {
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsEmptyStruct_andEmptyExtensionOnProtocol_whenProtocolIsEmpty_andProtocolIsExplicitlyPrivate() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            private protocol MyClient { }
+            """
+        } expansion: {
+            """
+            private protocol MyClient { }
+            
+            private struct MyClientProtocolWitness: MyClient {
+            }
+            
+            private extension MyClient {
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsEmptyStruct_andEmptyExtensionOnProtocol_whenProtocolIsEmpty_andProtocolIsExplicitlyFileprivate() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            fileprivate protocol MyClient { }
+            """
+        } expansion: {
+            """
+            fileprivate protocol MyClient { }
+            
+            fileprivate struct MyClientProtocolWitness: MyClient {
+            }
+            
+            fileprivate extension MyClient {
+            }
+            """
+        }
+    }
+}
+
 //// MARK: - Functions
 //
 //// MARK: One

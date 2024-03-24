@@ -20,8 +20,8 @@ import ProtocolWitnessing
  */
 
 
-@ProtocolWitnessing
-public protocol MyClient {
+//@ProtocolWitnessing
+internal protocol MyClient {
     var name: String { get }
     var height: Double { get set }
     
@@ -33,18 +33,18 @@ public protocol MyClient {
 
 // < Generated >
 
-public struct MyClientProtocolWitness: MyClient {
-    public let name: String
-    public var height: Double
+internal struct MyClientProtocolWitness: MyClient {
+    internal let name: String
+    internal var height: Double
     
-    public func doSomething(age: Int) -> Void {
+    internal func doSomething(age: Int) -> Void {
         _doSomething(age)
     }
     
     var _doSomething: (Int) -> Void
 }
 
-public extension MyClient {
+internal extension MyClient {
     static func makeErasedProtocolWitness(
         name: String,
         height: Double,

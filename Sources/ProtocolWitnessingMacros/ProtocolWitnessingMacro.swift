@@ -13,25 +13,116 @@ struct ProtocolWitnessingPlugin: CompilerPlugin {
 }
 
 
-public struct WitnessingMacro: MemberMacro {
+public struct WitnessingMacro: PeerMacro, ExtensionMacro {
     /**
-            Create the `Witness` inner type
+     Create the `Witness` inner type
      */
     public static func expansion(
         of node: AttributeSyntax,
-        providingMembersOf declaration: some DeclGroupSyntax,
+        providingPeersOf declaration: some DeclSyntaxProtocol,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
-        guard let protocolDecl = declaration as? ProtocolDeclSyntax else {
+        guard let protocolDecl = declaration.as(ProtocolDeclSyntax.self) else {
             throw ProtocolWitnessingError.notAProtocol
         }
-
+        
+        let protocolName = protocolDecl.name.trimmedDescription
+        let modifierOrEmpty = modifierOrEmpty(for: protocolDecl)
         
         
         
         
-        return []
+        
+        //        public struct MyClientProtocolWitness: MyClient {
+        //            public let name: String
+        //            public var height: Double
+        //
+        //            public func doSomething(age: Int) -> Void {
+        //                _doSomething(age)
+        //            }
+        //
+        //            var _doSomething: (Int) -> Void
+        //        }
+        //
+        
+        
+        
+        let protocolWitnessStruct = """
+            \(modifierOrEmpty)struct \(protocolName)ProtocolWitness: \(protocolName) {
+            }
+            """
+        
+        
+        return [
+            DeclSyntax(stringLiteral: protocolWitnessStruct)
+        ]
     }
+    
+    
+    
+    
+    public static func expansion(
+        of node: AttributeSyntax,
+        attachedTo declaration: some DeclGroupSyntax,
+        providingExtensionsOf type: some TypeSyntaxProtocol,
+        conformingTo protocols: [TypeSyntax],
+        in context: some MacroExpansionContext
+    ) throws -> [ExtensionDeclSyntax] {
+        guard let protocolDecl = declaration.as(ProtocolDeclSyntax.self) else {
+            // This is handled by the peer macro so no need to throw here to avoid duplicate Xcode errors
+            return []
+        }
+        
+        
+        let protocolName = protocolDecl.name.trimmedDescription
+        let modifierOrEmpty = modifierOrEmpty(for: protocolDecl)
+        
+        
+        
+        
+        //        public extension MyClient {
+        //            static func makeErasedProtocolWitness(
+        //                name: String,
+        //                height: Double,
+        //                doSomething: @escaping (Int) -> Void
+        //            ) -> MyClient {
+        //                MyClientProtocolWitness(
+        //                    name: name,
+        //                    height: height,
+        //                    _doSomething: doSomething
+        //                )
+        //            }
+        //
+        //            func makingProtocolWitness() -> MyClientProtocolWitness {
+        //                MyClientProtocolWitness(
+        //                    name: name,
+        //                    height: height,
+        //                    _doSomething: doSomething
+        //                )
+        //            }
+        //        }
+        
+        
+        
+        
+        let extensionBody = """
+            \(modifierOrEmpty)extension \(protocolName) {}
+            """
+        
+        let extensionDecl = try ExtensionDeclSyntax("\(raw: extensionBody)")
+        
+        
+        return [
+            extensionDecl
+        ]
+    }
+}
+    
+    
+    
+    
+    
+    
     
     
     
@@ -238,7 +329,9 @@ public struct WitnessingMacro: MemberMacro {
 //        
 //        return [witnessDecl]
 //    }
-}
+//}
+
+
 
 
 // MARK: - Capturing data
@@ -868,6 +961,20 @@ private func declGroupIsMainActor(_ decl: some DeclGroupSyntax) -> Bool {
             .name
             .tokenKind == .identifier("MainActor")
         } == true
+}
+
+private func modifierOrEmpty(for protocolDecl: ProtocolDeclSyntax) -> String {
+    let modifierOrNil = protocolDecl
+        .modifiers
+        .first(where: {
+            $0.name.tokenKind == .keyword(.internal)
+            || $0.name.tokenKind == .keyword(.public)
+            || $0.name.tokenKind == .keyword(.private)
+            || $0.name.tokenKind == .keyword(.fileprivate)
+        })?
+        .name.trimmedDescription
+    
+    return modifierOrNil.flatMap { "\($0) " } ?? ""
 }
 
 
