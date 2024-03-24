@@ -1073,169 +1073,159 @@ extension ProtocolWitnessingTests {
     }
 }
 
-//// MARK: Throwing
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_whenOneFunction_andFunctionIsThrowing() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething() throws { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething() throws { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: () throws -> Void
-//            
-//                    init(doSomething: @escaping () throws -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething() throws {
-//                        try _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_whenTwoFunctions_andBothFunctionsAreThrowing() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething() throws { }
-//            
-//                func doSomethingElse() throws { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething() throws { }
-//            
-//                func doSomethingElse() throws { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: () throws -> Void
-//            
-//                    var _doSomethingElse: () throws -> Void
-//            
-//                    init(
-//                        doSomething: @escaping () throws -> Void,
-//                        doSomethingElse: @escaping () throws -> Void
-//                    ) {
-//                        _doSomething = doSomething
-//                        _doSomethingElse = doSomethingElse
-//                    }
-//            
-//                    func doSomething() throws {
-//                        try _doSomething()
-//                    }
-//            
-//                    func doSomethingElse() throws {
-//                        try _doSomethingElse()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething,
-//                            doSomethingElse: production.doSomethingElse
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_whenTwoFunctions_andOneFunctionIsThrowing_andOtherFunctionIsNot() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething() { }
-//            
-//                func doSomethingElse() throws { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething() { }
-//            
-//                func doSomethingElse() throws { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: () -> Void
-//            
-//                    var _doSomethingElse: () throws -> Void
-//            
-//                    init(
-//                        doSomething: @escaping () -> Void,
-//                        doSomethingElse: @escaping () throws -> Void
-//                    ) {
-//                        _doSomething = doSomething
-//                        _doSomethingElse = doSomethingElse
-//                    }
-//            
-//                    func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    func doSomethingElse() throws {
-//                        try _doSomethingElse()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething,
-//                            doSomethingElse: production.doSomethingElse
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
+// MARK: Throwing
+
+extension ProtocolWitnessingTests {
+    func testMacro_whenOneFunction_andFunctionIsThrowing() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething() throws
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething() throws
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() throws {
+                    try _doSomething()
+                }
+
+                var _doSomething: () throws -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () throws -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenTwoFunctions_andBothFunctionsAreThrowing() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething() throws
+            
+                func doSomethingElse() throws
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething() throws
+
+                func doSomethingElse() throws
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() throws {
+                    try _doSomething()
+                }
+
+                var _doSomething: () throws -> Void
+
+                func doSomethingElse() throws {
+                    try _doSomethingElse()
+                }
+
+                var _doSomethingElse: () throws -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () throws -> Void,
+                    doSomethingElse: @escaping () throws -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doSomethingElse: doSomethingElse
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doSomethingElse: doSomethingElse
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenTwoFunctions_andOneFunctionIsThrowing_andOtherFunctionIsNot() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething()
+            
+                func doSomethingElse() throws
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething()
+
+                func doSomethingElse() throws
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() {
+                    _doSomething()
+                }
+
+                var _doSomething: () -> Void
+
+                func doSomethingElse() throws {
+                    try _doSomethingElse()
+                }
+
+                var _doSomethingElse: () throws -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () -> Void,
+                    doSomethingElse: @escaping () throws -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doSomethingElse: doSomethingElse
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doSomethingElse: doSomethingElse
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
 //// MARK: Complex
 //
 //extension ProtocolWitnessingTests {
