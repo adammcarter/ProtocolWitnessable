@@ -402,6 +402,10 @@ private func makeCapturedProperties(from structDecl: StructDeclSyntax) -> [Captu
                 .modifiers
                 .contains { $0.name.tokenKind == .keyword(.static) } == true
             
+            let isLazy = varDecl
+                .modifiers
+                .contains { $0.name.tokenKind == .keyword(.lazy) }
+            
             let accessors = member
                 .decl
                 .as(VariableDeclSyntax.self)?
@@ -494,6 +498,7 @@ private func makeCapturedProperties(from structDecl: StructDeclSyntax) -> [Captu
                         isThrowing: isThrowing,
                         isStatic: isStatic,
                         isComputed: isComputed,
+                        isLazy: isLazy,
                         closureContents: closureContents
                     )
                 }
@@ -841,6 +846,7 @@ private struct CapturedProperty: Declaring {
     let isThrowing: Bool
     let isStatic: Bool
     let isComputed: Bool
+    let isLazy: Bool
     let closureContents: String?
 }
 
@@ -850,21 +856,24 @@ private struct CapturedFunction: Declaring {
     let type: String
     let callsite: String
     let isStatic: Bool
+    let isLazy = false
 }
 
 protocol Declaring {
     var modifier: String? { get }
     var isStatic: Bool { get }
+    var isLazy: Bool { get }
     
     var prefix: String { get }
 }
 
 extension Declaring {
     var prefix: String {
+        let lazyOrEmpty = isLazy ? "lazy " : ""
         let modifierOrEmpty = modifier.flatMap { "\($0) " } ?? ""
         let staticOrEmpty = isStatic ? "static " : ""
         
-        return "\(modifierOrEmpty)\(staticOrEmpty)"
+        return "\(lazyOrEmpty)\(modifierOrEmpty)\(staticOrEmpty)"
     }
 }
 

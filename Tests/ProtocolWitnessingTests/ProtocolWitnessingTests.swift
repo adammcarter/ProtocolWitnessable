@@ -21,8 +21,6 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
- - Privatise ProtocolWitness struct init?
- - Include "lazy" prefix when var is lazy var
  - Add support for attaching to actors and classes?
  - Erase type for production()?
  - Use SwiftSyntaxMacros builders?
@@ -36,6 +34,8 @@ final class ProtocolWitnessingTests: XCTestCase {
  - Refactor all the stuff
  - Produce a warning when let/var has no explicit type? fixit?
     - Or is there a way to detect the type automatically and put it in? Right now we just don't include the property in the witness
+ - Create witnesses for test, preview, preproduction from the production variant by default
+ - Inverse this? Change architecture to a struct that declares empty functions and a macro that expands on this, creating a production one and various others?
  */
 
 // MARK: - Initial sanity checking
@@ -3294,7 +3294,7 @@ extension ProtocolWitnessingTests {
                 }()
 
                 struct ProtocolWitness {
-                    var getSomething: Bool = {
+                    lazy var getSomething: Bool = {
                         true
                     }()
 
@@ -3346,7 +3346,7 @@ extension ProtocolWitnessingTests {
                 }()
 
                 struct ProtocolWitness {
-                    var getSomething: Bool = {
+                    lazy var getSomething: Bool = {
                         let thing = true
 
                         print("thing", thing)
@@ -3944,7 +3944,7 @@ extension ProtocolWitnessingTests {
                             "a", "b", "c"
                         ]
 
-                    var moreStrings: [String] = {
+                    lazy var moreStrings: [String] = {
                             [
                                 "x", "y", "z"
                             ]
