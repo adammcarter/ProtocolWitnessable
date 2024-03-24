@@ -21,14 +21,11 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
+ - Privatise ProtocolWitness struct init?
  - Include "lazy" prefix when var is lazy var
- - Ignore private vars/functions within type
- - Add public accessor when public
- - Add internal accessor when explicitly internal
  - Add support for attaching to actors and classes?
  - Erase type for production()?
  - Use SwiftSyntaxMacros builders?
- - Privatise ProtocolWitness struct init?
  - Arg for overriding to not use a singleton and having `production() {}` create a new one each time
  - How does this work with the function passing in params? Weird we pass stuff in then potentially ignore it and return the singleton...
  - Use unique name generator helper for witness type name?

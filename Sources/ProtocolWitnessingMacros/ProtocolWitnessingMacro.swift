@@ -270,12 +270,7 @@ public struct WitnessingMacro: MemberMacro {
         
         
         let wrappedFunctions = capturedFunctions
-            .map {
-                let modifierOrEmpty = $0.modifier.flatMap { "\($0) " } ?? ""
-                let staticOrEmpty = $0.isStatic ? "static " : ""
-                
-                return "\(modifierOrEmpty)\(staticOrEmpty)\($0.callsite)"
-            }
+            .map { "\($0.prefix)\($0.callsite)" }
             .joined(separator: "\n\n")
 
         
@@ -669,9 +664,6 @@ private func makeProtocolWitnessProperties(from capturedProperty: CapturedProper
     
     
     let typeOrEmpty = type ?? ""
-    let staticOrEmpty = capturedProperty.isStatic ? "static " : ""
-    let modifierOrEmpty = capturedProperty.modifier.flatMap { "\($0) " } ?? ""
-    let propertyPrefix = "\(modifierOrEmpty)\(staticOrEmpty)var"
     
     let name = capturedProperty.name
     
@@ -691,7 +683,7 @@ private func makeProtocolWitnessProperties(from capturedProperty: CapturedProper
         let equals = capturedProperty.equals
     {
         return """
-                \(propertyPrefix) \(name)\(typeOrEmpty) = \(equals)
+                \(capturedProperty.prefix)var \(name)\(typeOrEmpty) = \(equals)
                 """
     } else {
         
@@ -738,12 +730,12 @@ private func makeProtocolWitnessProperties(from capturedProperty: CapturedProper
         
         
         
-        let underscoredProperty = "\(propertyPrefix) _\(name)\(rhs)"
+        let underscoredProperty = "\(capturedProperty.prefix)var _\(name)\(rhs)"
         
         let setter = capturedProperty.setter.flatMap { "\n\($0)" } ?? ""
         
         let wrappedProperty = """
-                \(propertyPrefix) \(name)\(typeOrEmpty) {
+                \(capturedProperty.prefix)var \(name)\(typeOrEmpty) {
                 \(getter)\(setter)
                 }
                 """
@@ -760,14 +752,7 @@ private func makeProtocolWitnessProperties(from capturedProperty: CapturedProper
 }
 
 private func makeProtocolWitnessProperties(from capturedFunction: CapturedFunction) -> String {
-    let staticOrEmpty = capturedFunction.isStatic ? "static " : ""
-    let modifierOrEmpty = capturedFunction.modifier.flatMap { "\($0) " } ?? ""
-    let propertyPrefix = "\(modifierOrEmpty)\(staticOrEmpty)var"
-
-    let name = capturedFunction.name
-    let type = ": \(capturedFunction.type)"
-    
-    return "\(propertyPrefix) _\(name)\(type)"
+    "\(capturedFunction.prefix)var _\(capturedFunction.name): \(capturedFunction.type)"
 }
 
 private func makeProtocolWitnessInitializerParameters(
@@ -844,7 +829,7 @@ private func declGroupIsMainActor(_ decl: some DeclGroupSyntax) -> Bool {
 
 // MARK: - Types
 
-private struct CapturedProperty {
+private struct CapturedProperty: Declaring {
     let modifier: String?
     let letOrVar: String
     let name: String
@@ -859,12 +844,28 @@ private struct CapturedProperty {
     let closureContents: String?
 }
 
-private struct CapturedFunction {
+private struct CapturedFunction: Declaring {
     let modifier: String?
     let name: String
     let type: String
     let callsite: String
     let isStatic: Bool
+}
+
+protocol Declaring {
+    var modifier: String? { get }
+    var isStatic: Bool { get }
+    
+    var prefix: String { get }
+}
+
+extension Declaring {
+    var prefix: String {
+        let modifierOrEmpty = modifier.flatMap { "\($0) " } ?? ""
+        let staticOrEmpty = isStatic ? "static " : ""
+        
+        return "\(modifierOrEmpty)\(staticOrEmpty)"
+    }
 }
 
 private struct InitializerParameter {
