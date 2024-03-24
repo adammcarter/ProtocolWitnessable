@@ -124,25 +124,14 @@ public struct WitnessingMacro: MemberMacro {
         
         
         
-        let protocolWitnessInitializerParameters = makeProtocolWitnessInitializerParameters(
-            from: allInitializerParameters,
-            productionName: protocolWitnessName
-        )
         
         
-        let returnProtocolWitnessInitFunctionName = "return \(typeName).\(witnessTypeName)"
         
-        let returnProtocolWitnessInitializer = if protocolWitnessInitializerParameters.isEmpty {
-            """
-            \(returnProtocolWitnessInitFunctionName)()
-            """
-        } else {
-            """
-            \(returnProtocolWitnessInitFunctionName)(
-            \(protocolWitnessInitializerParameters)
-            )
-            """
-        }
+        let wrappedFunctions = capturedFunctions
+            .map { "\($0.prefix)\($0.callsite)" }
+            .joined(separator: "\n\n")
+        
+
         
         
         
@@ -191,115 +180,16 @@ public struct WitnessingMacro: MemberMacro {
 
         
         
-        let isMainActor = declGroupIsMainActor(structDecl)
-        let mainActorOrEmpty = isMainActor ? "@MainActor\n" : ""
         
-        let functionPrefix = "\(mainActorOrEmpty)static func \(protocolWitnessName)"
-        
-        
-        let needsAsync = allInitializerParameters.contains { $0.isAsync }
-        let needsThrowing = allInitializerParameters.contains { $0.isThrowing }
-        
-        let asyncThrowsSuffix = if needsAsync, needsThrowing {
-            " async throws"
-        } else if needsAsync {
-            " async"
-        } else if needsThrowing {
-            " throws"
-        } else {
-            ""
-        }
-
-        let functionSuffix = "\(asyncThrowsSuffix) -> \(typeName).\(witnessTypeName)"
-
-        
-        let staticFuncProductionFunctionDeclaration = if expandedParameters.isEmpty {
-            """
-            \(functionPrefix)()\(functionSuffix) {
-            """
-        } else {
-            """
-            \(functionPrefix)(
-            \(expandedParameters)
-            )\(functionSuffix) {
-            """
-        }
-
-        
-        
-        
-        
-        
-        
-
-        
-        
-        
-        let parametersForProtocolWitnessInit = nonComputedParameters
-            .filter { $0.equals == nil }
-            .map {
-                "\($0.name): \($0.name)"
-            }
-            .joined(separator: ",\n")
-        
-
-        
-        
-        
-        let letProductionInit = if parametersForProtocolWitnessInit.isEmpty {
-            """
-            \(typeName)()
-            """
-        } else if parametersForProtocolWitnessInit.count == 1, let expandedProperty = parametersForProtocolWitnessInit.first {
-            """
-            \(typeName)(\(expandedProperty))
-            """
-        } else {
-            """
-            \(typeName)(
-            \(parametersForProtocolWitnessInit)
-            )
-            """
-        }
-
-        
-        
-        
-        
-        
-        
-        
-        let wrappedFunctions = capturedFunctions
-            .map { "\($0.prefix)\($0.callsite)" }
-            .joined(separator: "\n\n")
-
-        
-        
-        
-        
-        
-        
-
-        let protocolWitnessStaticVar = """
-            private static var _\(protocolWitnessName): \(typeName)?
-            """
-        
-        
-        
-        let protocolWitnessFunction = """
-            \(staticFuncProductionFunctionDeclaration)
-            let \(protocolWitnessName) = _\(protocolWitnessName) ?? \(letProductionInit)
-            
-            if _\(protocolWitnessName) == nil {
-            _\(protocolWitnessName) = \(protocolWitnessName)
-            }
-            
-            \(returnProtocolWitnessInitializer)
-            }
-            """
-        
-        
-        
+        let protocolWitnessFunctions = makeProtocolWitnessFunction(
+            structDecl: structDecl,
+            protocolWitnessName: protocolWitnessName,
+            typeName: typeName,
+            witnessTypeName: witnessTypeName,
+            allInitializerParameters: allInitializerParameters,
+            expandedParameters: expandedParameters,
+            nonComputedParameters: nonComputedParameters
+        )
         
         
         
@@ -310,9 +200,7 @@ public struct WitnessingMacro: MemberMacro {
                 struct \(raw: witnessTypeName) {
                     \(raw: protocolWitnessInit)
                 
-                    \(raw: protocolWitnessStaticVar)
-                
-                    \(raw: protocolWitnessFunction)
+                    \(raw: protocolWitnessFunctions)
                 }
                 """
         } else {
@@ -324,9 +212,7 @@ public struct WitnessingMacro: MemberMacro {
                 
                     \(raw: wrappedFunctions)
                 
-                    \(raw: protocolWitnessStaticVar)
-                
-                    \(raw: protocolWitnessFunction)
+                    \(raw: protocolWitnessFunctions)
                 }
                 """
         }
@@ -782,6 +668,140 @@ private func makeProtocolWitnessInitializerParameters(
             return "\(parameter.name):\(closureWrappedValueOrValue)"
         }
         .joined(separator: ",\n")
+}
+
+
+// MARK: - Protocol witness functions
+
+private func makeProtocolWitnessFunction(
+    structDecl: StructDeclSyntax,
+    protocolWitnessName: String,
+    typeName: String,
+    witnessTypeName: String,
+    allInitializerParameters: [InitializerParameter],
+    expandedParameters: String,
+    nonComputedParameters: [CapturedProperty]
+) -> String {
+    let isMainActor = declGroupIsMainActor(structDecl)
+    let mainActorOrEmpty = isMainActor ? "@MainActor\n" : ""
+
+    let functionPrefix = "\(mainActorOrEmpty)static func \(protocolWitnessName)"
+    
+    
+    let needsAsync = allInitializerParameters.contains { $0.isAsync }
+    let needsThrowing = allInitializerParameters.contains { $0.isThrowing }
+    
+    let asyncThrowsSuffix = if needsAsync, needsThrowing {
+        " async throws"
+    } else if needsAsync {
+        " async"
+    } else if needsThrowing {
+        " throws"
+    } else {
+        ""
+    }
+    
+    let functionSuffix = "\(asyncThrowsSuffix) -> \(typeName).\(witnessTypeName)"
+    
+    
+    let staticFuncProductionFunctionDeclaration = if expandedParameters.isEmpty {
+            """
+            \(functionPrefix)()\(functionSuffix) {
+            """
+    } else {
+            """
+            \(functionPrefix)(
+            \(expandedParameters)
+            )\(functionSuffix) {
+            """
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    let parametersForProtocolWitnessInit = nonComputedParameters
+        .filter { $0.equals == nil }
+        .map {
+            "\($0.name): \($0.name)"
+        }
+        .joined(separator: ",\n")
+    
+    
+    
+    
+    
+    let letProductionInit = if parametersForProtocolWitnessInit.isEmpty {
+            """
+            \(typeName)()
+            """
+    } else if parametersForProtocolWitnessInit.count == 1, let expandedProperty = parametersForProtocolWitnessInit.first {
+            """
+            \(typeName)(\(expandedProperty))
+            """
+    } else {
+            """
+            \(typeName)(
+            \(parametersForProtocolWitnessInit)
+            )
+            """
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    let returnProtocolWitnessInitFunctionName = "return \(typeName).\(witnessTypeName)"
+    
+    
+    let protocolWitnessInitializerParameters = makeProtocolWitnessInitializerParameters(
+        from: allInitializerParameters,
+        productionName: protocolWitnessName
+    )
+    
+    
+    let returnProtocolWitnessInitializer = if protocolWitnessInitializerParameters.isEmpty {
+            """
+            \(returnProtocolWitnessInitFunctionName)()
+            """
+    } else {
+            """
+            \(returnProtocolWitnessInitFunctionName)(
+            \(protocolWitnessInitializerParameters)
+            )
+            """
+    }
+    
+    
+    
+    
+    
+    return """
+        private static var _\(protocolWitnessName): \(typeName)?
+        
+        \(staticFuncProductionFunctionDeclaration)
+        let \(protocolWitnessName) = _\(protocolWitnessName) ?? \(letProductionInit)
+        
+        if _\(protocolWitnessName) == nil {
+        _\(protocolWitnessName) = \(protocolWitnessName)
+        }
+        
+        \(returnProtocolWitnessInitializer)
+        }
+        """
 }
 
 

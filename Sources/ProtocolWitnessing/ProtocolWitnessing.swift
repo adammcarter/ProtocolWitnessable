@@ -17,3 +17,7 @@ public macro ProtocolWitnessing(productionInstanceName: String) =
 @attached(member, names: arbitrary)
 public macro ProtocolWitnessing(typeName: String, productionInstanceName: String) =
 #externalMacro(module: "ProtocolWitnessingMacros", type: "WitnessingMacro")
+
+@attached(member, names: arbitrary)
+public macro ProtocolWitnessing(typeName: String, productionInstanceName: String, extraWitnessNames: [String]) =
+#externalMacro(module: "ProtocolWitnessingMacros", type: "WitnessingMacro")

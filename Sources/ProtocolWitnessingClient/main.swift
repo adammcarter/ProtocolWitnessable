@@ -163,47 +163,6 @@ import ProtocolWitnessing
 
 
 
-//struct MyClient {
-//    lazy var getSomething: Bool = {
-//        true
-//    }()
-//    
-//    struct ProtocolWitness {
-//        var _getSomething: Bool = {
-//            true
-//        }()
-//        
-//        var getSomething: Bool {
-//            get {
-//                _getSomething
-//            }
-//        }
-//        
-//        init() {
-//            
-//        }
-//        
-//        
-//        
-//        private static var _production: MyClient?
-//        
-//        static func production() -> MyClient.ProtocolWitness {
-//            let production = _production ?? MyClient()
-//            
-//            if _production == nil {
-//                _production = production
-//            }
-//            
-//            return MyClient.ProtocolWitness()
-//        }
-//    }
-//}
-//
-//
-//
-//var prod = MyClient.ProtocolWitness.production()
-//
-//prod.getSomething
 
 
 //var mock = prod

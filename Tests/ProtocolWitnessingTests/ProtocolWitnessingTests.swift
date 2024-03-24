@@ -4265,6 +4265,21 @@ extension ProtocolWitnessingTests {
     }
 }
 
+// MARK: productionInstanceName
+
+//extension ProtocolWitnessingTests {
+//    func testMacro_createsExtraWitnesses_whenExtraWitnessNamesIsNotEmpty() throws {
+//        assertMacro {
+//            """
+//            @ProtocolWitnessing(typeName: "TypeName", productionInstanceName: "InstanceName", extraWitnessNames: ["test", "preview"])
+//            struct MyClient {
+//                func doSomething() { }
+//            }
+//            """
+//        }
+//    }
+//}
+
 // MARK: - Misc.
 
 extension ProtocolWitnessingTests {
