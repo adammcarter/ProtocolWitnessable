@@ -44,25 +44,25 @@ public struct WitnessingMacro: MemberMacro {
         
         
         
+        let propertiesForInitializerParameters = capturedProperties.map {
+            InitializerParameter(
+                modifier: $0.modifier,
+                letOrVar: $0.letOrVar,
+                name: $0.name,
+                type: $0.type,
+                equals: $0.equals,
+                isEscaping: false,
+                isAsync: $0.isAsync,
+                isThrowing: $0.isThrowing,
+                isStatic: $0.isStatic,
+                closureContents: $0.closureContents
+            )
+        }
         
         
-        let allInitializerParameters: [InitializerParameter] = [
-            capturedProperties.map {
-                InitializerParameter(
-                    modifier: $0.modifier,
-                    letOrVar: $0.letOrVar,
-                    name: $0.name,
-                    type: $0.type,
-                    equals: $0.equals,
-                    isEscaping: false,
-                    isAsync: $0.isAsync,
-                    isThrowing: $0.isThrowing,
-                    isStatic: $0.isStatic,
-                    closureContents: $0.closureContents
-                )
-            }
-            +
-            capturedFunctions.map {
+        let functionsForInitializerParameters = capturedFunctions
+            .filter { $0.isStatic == false }
+            .map {
                 InitializerParameter(
                     modifier: $0.modifier,
                     letOrVar: nil,
@@ -76,6 +76,11 @@ public struct WitnessingMacro: MemberMacro {
                     closureContents: nil
                 )
             }
+        
+        
+        let allInitializerParameters: [InitializerParameter] = [
+            propertiesForInitializerParameters,
+            functionsForInitializerParameters,
         ]
             .flatMap { $0 }
             .filter { $0.closureContents == nil }
@@ -267,8 +272,9 @@ public struct WitnessingMacro: MemberMacro {
         let wrappedFunctions = capturedFunctions
             .map {
                 let modifierOrEmpty = $0.modifier.flatMap { "\($0) " } ?? ""
+                let staticOrEmpty = $0.isStatic ? "static " : ""
                 
-                return "\(modifierOrEmpty)\($0.callsite)"
+                return "\(modifierOrEmpty)\(staticOrEmpty)\($0.callsite)"
             }
             .joined(separator: "\n\n")
 
@@ -514,8 +520,8 @@ private func makeCapturedFunctions(from structDecl: StructDeclSyntax) -> [Captur
             
             return function
         }
-        .map {
-            let modifier = $0
+        .map { function -> CapturedFunction in
+            let modifier = function
                 .modifiers
                 .first {
                     $0.name.tokenKind == .keyword(.internal)
@@ -526,7 +532,7 @@ private func makeCapturedFunctions(from structDecl: StructDeclSyntax) -> [Captur
                 .trimmedDescription
             
             
-            let signature = $0.signature
+            let signature = function.signature
             
             
             let effectSpecifiers = signature.effectSpecifiers
@@ -575,7 +581,7 @@ private func makeCapturedFunctions(from structDecl: StructDeclSyntax) -> [Captur
                 .name
                 .text
             
-            let name = $0.name.text
+            let name = function.name.text
             
             let returnValueOrVoid = returnValue ?? "Void"
             let returnValueIfNotVoid = returnValue.flatMap { " -> \($0)" } ?? ""
@@ -627,12 +633,17 @@ private func makeCapturedFunctions(from structDecl: StructDeclSyntax) -> [Captur
                 """
             
             
+            let isStatic = function
+                .modifiers
+                .contains { $0.name.tokenKind == .keyword(.static) } == true
+
             
             return CapturedFunction(
                 modifier: modifier,
                 name: name,
                 type: type,
-                callsite: callsite
+                callsite: callsite,
+                isStatic: isStatic
             )
         }
 }
@@ -660,7 +671,7 @@ private func makeProtocolWitnessProperties(from capturedProperty: CapturedProper
     let typeOrEmpty = type ?? ""
     let staticOrEmpty = capturedProperty.isStatic ? "static " : ""
     let modifierOrEmpty = capturedProperty.modifier.flatMap { "\($0) " } ?? ""
-    let propertyPrefix = "\(staticOrEmpty)\(modifierOrEmpty)var"
+    let propertyPrefix = "\(modifierOrEmpty)\(staticOrEmpty)var"
     
     let name = capturedProperty.name
     
@@ -749,9 +760,10 @@ private func makeProtocolWitnessProperties(from capturedProperty: CapturedProper
 }
 
 private func makeProtocolWitnessProperties(from capturedFunction: CapturedFunction) -> String {
+    let staticOrEmpty = capturedFunction.isStatic ? "static " : ""
     let modifierOrEmpty = capturedFunction.modifier.flatMap { "\($0) " } ?? ""
-    let propertyPrefix = "\(modifierOrEmpty)var"
-    
+    let propertyPrefix = "\(modifierOrEmpty)\(staticOrEmpty)var"
+
     let name = capturedFunction.name
     let type = ": \(capturedFunction.type)"
     
@@ -852,6 +864,7 @@ private struct CapturedFunction {
     let name: String
     let type: String
     let callsite: String
+    let isStatic: Bool
 }
 
 private struct InitializerParameter {

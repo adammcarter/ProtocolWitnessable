@@ -21,8 +21,6 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
- - Make sure any let (with type) has wrapped value with getter pointing to _ var of that let.
- - Ststic functions
  - Include "lazy" prefix when var is lazy var
  - Ignore private vars/functions within type
  - Add public accessor when public
@@ -841,6 +839,98 @@ extension ProtocolWitnessingTests {
                             explicitPublicDoSomething: production.explicitPublicDoSomething,
                             doSomething: production.doSomething
                         )
+                    }
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Static
+
+extension ProtocolWitnessingTests {
+    func testMacro_includesFunction_whenStatic() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                static func doSomething() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                static func doSomething() { }
+
+                struct ProtocolWitness {
+                    static var _doSomething: () -> Void
+
+                    init() {
+                    }
+
+                    static func doSomething() {
+                        _doSomething()
+                    }
+
+                    private static var _production: MyClient?
+
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+
+                        if _production == nil {
+                            _production = production
+                        }
+
+                        return MyClient.ProtocolWitness()
+                    }
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_includesFunction_whenStatic_andExplicitAccessor() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            struct MyClient {
+                static func doSomething() { }
+                public static func doSomethingElse() { }
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                static func doSomething() { }
+                public static func doSomethingElse() { }
+
+                struct ProtocolWitness {
+                    static var _doSomething: () -> Void
+
+                    public static var _doSomethingElse: () -> Void
+
+                    init() {
+                    }
+
+                    static func doSomething() {
+                        _doSomething()
+                    }
+
+                    public static func doSomethingElse() {
+                        _doSomethingElse()
+                    }
+
+                    private static var _production: MyClient?
+
+                    static func production() -> MyClient.ProtocolWitness {
+                        let production = _production ?? MyClient()
+
+                        if _production == nil {
+                            _production = production
+                        }
+
+                        return MyClient.ProtocolWitness()
                     }
                 }
             }
