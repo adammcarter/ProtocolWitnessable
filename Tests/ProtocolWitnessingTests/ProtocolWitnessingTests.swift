@@ -1226,198 +1226,379 @@ extension ProtocolWitnessingTests {
     }
 }
 
-//// MARK: Complex
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_expandsType_whenFunctionParametersContainsVoidToVoidClosure() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething(completionHandler: (Int) -> Void) {
-//                    // Complex logic here...
-//                    completionHandler()
-//                }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething(completionHandler: (Int) -> Void) {
-//                    // Complex logic here...
-//                    completionHandler()
-//                }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: ((Int) -> Void) -> Void
-//            
-//                    init(doSomething: @escaping ((Int) -> Void) -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething(completionHandler: (Int) -> Void) {
-//                        _doSomething(completionHandler)
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_expandsType_whenFunctionParametersContainsParamToVoidClosure() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething(completionHandler: (Int) -> Void) {
-//                    // Complex logic here...
-//                    completionHandler(1234567890)
-//                }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething(completionHandler: (Int) -> Void) {
-//                    // Complex logic here...
-//                    completionHandler(1234567890)
-//                }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: ((Int) -> Void) -> Void
-//            
-//                    init(doSomething: @escaping ((Int) -> Void) -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething(completionHandler: (Int) -> Void) {
-//                        _doSomething(completionHandler)
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_expandsType_whenFunctionParametersContainsVoidToVoidClosure_andClosureIsEscaping() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething(completionHandler: @escaping () -> Void) {
-//                    completionHandler()
-//                }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething(completionHandler: @escaping () -> Void) {
-//                    completionHandler()
-//                }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: (@escaping () -> Void) -> Void
-//            
-//                    init(doSomething: @escaping (@escaping () -> Void) -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething(completionHandler: @escaping () -> Void) {
-//                        _doSomething(completionHandler)
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_expandsType_whenFunctionParametersContainsParamToVoidClosure_andClosureIsEscaping() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething(completionHandler: @escaping (Int) -> Void) { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething(completionHandler: @escaping (Int) -> Void) { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: (@escaping (Int) -> Void) -> Void
-//            
-//                    init(doSomething: @escaping (@escaping (Int) -> Void) -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething(completionHandler: @escaping (Int) -> Void) {
-//                        _doSomething(completionHandler)
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
+// MARK: Completion handlers
+
+extension ProtocolWitnessingTests {
+    func testMacro_whenFunctionParametersContainsVoidToVoidClosure() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething(completionHandler: () -> Void)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(completionHandler: () -> Void)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(completionHandler: () -> Void) {
+                    _doSomething(completionHandler)
+                }
+
+                var _doSomething: (() -> Void) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping (() -> Void) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenFunctionParametersContainsTypeToVoidClosure() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething(completionHandler: (Int) -> Void)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(completionHandler: (Int) -> Void)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(completionHandler: (Int) -> Void) {
+                    _doSomething(completionHandler)
+                }
+
+                var _doSomething: ((Int) -> Void) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping ((Int) -> Void) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenFunctionParametersContainsTypeToVoidClosure_andTypeIsOptional() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething(completionHandler: (Int?) -> Void)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(completionHandler: (Int?) -> Void)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(completionHandler: (Int?) -> Void) {
+                    _doSomething(completionHandler)
+                }
+
+                var _doSomething: ((Int?) -> Void) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping ((Int?) -> Void) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenFunctionParametersContainsMultipleVariousTypesToVoidClosure() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething(completionHandler: (Int, String, Double) -> Void)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(completionHandler: (Int, String, Double) -> Void)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(completionHandler: (Int, String, Double) -> Void) {
+                    _doSomething(completionHandler)
+                }
+
+                var _doSomething: ((Int, String, Double) -> Void) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping ((Int, String, Double) -> Void) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenFunctionParametersContainsMultipleSameTypesToVoidClosure() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething(completionHandler: (Int, Int, Int) -> Void)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(completionHandler: (Int, Int, Int) -> Void)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(completionHandler: (Int, Int, Int) -> Void) {
+                    _doSomething(completionHandler)
+                }
+
+                var _doSomething: ((Int, Int, Int) -> Void) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping ((Int, Int, Int) -> Void) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenFunctionParametersContainsVoidToVoidClosure_andIsEscaping() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething(completionHandler: @escaping () -> Void)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(completionHandler: @escaping () -> Void)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(completionHandler: @escaping () -> Void) {
+                    _doSomething(completionHandler)
+                }
+
+                var _doSomething: (@escaping () -> Void) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping (@escaping () -> Void) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenFunctionParametersContainsTypeToVoidClosure_andIsEscaping() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething(completionHandler: @escaping (Int) -> Void)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(completionHandler: @escaping (Int) -> Void)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(completionHandler: @escaping (Int) -> Void) {
+                    _doSomething(completionHandler)
+                }
+
+                var _doSomething: (@escaping (Int) -> Void) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping (@escaping (Int) -> Void) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenFunctionParametersContainsMultipleVoidToVoidClosures() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething(configurationHandler: () -> Void, completionHandler: () -> Void)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(configurationHandler: () -> Void, completionHandler: () -> Void)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(configurationHandler: () -> Void, completionHandler: () -> Void) {
+                    _doSomething(configurationHandler, completionHandler)
+                }
+
+                var _doSomething: (() -> Void, () -> Void) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping (() -> Void, () -> Void) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenFunctionParametersContainsMultipleVoidToVoidClosures_andMixedParameters() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething(configurationHandler: () -> Void, completionHandler: (Bool, Error?) -> Void)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(configurationHandler: () -> Void, completionHandler: (Bool, Error?) -> Void)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(configurationHandler: () -> Void, completionHandler: (Bool, Error?) -> Void) {
+                    _doSomething(configurationHandler, completionHandler)
+                }
+
+                var _doSomething: (() -> Void, (Bool, Error?) -> Void) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping (() -> Void, (Bool, Error?) -> Void) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
 //// MARK: Formatting
 //
 //extension ProtocolWitnessingTests {
