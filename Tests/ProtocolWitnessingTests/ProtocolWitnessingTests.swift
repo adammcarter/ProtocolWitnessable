@@ -73,7 +73,6 @@ extension ProtocolWitnessingTests {
             
                 struct ProtocolWitness {
                     init() {
-            
                     }
             
                     private static var _production: MyClientClass?
@@ -110,7 +109,6 @@ extension ProtocolWitnessingTests {
 
                 struct ProtocolWitness {
                     init() {
-
                     }
 
                     private static var _production: MyClient?
@@ -574,7 +572,6 @@ extension ProtocolWitnessingTests {
             
                 struct ProtocolWitness {
                     init() {
-            
                     }
             
                     private static var _production: MyClient?
@@ -1842,7 +1839,6 @@ extension ProtocolWitnessingTests {
                     var _someLetProperty: Int = 10
 
                     init() {
-
                     }
 
 
@@ -1881,7 +1877,6 @@ extension ProtocolWitnessingTests {
                     var someLetProperty: Int = 10
 
                     init() {
-
                     }
 
 
@@ -1918,7 +1913,6 @@ extension ProtocolWitnessingTests {
 
                 struct ProtocolWitness {
                     init() {
-
                     }
 
                     private static var _production: MyClient?
@@ -1955,7 +1949,6 @@ extension ProtocolWitnessingTests {
                     var someLetProperty = 10
             
                     init() {
-
                     }
 
             
@@ -2224,7 +2217,6 @@ extension ProtocolWitnessingTests {
             
                 struct ProtocolWitness {
                     init() {
-            
                     }
             
                     private static var _production: MyClient?
@@ -2265,7 +2257,6 @@ extension ProtocolWitnessingTests {
                     var somethingNotPrivate = true
             
                     init() {
-            
                     }
             
             
@@ -2308,7 +2299,6 @@ extension ProtocolWitnessingTests {
                     internal var somethingInternal = true
             
                     init() {
-            
                     }
             
             
@@ -2353,7 +2343,6 @@ extension ProtocolWitnessingTests {
                     var somethingInternal = true
             
                     init() {
-            
                     }
             
             
@@ -2396,7 +2385,6 @@ extension ProtocolWitnessingTests {
                     public var somethingPublic = true
             
                     init() {
-            
                     }
             
             
@@ -2441,7 +2429,6 @@ extension ProtocolWitnessingTests {
                     var somethingInternal = true
             
                     init() {
-            
                     }
             
             
@@ -2484,7 +2471,6 @@ extension ProtocolWitnessingTests {
                     open var somethingOpen = true
             
                     init() {
-            
                     }
             
             
@@ -2529,7 +2515,6 @@ extension ProtocolWitnessingTests {
                     var somethingElse = true
             
                     init() {
-            
                     }
             
             
@@ -2580,7 +2565,6 @@ extension ProtocolWitnessingTests {
                     }()
 
                     init() {
-            
                     }
             
             
@@ -2631,7 +2615,6 @@ extension ProtocolWitnessingTests {
                     }()
 
                     init() {
-            
                     }
             
             
@@ -2694,7 +2677,6 @@ extension ProtocolWitnessingTests {
                     }()
 
                     init() {
-            
                     }
             
             
@@ -2745,7 +2727,6 @@ extension ProtocolWitnessingTests {
                     }()
             
                     init() {
-            
                     }
             
             
@@ -2800,7 +2781,6 @@ extension ProtocolWitnessingTests {
                     }()
             
                     init() {
-            
                     }
             
             
@@ -2855,7 +2835,6 @@ extension ProtocolWitnessingTests {
                     }()
             
                     init() {
-            
                     }
             
             
@@ -2922,7 +2901,6 @@ extension ProtocolWitnessingTests {
                     }()
             
                     init() {
-            
                     }
             
             
@@ -2977,7 +2955,6 @@ extension ProtocolWitnessingTests {
                     }
             
                     init() {
-            
                     }
             
             
@@ -3032,7 +3009,6 @@ extension ProtocolWitnessingTests {
                     }
             
                     init() {
-            
                     }
             
             
@@ -3083,7 +3059,6 @@ extension ProtocolWitnessingTests {
                     }()
 
                     init() {
-
                     }
 
 
@@ -3134,7 +3109,6 @@ extension ProtocolWitnessingTests {
                     }()
             
                     init() {
-            
                     }
             
             
@@ -3190,7 +3164,6 @@ extension ProtocolWitnessingTests {
                     }()
             
                     init() {
-            
                     }
             
             
@@ -3239,7 +3212,6 @@ extension ProtocolWitnessingTests {
                     }()
 
                     init() {
-
                     }
 
 
@@ -3296,7 +3268,6 @@ extension ProtocolWitnessingTests {
                     }()
 
                     init() {
-
                     }
 
 
@@ -3356,7 +3327,6 @@ extension ProtocolWitnessingTests {
                     }()
             
                     init() {
-            
                     }
             
             
@@ -3416,7 +3386,6 @@ extension ProtocolWitnessingTests {
                     }()
             
                     init() {
-            
                     }
             
             
@@ -3485,7 +3454,6 @@ extension ProtocolWitnessingTests {
                     }()
             
                     init() {
-            
                     }
             
             
@@ -3558,7 +3526,6 @@ extension ProtocolWitnessingTests {
                     }()
             
                     init() {
-            
                     }
             
             
@@ -3600,7 +3567,6 @@ extension ProtocolWitnessingTests {
 
                 struct ProtocolWitness {
                     init() {
-
                     }
 
                     private static var _production: MyClient?
@@ -4054,7 +4020,6 @@ extension ProtocolWitnessingTests {
             
                 struct MyCustomWitnessTypeName {
                     init() {
-            
                     }
             
                     private static var _production: MyClient?

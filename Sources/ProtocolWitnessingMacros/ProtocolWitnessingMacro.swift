@@ -87,9 +87,7 @@ public struct WitnessingMacro: MemberMacro {
         
         if allInitializerParameters.isEmpty {
             protocolWitnessInit = """
-                init() {
-                
-                }
+                init() { }
                 """
         } else if
             allInitializerParameters.count == 1,
