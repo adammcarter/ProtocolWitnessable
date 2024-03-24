@@ -33,7 +33,9 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
         
         
         
-        let functions = makeCapturedFunctions(from: protocolDecl)
+        let capturedProperties = makeCapturedProperties(from: protocolDecl)
+        
+        let capturedFunctions = makeCapturedFunctions(from: protocolDecl)
         
         
         
@@ -57,36 +59,32 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
         
         let protocolWitnessStruct: String
         
-        if functions.isEmpty {
+        if capturedProperties.isEmpty && capturedFunctions.isEmpty {
             protocolWitnessStruct = """
                 \(modifierOrEmpty)struct \(protocolWitnessStructTypeName): \(protocolTypeName) {
                 }
                 """
         } else {
-            let protocolWitnessStructBody = functions
-                .map { capturedFunction in
-                    let wrappedFunction = makeWrappedFunction(for: capturedFunction)
-                    
-                    let underscoredClosureParameters = capturedFunction
-                        .capturedClosureParameters
-                        .map { _ in "_" }
-                        .joined(separator: ", ")
-                        .appending(capturedFunction.capturedClosureParameters.isEmpty ? "" : " in")
-                    
-                    let defaultValueOrEmpty = capturedFunction.isStatic
-                        ? " = { \(underscoredClosureParameters) }"
-                        : ""
-                    
-                    let functionAsProperty = "\(capturedFunction.prefix)var _\(capturedFunction.name): \(capturedFunction.type)\(defaultValueOrEmpty)"
-                    
-                    
-                    return """
-                    \(wrappedFunction)
-                    
-                    \(functionAsProperty)
-                    """
-                }
+            let propertiesAsPropertiesAndWrappedProperties = capturedProperties
+                .compactMap(makePropertiesAsPropertiesAndWrappedProperties)
                 .joined(separator: "\n\n")
+            
+            
+            let functionsAsPropertiesAndWrappedFunctions = capturedFunctions
+                .map(makeFunctionsAsPropertiesAndWrappedFunctions)
+                .joined(separator: "\n\n")
+            
+            
+            
+            let separator = propertiesAsPropertiesAndWrappedProperties.isEmpty
+                || functionsAsPropertiesAndWrappedFunctions.isEmpty
+                ? ""
+                : "\n\n"
+            
+            let protocolWitnessStructBody = [
+                propertiesAsPropertiesAndWrappedProperties,
+                functionsAsPropertiesAndWrappedFunctions
+            ].joined(separator: separator)
 
             
             protocolWitnessStruct = """
@@ -125,7 +123,10 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
         
         
         
-        let functions = makeCapturedFunctions(from: protocolDecl)
+        let capturedProperties = makeCapturedProperties(from: protocolDecl)
+            .filter { $0.isStatic == false }
+        
+        let capturedFunctions = makeCapturedFunctions(from: protocolDecl)
             .filter { $0.isStatic == false }
         
         
@@ -157,7 +158,7 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
         let makeErasedProtocolWitnessFunction: String
         let makingProtocolWitness: String
         
-        if functions.isEmpty {
+        if capturedProperties.isEmpty && capturedFunctions.isEmpty {
             makeErasedProtocolWitnessFunction = """
                 static func makeErasedProtocolWitness() -> \(protocolTypeName) {
                 \(protocolWitnessStructTypeName)()
@@ -170,20 +171,52 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
                 }
                 """
         } else {
-            let erasedProtocolWitnessFunctionParameters = functions
+            let propertyParameters = capturedProperties
+                .map {
+                    "\($0.name): \($0.type)"
+                }
+            
+            let functionParameters = capturedFunctions
                 .map {
                     "\($0.name): @escaping \($0.type)"
                 }
+            
+            
+            let erasedProtocolWitnessFunctionParameters = [
+                propertyParameters,
+                functionParameters,
+            ]
+                .flatMap { $0 }
                 .joined(separator: ",\n")
 
             
-            let protocolWitnessInitializerParameters = functions
+            
+            
+            
+            
+            let propertyInitializerParameters = capturedProperties
+                .map {
+                    let underscoreOrEmpty = $0.isGetOnly ? "_" : ""
+                    
+                    return "\(underscoreOrEmpty)\($0.name): \($0.name)"
+                }
+            
+            let functionInitializerParameters = capturedFunctions
                 .map {
                     "_\($0.name): \($0.name)"
                 }
+            
+            
+            let protocolWitnessInitializerParameters = [
+                propertyInitializerParameters,
+                functionInitializerParameters,
+            ]
+                .flatMap { $0 }
                 .joined(separator: ",\n")
 
+            
 
+            
             makeErasedProtocolWitnessFunction = """
                 static func makeErasedProtocolWitness(
                 \(erasedProtocolWitnessFunctionParameters)
@@ -439,8 +472,8 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
 
 // MARK: - Capturing data
 
-private func makeCapturedProperties(from structDecl: StructDeclSyntax) -> [CapturedProperty] {
-    structDecl
+private func makeCapturedProperties(from decl: ProtocolDeclSyntax) -> [CapturedProperty] {
+    decl
         .memberBlock
         .members
         .compactMap { member -> [CapturedProperty]? in
@@ -488,18 +521,9 @@ private func makeCapturedProperties(from structDecl: StructDeclSyntax) -> [Captu
             }
             
             
-            let modifier = varDecl
-                .modifiers
-                .first {
-                    $0.name.tokenKind == .keyword(.internal)
-                    || $0.name.tokenKind == .keyword(.public)
-                    || $0.name.tokenKind == .keyword(.open)
-                }?
-                .name
-                .trimmedDescription
             
-            let letOrVar = varDecl.bindingSpecifier.text
             
+                        
             let isStatic = member
                 .decl
                 .as(VariableDeclSyntax.self)?
@@ -509,42 +533,7 @@ private func makeCapturedProperties(from structDecl: StructDeclSyntax) -> [Captu
             let isLazy = varDecl
                 .modifiers
                 .contains { $0.name.tokenKind == .keyword(.lazy) }
-            
-            let accessors = member
-                .decl
-                .as(VariableDeclSyntax.self)?
-                .bindings
-                .first?
-                .accessorBlock?
-                .accessors
-            
-            let getterClosureContents = accessors?
-                .as(AccessorDeclListSyntax.self)?
-                .first?
-                .body?
-                .statements
-                .trimmedDescription
-            
-            let functionCallContents = member
-                .decl
-                .as(VariableDeclSyntax.self)?
-                .bindings
-                .first?
-                .initializer?
-                .value
-                .as(FunctionCallExprSyntax.self)?
-                .calledExpression
-                .as(ClosureExprSyntax.self)?
-                .statements
-                .trimmedDescription
-            
-            let closureContents = functionCallContents
-            ?? getterClosureContents
-            ?? accessors?.trimmedDescription
-            
-            
-            
-            
+        
             
             
             
@@ -554,56 +543,45 @@ private func makeCapturedProperties(from structDecl: StructDeclSyntax) -> [Captu
             return varDecl
                 .bindings
                 .compactMap { binding -> CapturedProperty? in
+                    guard let type = binding.typeAnnotation?.type.trimmedDescription else {
+                        return nil
+                    }
+                    
+                    
                     
                     let accessorBlock = binding.accessorBlock
-                    let isComputed = accessorBlock != nil
                     
-                    
-                    let isAsync = accessorBlock?
+                    let declList = accessorBlock?
                         .accessors
-                        .as(AccessorDeclListSyntax.self)?
+                        .as(AccessorDeclListSyntax.self)
+                    
+                    
+                    let isAsync = declList?
                         .compactMap { $0.effectSpecifiers?.asyncSpecifier }
                         .isEmpty == false
                     
-                    let isThrowing = accessorBlock?
-                        .accessors
-                        .as(AccessorDeclListSyntax.self)?
+                    let isThrowing = declList?
                         .compactMap { $0.effectSpecifiers?.throwsSpecifier }
                         .isEmpty == false
                     
+                    let isGetOnly = declList?.contains {
+                        $0.accessorSpecifier.tokenKind == .keyword(.set)
+                    } == false && declList != nil
                     
                     
                     
                     
                     
-                    
-                    let setter = accessorBlock?
-                        .accessors
-                        .as(AccessorDeclListSyntax.self)?
-                        .first { $0.accessorSpecifier.tokenKind == .keyword(.set) }?
-                        .trimmedDescription
-                    
-                    
-                    let type = binding.typeAnnotation?.type.trimmedDescription
                     let name = binding.pattern.trimmedDescription
-                    let accessor = accessorBlock?.trimmedDescription
-                    let equals = binding.initializer?.value.trimmedDescription
-                    
                     
                     return CapturedProperty(
-                        modifier: modifier,
-                        letOrVar: letOrVar,
                         name: name,
                         type: type,
-                        accessor: accessor,
-                        setter: setter,
-                        equals: equals,
+                        isGetOnly: isGetOnly,
                         isAsync: isAsync,
                         isThrowing: isThrowing,
                         isStatic: isStatic,
-                        isComputed: isComputed,
-                        isLazy: isLazy,
-                        closureContents: closureContents
+                        isLazy: isLazy
                     )
                 }
         }
@@ -701,109 +679,56 @@ private func makeCapturedFunctions(from decl: ProtocolDeclSyntax) -> [CapturedFu
 
 private func makeProtocolWitnessProperties(from capturedProperty: CapturedProperty) -> String? {
     let type = capturedProperty.type.flatMap({ ": \($0)" })
+    let name = capturedProperty.name
+    
+    
+    let asyncThrows = if capturedProperty.isAsync, capturedProperty.isThrowing {
+        " async throws"
+    } else if capturedProperty.isAsync {
+        " async"
+    } else if capturedProperty.isThrowing {
+        " throws"
+    } else {
+        ""
+    }
+    
+    let getExpression = if capturedProperty.isAsync, capturedProperty.isThrowing {
+        "try await _\(capturedProperty.name)()"
+    } else if capturedProperty.isThrowing {
+        "try _\(capturedProperty.name)()"
+    } else {
+        "_\(capturedProperty.name)"
+    }
+    
+    let getName = "get\(asyncThrows)"
+    let getter = "\(getName) { \(getExpression) }"
     
     
     
-    
-    
-    let isMissingType = type == nil
-    let isLet = capturedProperty.letOrVar == "let"
-    
-    if isMissingType, isLet {
-        return nil
+    let rhs = if capturedProperty.isThrowing {
+        ": () throws -> \(capturedProperty.type)"
+    } else {
+        ": \(capturedProperty.type)"
     }
     
     
     
+    let underscoredProperty = "\(capturedProperty.prefix)var _\(name)\(rhs)"
     
-    
-    
-    let typeOrEmpty = type ?? ""
-    
-    let name = capturedProperty.name
-    
-    
-    
-    
-    let isVar = capturedProperty.letOrVar == "var"
-    
-    
-    
-    
-    
-    
-    
-    if
-        isVar,
-        let equals = capturedProperty.equals
-    {
-        return """
-                \(capturedProperty.prefix)var \(name)\(typeOrEmpty) = \(equals)
-                """
-    } else {
-        
-        let asyncThrows = if capturedProperty.isAsync, capturedProperty.isThrowing {
-            " async throws"
-        } else if capturedProperty.isAsync {
-            " async"
-        } else if capturedProperty.isThrowing {
-            " throws"
-        } else {
-            ""
-        }
-        
-        let getExpression = if capturedProperty.isAsync, capturedProperty.isThrowing {
-            "try await _\(capturedProperty.name)()"
-        } else if capturedProperty.isThrowing {
-            "try _\(capturedProperty.name)()"
-        } else {
-            "_\(capturedProperty.name)"
-        }
-        
-        let getName = "get\(asyncThrows)"
-        let getter = "\(getName) { \(getExpression) }"
-        
-        
-        
-        let rhs: String
-        
-        if capturedProperty.isThrowing {
-            let typeRhs = capturedProperty.closureContents.flatMap { " = { \($0) }" }
-            ?? capturedProperty.equals.flatMap { " = \($0)" }
-            ?? ""
-            
-            rhs = capturedProperty.type.flatMap { ": () throws -> \($0)\(typeRhs)" }
-            ?? ""
-        } else {
-            let defaultValue = capturedProperty.closureContents.flatMap { " = { \($0) }()" }
-            ?? capturedProperty.equals.flatMap { " = \($0)" }
-            ?? ""
-            
-            rhs = capturedProperty.type.flatMap { ": \($0)\(defaultValue)" }
-            ?? ""
-        }
-        
-        
-        
-        let underscoredProperty = "\(capturedProperty.prefix)var _\(name)\(rhs)"
-        
-        let setter = capturedProperty.setter.flatMap { "\n\($0)" } ?? ""
-        
-        let wrappedProperty = """
-                \(capturedProperty.prefix)var \(name)\(typeOrEmpty) {
-                \(getter)\(setter)
+    let wrappedProperty = """
+                \(capturedProperty.prefix)var \(name)\(type) {
+                \(getter)
                 }
                 """
-        
-        
-        
-        
-        return """
+    
+    
+    
+    
+    return """
                 \(wrappedProperty)
                 
                 \(underscoredProperty)
                 """
-    }
 }
 
 private func makeProtocolWitnessProperties(from capturedFunction: CapturedFunction) -> String {
@@ -891,7 +816,6 @@ private func makeProtocolWitnessFunction(
     
     
     let parametersForProtocolWitnessInit = nonComputedParameters
-        .filter { $0.equals == nil }
         .map {
             "\($0.name): \($0.name)"
         }
@@ -1036,6 +960,76 @@ private func makeProtocolWitnessStructTypeName(for protocolTypeName: String) -> 
     "\(protocolTypeName)ProtocolWitness"
 }
 
+private func makePropertiesAsPropertiesAndWrappedProperties(for capturedProperty: CapturedProperty) -> String {
+    let wrappedProperty = makeWrappedProperty(for: capturedProperty)
+    
+        
+    let defaultValueOrEmpty = capturedProperty.isStatic
+        ? " = { .init() }()"
+        : ""
+    
+    
+    let underscoreOrEmpty = capturedProperty.isGetOnly && capturedProperty.isStatic == false
+        ? "_"
+        : ""
+    
+    let prefix = "\(capturedProperty.prefix)var \(underscoreOrEmpty)"
+    let property = "\(prefix)\(capturedProperty.name): \(capturedProperty.type)\(defaultValueOrEmpty)"
+    
+    
+    return [
+        wrappedProperty,
+        property
+    ]
+        .compactMap { $0 }
+        .joined(separator: "\n\n")
+}
+
+private func makeWrappedProperty(for capturedProperty: CapturedProperty) -> String? {
+    guard capturedProperty.isGetOnly else {
+        return nil
+    }
+    
+    guard capturedProperty.isStatic == false else {
+        return nil
+    }
+    
+    return """
+        \(capturedProperty.prefix)var \(capturedProperty.name): \(capturedProperty.type) {
+        _\(capturedProperty.name)
+        }
+        """
+}
+
+private func makeFunctionsAsPropertiesAndWrappedFunctions(for capturedFunction: CapturedFunction) -> String {
+    let wrappedFunction = makeWrappedFunction(for: capturedFunction)
+    
+    
+    
+    let underscoredClosureParameters = capturedFunction
+        .capturedClosureParameters
+        .map { _ in "_" }
+        .joined(separator: ", ")
+        .appending(capturedFunction.capturedClosureParameters.isEmpty ? "" : " in")
+    
+    
+    let defaultValueOrEmpty = capturedFunction.isStatic
+        ? " = { \(underscoredClosureParameters) }"
+        : ""
+    
+    
+    let functionAsProperty = "\(capturedFunction.prefix)var _\(capturedFunction.name): \(capturedFunction.type)\(defaultValueOrEmpty)"
+    
+    
+    
+    return """
+        \(wrappedFunction)
+        
+        \(functionAsProperty)
+        """
+    
+}
+
 private func makeWrappedFunction(for capturedFunction: CapturedFunction) -> String {
     let parameterNameWithTypeList = capturedFunction.capturedClosureParameters
         .map { "\($0.name): \($0.type)" }
@@ -1087,23 +1081,24 @@ private func makeWrappedFunction(for capturedFunction: CapturedFunction) -> Stri
 
 // MARK: - Types
 
-private struct CapturedProperty: Declaring {
-    let modifier: String?
-    let letOrVar: String
+private struct CapturedProperty {
     let name: String
-    let type: String?
-    let accessor: String?
-    let setter: String?
-    let equals: String?
+    let type: String
+    let isGetOnly: Bool
     let isAsync: Bool
     let isThrowing: Bool
     let isStatic: Bool
-    let isComputed: Bool
     let isLazy: Bool
-    let closureContents: String?
+    
+    var prefix: String {
+        let lazyOrEmpty = isLazy ? "lazy " : ""
+        let staticOrEmpty = isStatic ? "static " : ""
+        
+        return "\(lazyOrEmpty)\(staticOrEmpty)"
+    }
 }
 
-private struct CapturedFunction: Declaring {
+private struct CapturedFunction {
     let modifier: String?
     let name: String
     let returnValue: String?
@@ -1116,6 +1111,14 @@ private struct CapturedFunction: Declaring {
     struct CapturedClosureParameter {
         let name: String
         let type: String
+    }
+    
+    var prefix: String {
+        let lazyOrEmpty = isLazy ? "lazy " : ""
+        let modifierOrEmpty = modifier.flatMap { "\($0) " } ?? ""
+        let staticOrEmpty = isStatic ? "static " : ""
+        
+        return "\(lazyOrEmpty)\(modifierOrEmpty)\(staticOrEmpty)"
     }
         
     var type: String {
@@ -1143,24 +1146,6 @@ private struct CapturedFunction: Declaring {
         
         return "\(signatureDecl) -> \(returnValueOrVoid)"
 
-    }
-}
-
-protocol Declaring {
-    var modifier: String? { get }
-    var isStatic: Bool { get }
-    var isLazy: Bool { get }
-    
-    var prefix: String { get }
-}
-
-extension Declaring {
-    var prefix: String {
-        let lazyOrEmpty = isLazy ? "lazy " : ""
-        let modifierOrEmpty = modifier.flatMap { "\($0) " } ?? ""
-        let staticOrEmpty = isStatic ? "static " : ""
-        
-        return "\(lazyOrEmpty)\(modifierOrEmpty)\(staticOrEmpty)"
     }
 }
 

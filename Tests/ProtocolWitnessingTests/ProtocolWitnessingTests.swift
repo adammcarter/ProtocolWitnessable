@@ -1773,268 +1773,156 @@ extension ProtocolWitnessingTests {
     }
 }
 
-//// MARK: - Properties
-//
-//// MARK: Only properties
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andNoFunctions() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                let someLetProperty: Int
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                let someLetProperty: Int
-//            
-//                struct ProtocolWitness {
-//                    var someLetProperty: Int {
-//                        get {
-//                            _someLetProperty
-//                        }
-//                    }
-//            
-//                    var _someLetProperty: Int
-//            
-//                    init(someLetProperty: Int) {
-//                        _someLetProperty = someLetProperty
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production(
-//                        someLetProperty: Int
-//                    ) -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient(
-//                            someLetProperty: someLetProperty
-//                        )
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            someLetProperty: production.someLetProperty
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_createsInitWithProperty_whenStructHasOneSimpleVarProperty_andNoFunctions_andVarHasNoDefaultValue() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                var someLetProperty: Int
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                var someLetProperty: Int
-//            
-//                struct ProtocolWitness {
-//                    var someLetProperty: Int {
-//                        get {
-//                            _someLetProperty
-//                        }
-//                    }
-//            
-//                    var _someLetProperty: Int
-//            
-//                    init(someLetProperty: Int) {
-//                        _someLetProperty = someLetProperty
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production(
-//                        someLetProperty: Int
-//                    ) -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient(
-//                            someLetProperty: someLetProperty
-//                        )
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            someLetProperty: production.someLetProperty
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andNoFunctions_andLetHasDefaultValue_andExplicitType() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                let someLetProperty: Int = 10
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                let someLetProperty: Int = 10
-//
-//                struct ProtocolWitness {
-//                    var someLetProperty: Int {
-//                        get {
-//                            _someLetProperty
-//                        }
-//                    }
-//
-//                    var _someLetProperty: Int = 10
-//
-//                    init() {
-//                    }
-//
-//
-//
-//                    private static var _production: MyClient?
-//
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andNoFunctions_andVarHasDefaultValue_andExplicitType() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                var someLetProperty: Int = 10
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                var someLetProperty: Int = 10
-//
-//                struct ProtocolWitness {
-//                    var someLetProperty: Int = 10
-//
-//                    init() {
-//                    }
-//
-//
-//
-//                    private static var _production: MyClient?
-//
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andNoFunctions_andLetHasDefaultValue_butImplicitType() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                let someLetProperty = 10
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                let someLetProperty = 10
-//
-//                struct ProtocolWitness {
-//                    init() {
-//                    }
-//
-//                    private static var _production: MyClient?
-//
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andNoFunctions_andVarHasDefaultValue_butImplicitType() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                var someLetProperty = 10
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                var someLetProperty = 10
-//
-//                struct ProtocolWitness {
-//                    var someLetProperty = 10
-//            
-//                    init() {
-//                    }
-//
-//            
-//            
-//                    private static var _production: MyClient?
-//
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
+// MARK: - Properties
+
+// MARK: Only properties
+
+extension ProtocolWitnessingTests {
+    func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetOnlyProperty() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                var someLetProperty: Int { get }
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                var someLetProperty: Int { get }
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                var someLetProperty: Int {
+                    _someLetProperty
+                }
+
+                var _someLetProperty: Int
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    someLetProperty: Int
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _someLetProperty: someLetProperty
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _someLetProperty: someLetProperty
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsVariable_butWithoutWrapper_whenGetSetProperty() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                var someLetProperty: Int { get set }
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                var someLetProperty: Int { get set }
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                var someLetProperty: Int
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    someLetProperty: Int
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        someLetProperty: someLetProperty
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        someLetProperty: someLetProperty
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsVariableWithDefaultLazyClosure_whenGetOnlyProperty_andStatic() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                static var someLetProperty: Int { get }
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                static var someLetProperty: Int { get }
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                static var someLetProperty: Int = {
+                    .init()
+                }()
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+            
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsVariableWithDefaultLazyClosure_whenGetAndSetProperty_andStatic() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                static var someLetProperty: Int { get set }
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                static var someLetProperty: Int { get set }
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                static var someLetProperty: Int = {
+                    .init()
+                }()
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+            
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+}
+
 //// MARK: With functions
 //
 //extension ProtocolWitnessingTests {

@@ -3,7 +3,25 @@ import ProtocolWitnessing
 
 
 
+protocol MyClient {
+    static var someLetProperty: Int { get }
+}
 
+struct MyClientProtocolWitness: MyClient {
+    static var someLetProperty: Int = {
+        .init()
+    }()
+}
+
+extension MyClient {
+    static func makeErasedProtocolWitness() -> MyClient {
+        MyClientProtocolWitness()
+    }
+    
+    func makingProtocolWitness() -> MyClientProtocolWitness {
+        MyClientProtocolWitness()
+    }
+}
 
 
 //
