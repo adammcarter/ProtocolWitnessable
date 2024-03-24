@@ -118,11 +118,18 @@ extension ProtocolWitnessingTests {
         } expansion: {
             """
             protocol MyClient { }
-            
+
             struct MyClientProtocolWitness: MyClient {
             }
-            
+
             extension MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
             }
             """
         }
@@ -137,11 +144,18 @@ extension ProtocolWitnessingTests {
         } expansion: {
             """
             internal protocol MyClient { }
-            
+
             internal struct MyClientProtocolWitness: MyClient {
             }
-            
+
             internal extension MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
             }
             """
         }
@@ -156,11 +170,18 @@ extension ProtocolWitnessingTests {
         } expansion: {
             """
             public protocol MyClient { }
-            
+
             public struct MyClientProtocolWitness: MyClient {
             }
-            
+
             public extension MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
             }
             """
         }
@@ -175,11 +196,18 @@ extension ProtocolWitnessingTests {
         } expansion: {
             """
             private protocol MyClient { }
-            
+
             private struct MyClientProtocolWitness: MyClient {
             }
-            
+
             private extension MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
             }
             """
         }
@@ -194,11 +222,18 @@ extension ProtocolWitnessingTests {
         } expansion: {
             """
             fileprivate protocol MyClient { }
-            
+
             fileprivate struct MyClientProtocolWitness: MyClient {
             }
-            
+
             fileprivate extension MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
             }
             """
         }

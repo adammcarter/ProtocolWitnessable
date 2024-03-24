@@ -26,7 +26,9 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
             throw ProtocolWitnessingError.notAProtocol
         }
         
-        let protocolName = protocolDecl.name.trimmedDescription
+        let protocolTypeName = protocolDecl.name.trimmedDescription
+        let protocolWitnessStructTypeName = makeProtocolWitnessStructTypeName(for: protocolTypeName)
+        
         let modifierOrEmpty = modifierOrEmpty(for: protocolDecl)
         
         
@@ -48,7 +50,7 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
         
         
         let protocolWitnessStruct = """
-            \(modifierOrEmpty)struct \(protocolName)ProtocolWitness: \(protocolName) {
+            \(modifierOrEmpty)struct \(protocolWitnessStructTypeName): \(protocolTypeName) {
             }
             """
         
@@ -74,7 +76,9 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
         }
         
         
-        let protocolName = protocolDecl.name.trimmedDescription
+        let protocolTypeName = protocolDecl.name.trimmedDescription
+        let protocolWitnessStructTypeName = makeProtocolWitnessStructTypeName(for: protocolTypeName)
+        
         let modifierOrEmpty = modifierOrEmpty(for: protocolDecl)
         
         
@@ -105,15 +109,32 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
         
         
         
-        let extensionBody = """
-            \(modifierOrEmpty)extension \(protocolName) {}
+        let makeErasedProtocolWitnessFunction = """
+            static func makeErasedProtocolWitness() -> \(protocolTypeName) {
+            \(protocolWitnessStructTypeName)()
+            }
             """
         
-        let extensionDecl = try ExtensionDeclSyntax("\(raw: extensionBody)")
+        let makingProtocolWitness = """
+            func makingProtocolWitness() -> \(protocolWitnessStructTypeName) {
+                \(protocolWitnessStructTypeName)()
+            }
+            """
+        
+        let extensionBody = """
+            \(modifierOrEmpty)extension \(protocolTypeName) {
+            \(makeErasedProtocolWitnessFunction)
+            
+            \(makingProtocolWitness)
+            }
+            """
+        
+
+        
         
         
         return [
-            extensionDecl
+            try ExtensionDeclSyntax("\(raw: extensionBody)")
         ]
     }
 }
@@ -963,6 +984,9 @@ private func declGroupIsMainActor(_ decl: some DeclGroupSyntax) -> Bool {
         } == true
 }
 
+
+// MARK: - Helpers
+
 private func modifierOrEmpty(for protocolDecl: ProtocolDeclSyntax) -> String {
     let modifierOrNil = protocolDecl
         .modifiers
@@ -975,6 +999,10 @@ private func modifierOrEmpty(for protocolDecl: ProtocolDeclSyntax) -> String {
         .name.trimmedDescription
     
     return modifierOrNil.flatMap { "\($0) " } ?? ""
+}
+
+private func makeProtocolWitnessStructTypeName(for protocolTypeName: String) -> String {
+    "\(protocolTypeName)ProtocolWitness"
 }
 
 
