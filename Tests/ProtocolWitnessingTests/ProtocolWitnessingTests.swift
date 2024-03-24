@@ -1599,243 +1599,180 @@ extension ProtocolWitnessingTests {
     }
 }
 
-//// MARK: Formatting
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_expandsType_whenContainingFunction_andFunctionHasExplicitVoidReturn() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething() -> Void { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething() -> Void { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: () -> Void
-//            
-//                    init(doSomething: @escaping () -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething() -> Void {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_expandsType_whenContainingFunction_andFunctionHasExtraWhitespaceAroundReturnArrow() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething()   ->   Void { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething()   ->   Void { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: () -> Void
-//            
-//                    init(doSomething: @escaping () -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething() -> Void {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_expandsType_whenContainingFunction_andFunctionHasExtraWhitespaceAroundFunctionName() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func    doSomething()    {    }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func    doSomething()    {    }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: () -> Void
-//            
-//                    init(doSomething: @escaping () -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_expandsType_whenContainingFunction_andFunctionHasExtraNewlinesAroundFunctionBody() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething()
-//                {
-//                    /*some logic here*/
-//                }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething()
-//                {
-//                    /*some logic here*/
-//                }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: () -> Void
-//            
-//                    init(doSomething: @escaping () -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_expandsType_whenContainingFunction_andFunctionHasExtraNewlinesAndWhitespaceEverywhere() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func    doSomething ()
-//                
-//                {
-//                    
-//                    /*some logic here*/
-//                    
-//                }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func    doSomething ()
-//                
-//                {
-//                    
-//                    /*some logic here*/
-//                    
-//                }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: () -> Void
-//            
-//                    init(doSomething: @escaping () -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
+// MARK: Funky code formatting
+
+extension ProtocolWitnessingTests {
+    func testMacro_expandsType_whenContainingFunction_andProtocolHasLotsOfWhitespaceAroundName() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol      MyClient     {
+                func doSomething()   ->   Void
+            }
+            """
+        } expansion: {
+            """
+            protocol      MyClient     {
+                func doSomething()   ->   Void
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() -> Void {
+                    _doSomething()
+                }
+
+                var _doSomething: () -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_expandsType_whenContainingFunction_andFunctionHasExtraWhitespaceAroundReturnArrow() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething()   ->   Void
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething()   ->   Void
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() -> Void {
+                    _doSomething()
+                }
+
+                var _doSomething: () -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_expandsType_whenContainingFunction_andFunctionHasExtraWhitespaceAroundFunctionName() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func    doSomething()
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func    doSomething()
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() {
+                    _doSomething()
+                }
+
+                var _doSomething: () -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_expandsType_whenContainingFunction_andFunctionHasExtraNewlinesAndWhitespaceEverywhere() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func    doSomething      (      )
+                
+
+
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func    doSomething      (      )
+                
+
+
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() {
+                    _doSomething()
+                }
+
+                var _doSomething: () -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
 //// MARK: - Properties
 //
 //// MARK: Only properties
