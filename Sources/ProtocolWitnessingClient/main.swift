@@ -4,22 +4,26 @@ import ProtocolWitnessing
 
 
 protocol MyClient {
-    static var someLetProperty: Int { get }
+    var someLetProperty: (Int) -> Void { get set }
 }
 
 struct MyClientProtocolWitness: MyClient {
-    static var someLetProperty: Int = {
-        .init()
-    }()
+    var someLetProperty: (Int) -> Void
 }
 
 extension MyClient {
-    static func makeErasedProtocolWitness() -> MyClient {
-        MyClientProtocolWitness()
+    static func makeErasedProtocolWitness(
+        someLetProperty: @escaping (Int) -> Void
+    ) -> MyClient {
+        MyClientProtocolWitness(
+            someLetProperty: someLetProperty
+        )
     }
     
     func makingProtocolWitness() -> MyClientProtocolWitness {
-        MyClientProtocolWitness()
+        MyClientProtocolWitness(
+            someLetProperty: someLetProperty
+        )
     }
 }
 

@@ -1921,6 +1921,162 @@ extension ProtocolWitnessingTests {
             """
         }
     }
+    
+    func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetOnlyProperty_andIsClosureType() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                var someLetProperty: () -> Void { get }
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                var someLetProperty: () -> Void { get }
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                var someLetProperty: () -> Void {
+                    _someLetProperty
+                }
+
+                var _someLetProperty: () -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    someLetProperty: @escaping () -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _someLetProperty: someLetProperty
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _someLetProperty: someLetProperty
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetSetProperty_andIsClosureType() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                var someLetProperty: () -> Void { get set }
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                var someLetProperty: () -> Void { get set }
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                var someLetProperty: () -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    someLetProperty: @escaping () -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        someLetProperty: someLetProperty
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        someLetProperty: someLetProperty
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetOnlyProperty_andIsClosureType_andHasParameters() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                var someLetProperty: (Int) -> Void { get }
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                var someLetProperty: (Int) -> Void { get }
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                var someLetProperty: (Int) -> Void {
+                    _someLetProperty
+                }
+
+                var _someLetProperty: (Int) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    someLetProperty: @escaping (Int) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _someLetProperty: someLetProperty
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _someLetProperty: someLetProperty
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetSetProperty_andIsClosureType_andHasParameters() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                var someLetProperty: (Int) -> Void { get set }
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                var someLetProperty: (Int) -> Void { get set }
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                var someLetProperty: (Int) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    someLetProperty: @escaping (Int) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        someLetProperty: someLetProperty
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        someLetProperty: someLetProperty
+                    )
+                }
+            }
+            """
+        }
+    }
 }
 
 //// MARK: With functions

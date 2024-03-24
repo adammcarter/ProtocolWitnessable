@@ -173,7 +173,9 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
         } else {
             let propertyParameters = capturedProperties
                 .map {
-                    "\($0.name): \($0.type)"
+                    let escapingOrEmpty = $0.isFunctionType ? "@escaping " : ""
+                    
+                    return "\($0.name): \(escapingOrEmpty)\($0.type)"
                 }
             
             let functionParameters = capturedFunctions
@@ -547,7 +549,7 @@ private func makeCapturedProperties(from decl: ProtocolDeclSyntax) -> [CapturedP
                         return nil
                     }
                     
-                    
+                    let isFunctionType = binding.typeAnnotation?.type.is(FunctionTypeSyntax.self) == true
                     
                     let accessorBlock = binding.accessorBlock
                     
@@ -581,7 +583,8 @@ private func makeCapturedProperties(from decl: ProtocolDeclSyntax) -> [CapturedP
                         isAsync: isAsync,
                         isThrowing: isThrowing,
                         isStatic: isStatic,
-                        isLazy: isLazy
+                        isLazy: isLazy,
+                        isFunctionType: isFunctionType
                     )
                 }
         }
@@ -1089,6 +1092,7 @@ private struct CapturedProperty {
     let isThrowing: Bool
     let isStatic: Bool
     let isLazy: Bool
+    let isFunctionType: Bool
     
     var prefix: String {
         let lazyOrEmpty = isLazy ? "lazy " : ""
