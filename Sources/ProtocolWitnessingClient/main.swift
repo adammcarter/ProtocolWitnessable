@@ -1,163 +1,72 @@
 import ProtocolWitnessing
 
-// TODO: 
 
-// @ProtocolWitnessing(_ typeName: String = "Witness", generatedRealName: String? = "production")
+
+
+/*
+    MAIN MACRO
+ */
+
+
+// Manually written
+
+
+/*
+ Rules for @ProtocolWitnessing:
+ - Must be attached to a protocol - can this be validated? Maybe some if on the passed in type?
+    - let p = MyClient.Protocol.self    <-- only protocols have this .Protocol so we can use that to check?
+    - Alt can the argument's type be a protocol so swift compiler enforces only protocols are passed in
+ 
+ */
+
+
 //@ProtocolWitnessing
-//struct MyService {
-//    func fetchData() -> Int {
-//        return (100...10_000).randomElement()!
-//    }
-//    
-//    // < Generated >
-//    // Uses typeName arg
-////    struct Witness {
-////        var _fetchData: () -> Int
-////        
-////        init(fetchData: @escaping () -> Int) {
-////            _fetchData = fetchData
-////        }
-////        
-////        func fetchData() -> Int {
-////            _fetchData()
-////        }
-////    }
-//    // < / Generated >
-//}
-
-
-// < Generated > (if generatedRealName not nil)
-//extension MyService {
-//    // Uses generatedRealName arg with _ prefix
-//    private static var _production = {
-//        Self()
-//    }()
-//    
-//    // Uses generatedRealName and typeName args
-//    static var production = Witness(
-//        fetchData: _production.fetchData
-//    )
-//}
-// < / Generated >
+public protocol MyClient {
+    var name: String { get }
+    var height: Double { get set }
+    
+    func doSomething(age: Int) -> Void
+}
 
 
 
 
+// < Generated >
 
-// Using the Macro...
+public struct MyClientProtocolWitness: MyClient {
+    public let name: String
+    public var height: Double
+    
+    public func doSomething(age: Int) -> Void {
+        _doSomething(age)
+    }
+    
+    var _doSomething: (Int) -> Void
+}
 
-//var production = MyService.production
-//
-//print(production.fetchData())
-//
-//var preproduction = production
-//preproduction._fetchData = { 0 }
-//
-//print(preproduction.fetchData())
-//
-//var flakey = production
-//flakey._fetchData = { (0...1).randomElement()! }
-//
-//print(flakey.fetchData())
+public extension MyClient {
+    static func makeErasedProtocolWitness(
+        name: String,
+        height: Double,
+        doSomething: @escaping (Int) -> Void
+    ) -> MyClient {
+        MyClientProtocolWitness(
+            name: name,
+            height: height,
+            _doSomething: doSomething
+        )
+    }
 
-//var crashing = production
-//crashing._fetchData = { fatalError("Crashed! :(") }
-//
-//print(crashing.fetchData())
+    func makingProtocolWitness() -> MyClientProtocolWitness {
+        MyClientProtocolWitness(
+            name: name,
+            height: height,
+            _doSomething: doSomething
+        )
+    }
+}
 
-
-
-
-
-
-//import Foundation
-//
-//@ProtocolWitnessing
-
-//struct MyComplexClient {
-//    func somethingThatDownloadsData(int: Int, completion: @escaping ([CodedThing]) -> Void) {
-//        let url = URL(string: "https://apple.com")!
-//        
-//        URLSession.shared.dataTask(with: .init(url: url)) { _, _, _ in
-//            let json = [
-//                [
-//                    "name": "dndlsdn",
-//                    "age": 43
-//                ],
-//                [
-//                    "name": "gf",
-//                    "age": 345
-//                ],
-//                [
-//                    "name": "erg",
-//                    "age": 876
-//                ],
-//            ]
-//            
-//            let data = try! JSONSerialization.data(withJSONObject: json)
-//            
-//            let things = try! JSONDecoder().decode([CodedThing].self, from: data)
-//            
-//            completion(things)
-//        }.resume()
-//    }
-//    
-//    struct Witness {
-//        var _somethingThatDownloadsData: (Int, @escaping ([CodedThing]) -> Void) -> Void
-//        
-//        init(somethingThatDownloadsData: @escaping (Int, @escaping ([CodedThing]) -> Void) -> Void) {
-//            _somethingThatDownloadsData = somethingThatDownloadsData
-//        }
-//        
-//        func somethingThatDownloadsData(int: Int, completion: @escaping ([CodedThing]) -> Void) {
-//            _somethingThatDownloadsData(int, completion)
-//        }
-//    }
-//}
-//
-//extension MyComplexClient {
-//    private static var _production: MyComplexClient?
-//    
-//    static func production() -> MyComplexClient.Witness {
-//        let production = _production ?? MyComplexClient()
-//        
-//        if _production == nil {
-//            _production = production
-//        }
-//        
-//        return MyComplexClient.Witness(
-//            somethingThatDownloadsData: production.somethingThatDownloadsData
-//        )
-//    }
-//    
-//    func witness() -> Witness {
-//        MyComplexClient.Witness(
-//            somethingThatDownloadsData: somethingThatDownloadsData
-//        )
-//    }
-//}
-//
-//struct CodedThing: Codable {
-//    let name: String
-//    let age: Int
-//}
-//
-//var prod = MyComplexClient.production()
-//prod.somethingThatDownloadsData(int: 3) { things in
-//    print("mock", things)
-//}
-//
-//
-//var mock = prod.witness()
-//mock._somethingThatDownloadsData = { _, _ in
-//    print("Hi from _somethingThatDownloadsData mock")
-//}
-//
-//mock.somethingThatDownloadsData(int: 3) { things in
-//    print("mock", things)
-//}
-
-//Thread.sleep(forTimeInterval: 10)
+// </ Generated >
 
 
 
@@ -165,9 +74,81 @@ import ProtocolWitnessing
 
 
 
-//var mock = prod
-//mock._getSomething = false
+/*
+    VENDING TYPES MACRO - COULD BE IN A SEPARATE MACRO PACKAGE
+ */
 
-//
-//print(mock.isThing)
+/*
+ Rules for @ProtocolVending:
+ - Only static funcs that return a MyClient are valid on this type
+ - MyClient must be a protocol - can this be validated? Maybe some if on the passed in type?
+    - let p = MyClient.Protocol.self    <-- only protocols have this .Protocol so we can use that to check?
+    - Alt can the argument's type be a protocol so swift compiler enforces only protocols are passed in
 
+*/
+
+
+// Manually written
+
+//@ProtocolVending(MyClient.self)
+public enum MyClientMaker {
+    static func production() -> MyClient {
+        MyClientProtocolWitness.makeErasedProtocolWitness(
+            name: "Adam",
+            height: 180,
+            doSomething: { print($0) }
+        )
+    }
+    
+    static func preview() -> MyClient {
+        var preview = production().makingProtocolWitness()
+        preview._doSomething = { _ in
+            print(987654321)
+        }
+        
+        return preview
+    }
+    
+    static func test() -> MyClient {
+        MyClientProtocolWitness.makeErasedProtocolWitness(
+            name: "Test",
+            height: 999,
+            doSomething: { _ in print("Test") }
+        )
+    }
+}
+
+
+// < Generated >
+
+extension MyClient {
+    typealias Make = MyClientMaker
+}
+
+// </ Generated >
+
+
+
+
+
+
+
+/*
+        USE OF MACRO(S)
+ */
+
+let prod = MyClient.Make.production()
+prod.doSomething(age: 30)
+
+var mock = prod.makingProtocolWitness()
+mock._doSomething = { _ in
+    print(10)
+}
+
+mock.doSomething(age: 65)
+
+
+var test: MyClient
+test = .Make.test()
+
+test.doSomething(age: 23456)
