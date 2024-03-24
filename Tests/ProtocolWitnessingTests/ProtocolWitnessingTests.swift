@@ -240,431 +240,686 @@ extension ProtocolWitnessingTests {
     }
 }
 
-//// MARK: - Functions
-//
-//// MARK: One
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_addsInitWithVoidToVoidClosure_andPropertyForVoidToVoidClosure_whenOneFunction_andNoArguments_andReturnsVoid() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething() { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: () -> Void
-//            
-//                    init(doSomething: @escaping () -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_addsInitWithParameterToVoidClosure_andPropertyForParameterToVoidClosure_whenOneFunction_andOneArgument_andReturnsVoid() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething(int: Int) { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething(int: Int) { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: (Int) -> Void
-//            
-//                    init(doSomething: @escaping (Int) -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething(int: Int) {
-//                        _doSomething(int)
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_addsInitWithParameterToReturnValueClosure_andPropertyForParameterToReturnValueClosure_whenOneFunction_andOneArgument_andReturnValue() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething(int: Int) -> Double { 0.5 }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething(int: Int) -> Double { 0.5 }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: (Int) -> Double
-//            
-//                    init(doSomething: @escaping (Int) -> Double) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething(int: Int) -> Double {
-//                        _doSomething(int)
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_addsInitWithParametersToReturnValueClosure_andPropertyForParameterToReturnValueClosure_whenOneFunction_andTwoArguments_andReturnValue() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething(int: Int, float: Float) -> Double { 0.5 }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething(int: Int, float: Float) -> Double { 0.5 }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: (Int, Float) -> Double
-//            
-//                    init(doSomething: @escaping (Int, Float) -> Double) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething(int: Int, float: Float) -> Double {
-//                        _doSomething(int, float)
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
-//// MARK: Two
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_addsInitWithVoidToVoidClosure_andPropertyForVoidToVoidClosure_whenTwoFunctions_andBothHaveNoArguments_andBothReturnsVoid() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething() { }
-//                func doAnotherThing() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                func doSomething() { }
-//                func doAnotherThing() { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: () -> Void
-//            
-//                    var _doAnotherThing: () -> Void
-//            
-//                    init(
-//                        doSomething: @escaping () -> Void,
-//                        doAnotherThing: @escaping () -> Void
-//                    ) {
-//                        _doSomething = doSomething
-//                        _doAnotherThing = doAnotherThing
-//                    }
-//            
-//                    func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    func doAnotherThing() {
-//                        _doAnotherThing()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething,
-//                            doAnotherThing: production.doAnotherThing
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_addsInitWithParameterToVoidClosure_andPropertyForParameterToVoidClosure_whenTwoFunctions_andBothHaveOneArgument_andBothReturnsVoid() throws {
-//        assertMacro {
-//            """
-//            enum MyType {}
-//            enum OtherType {}
-//            
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething(arg1: MyType) { }
-//                func doAnotherThing(otherArg: OtherType) { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            enum MyType {}
-//            enum OtherType {}
-//            struct MyClient {
-//                func doSomething(arg1: MyType) { }
-//                func doAnotherThing(otherArg: OtherType) { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: (MyType) -> Void
-//            
-//                    var _doAnotherThing: (OtherType) -> Void
-//            
-//                    init(
-//                        doSomething: @escaping (MyType) -> Void,
-//                        doAnotherThing: @escaping (OtherType) -> Void
-//                    ) {
-//                        _doSomething = doSomething
-//                        _doAnotherThing = doAnotherThing
-//                    }
-//            
-//                    func doSomething(arg1: MyType) {
-//                        _doSomething(arg1)
-//                    }
-//            
-//                    func doAnotherThing(otherArg: OtherType) {
-//                        _doAnotherThing(otherArg)
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething,
-//                            doAnotherThing: production.doAnotherThing
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_addsInitWithParameterToReturnValueClosure_andPropertyForParameterToReturnValueClosure_whenTwoFunctions_andBothHaveOneArgument_andBothReturnValues() throws {
-//        assertMacro {
-//            """
-//            enum MyType {}
-//            enum OtherType {}
-//            
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething(arg1: MyType) -> OtherType { }
-//                func doAnotherThing(otherArg: OtherType) -> MyType { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            enum MyType {}
-//            enum OtherType {}
-//            struct MyClient {
-//                func doSomething(arg1: MyType) -> OtherType { }
-//                func doAnotherThing(otherArg: OtherType) -> MyType { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: (MyType) -> OtherType
-//            
-//                    var _doAnotherThing: (OtherType) -> MyType
-//            
-//                    init(
-//                        doSomething: @escaping (MyType) -> OtherType,
-//                        doAnotherThing: @escaping (OtherType) -> MyType
-//                    ) {
-//                        _doSomething = doSomething
-//                        _doAnotherThing = doAnotherThing
-//                    }
-//            
-//                    func doSomething(arg1: MyType) -> OtherType {
-//                        _doSomething(arg1)
-//                    }
-//            
-//                    func doAnotherThing(otherArg: OtherType) -> MyType {
-//                        _doAnotherThing(otherArg)
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething,
-//                            doAnotherThing: production.doAnotherThing
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_addsInitWithParametersToReturnValueClosure_andPropertyForParameterToReturnValueClosure_whenTwoFunctions_andBothHaveTwoArguments_andBothReturnValues() throws {
-//        assertMacro {
-//            """
-//            enum MyType {}
-//            enum OtherType {}
-//            enum TypeTwo {}
-//            enum AnotherType {}
-//            
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                func doSomething(arg1: MyType, arg2: TypeTwo) -> OtherType { }
-//                func doAnotherThing(otherArg: OtherType, anotherArg: AnotherType) -> MyType { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            enum MyType {}
-//            enum OtherType {}
-//            enum TypeTwo {}
-//            enum AnotherType {}
-//            struct MyClient {
-//                func doSomething(arg1: MyType, arg2: TypeTwo) -> OtherType { }
-//                func doAnotherThing(otherArg: OtherType, anotherArg: AnotherType) -> MyType { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: (MyType, TypeTwo) -> OtherType
-//            
-//                    var _doAnotherThing: (OtherType, AnotherType) -> MyType
-//            
-//                    init(
-//                        doSomething: @escaping (MyType, TypeTwo) -> OtherType,
-//                        doAnotherThing: @escaping (OtherType, AnotherType) -> MyType
-//                    ) {
-//                        _doSomething = doSomething
-//                        _doAnotherThing = doAnotherThing
-//                    }
-//            
-//                    func doSomething(arg1: MyType, arg2: TypeTwo) -> OtherType {
-//                        _doSomething(arg1, arg2)
-//                    }
-//            
-//                    func doAnotherThing(otherArg: OtherType, anotherArg: AnotherType) -> MyType {
-//                        _doAnotherThing(otherArg, anotherArg)
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething,
-//                            doAnotherThing: production.doAnotherThing
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
+// MARK: - Functions
+
+// MARK: One
+
+extension ProtocolWitnessingTests {
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenOneFunction_andInstanceFunc_andNoArguments_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething()
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething()
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() {
+                    _doSomething()
+                }
+
+                var _doSomething: () -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenOneFunction_andInstanceFunc_andOneArgument_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething(someInt: Int)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(someInt: Int)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(someInt: Int) {
+                    _doSomething(someInt)
+                }
+
+                var _doSomething: (Int) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping (Int) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenOneFunction_andInstanceFunc_andTwoArguments_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething(someInt: Int, otherArg: String)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(someInt: Int, otherArg: String)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(someInt: Int, otherArg: String) {
+                    _doSomething(someInt, otherArg)
+                }
+
+                var _doSomething: (Int, String) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping (Int, String) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenOneFunction_andInstanceFunc_andNoArguments_andExplicitlyReturnsVoid_andImplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething() -> Void
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething() -> Void
+            }
+            
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() -> Void {
+                    _doSomething()
+                }
+            
+                var _doSomething: () -> Void
+            }
+            
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenOneFunction_andInstanceFunc_andNoArguments_andExplicitlyReturnsInt_andImplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething() -> Int
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething() -> Int
+            }
+            
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() -> Int {
+                    _doSomething()
+                }
+            
+                var _doSomething: () -> Int
+            }
+            
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () -> Int
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenOneFunction_andInstanceFunc_andNoArguments_andImplicitlyReturnsVoid_andExplicitlyInternal() throws {
+        // This test makes no sense as we can't add internal funcs to protocols, we get a compiler error
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenOneFunction_andInstanceFunc_andNoArguments_andImplicitlyReturnsVoid_andExplicitlyPublic() throws {
+        // This test makes no sense as we can't add public funcs to protocols, we get a compiler error
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenOneFunction_andInstanceFunc_andNoArguments_andImplicitlyReturnsVoid_andExplicitlyOpen() throws {
+        // This test makes no sense as we can't add open funcs to protocols, we get a compiler error
+    }
+    
+    func testMacro_doesNotAddWrappedFunction_andProperty_andInitializerParameters_whenOneFunction_andInstanceFunc_andNoArguments_andImplicitlyReturnsVoid_andExplicitlyFileprivate() throws {
+        // This test makes no sense as we can't add fileprivate funcs to protocols, we get a compiler error
+    }
+    
+    func testMacro_doesNotAddWrappedFunction_andProperty_andInitializerParameters_whenOneFunction_andInstanceFunc_andNoArguments_andImplicitlyReturnsVoid_andExplicitlyPrivate() throws {
+        // This test makes no sense as we can't add private funcs to protocols, we get a compiler error
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_butNoInitializerParameters_whenOneFunction_andStaticFunc_andNoArguments_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                static func doSomething()
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                static func doSomething()
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                static func doSomething() {
+                    _doSomething()
+                }
+            
+                static var _doSomething: () -> Void = {
+                }
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+            
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_butNoInitializerParameters_whenOneFunction_andStaticFunc_andOneArgument_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                static func doSomething(int: Int)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                static func doSomething(int: Int)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                static func doSomething(int: Int) {
+                    _doSomething(int)
+                }
+
+                static var _doSomething: (Int) -> Void = { _ in
+                }
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_butNoInitializerParameters_whenOneFunction_andStaticFunc_andTwoArguments_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                static func doSomething(int: Int, string: String)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                static func doSomething(int: Int, string: String)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                static func doSomething(int: Int, string: String) {
+                    _doSomething(int, string)
+                }
+
+                static var _doSomething: (Int, String) -> Void = { _, _ in
+                }
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Two (same)
+
+extension ProtocolWitnessingTests {
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenTwoFunctions_andInstanceFunc_andNoArguments_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething()
+            
+                func doAnotherThing()
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething()
+
+                func doAnotherThing()
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() {
+                    _doSomething()
+                }
+
+                var _doSomething: () -> Void
+
+                func doAnotherThing() {
+                    _doAnotherThing()
+                }
+
+                var _doAnotherThing: () -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () -> Void,
+                    doAnotherThing: @escaping () -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doAnotherThing: doAnotherThing
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doAnotherThing: doAnotherThing
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenTwoFunctions_andInstanceFunc_andOneArgument_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething(someInt: Int)
+            
+                func doAnotherThing(otherString: String)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(someInt: Int)
+
+                func doAnotherThing(otherString: String)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(someInt: Int) {
+                    _doSomething(someInt)
+                }
+
+                var _doSomething: (Int) -> Void
+
+                func doAnotherThing(otherString: String) {
+                    _doAnotherThing(otherString)
+                }
+
+                var _doAnotherThing: (String) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping (Int) -> Void,
+                    doAnotherThing: @escaping (String) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doAnotherThing: doAnotherThing
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doAnotherThing: doAnotherThing
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenTwoFunctions_andInstanceFunc_andTwoArguments_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething(someInt: Int, otherArg: String)
+            
+                func doAnotherThing(one: Int, two: Double)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(someInt: Int, otherArg: String)
+
+                func doAnotherThing(one: Int, two: Double)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(someInt: Int, otherArg: String) {
+                    _doSomething(someInt, otherArg)
+                }
+
+                var _doSomething: (Int, String) -> Void
+
+                func doAnotherThing(one: Int, two: Double) {
+                    _doAnotherThing(one, two)
+                }
+
+                var _doAnotherThing: (Int, Double) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping (Int, String) -> Void,
+                    doAnotherThing: @escaping (Int, Double) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doAnotherThing: doAnotherThing
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doAnotherThing: doAnotherThing
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenTwoFunctions_andInstanceFunc_andNoArguments_andExplicitlyReturnsVoid_andImplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething() -> Void
+            
+                func doAnotherThing() -> Void
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething() -> Void
+
+                func doAnotherThing() -> Void
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() -> Void {
+                    _doSomething()
+                }
+
+                var _doSomething: () -> Void
+
+                func doAnotherThing() -> Void {
+                    _doAnotherThing()
+                }
+
+                var _doAnotherThing: () -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () -> Void,
+                    doAnotherThing: @escaping () -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doAnotherThing: doAnotherThing
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doAnotherThing: doAnotherThing
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenTwoFunctions_andInstanceFunc_andNoArguments_andExplicitlyReturnsInt_andImplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething() -> Int
+            
+                func doAnotherThing() -> Double
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething() -> Int
+
+                func doAnotherThing() -> Double
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() -> Int {
+                    _doSomething()
+                }
+
+                var _doSomething: () -> Int
+
+                func doAnotherThing() -> Double {
+                    _doAnotherThing()
+                }
+
+                var _doAnotherThing: () -> Double
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () -> Int,
+                    doAnotherThing: @escaping () -> Double
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doAnotherThing: doAnotherThing
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething,
+                        _doAnotherThing: doAnotherThing
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenTwoFunctions_andInstanceFunc_andNoArguments_andImplicitlyReturnsVoid_andExplicitlyInternal() throws {
+        // This test makes no sense as we can't add internal funcs to protocols, we get a compiler error
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenTwoFunctions_andInstanceFunc_andNoArguments_andImplicitlyReturnsVoid_andExplicitlyPublic() throws {
+        // This test makes no sense as we can't add public funcs to protocols, we get a compiler error
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenTwoFunctions_andInstanceFunc_andNoArguments_andImplicitlyReturnsVoid_andExplicitlyOpen() throws {
+        // This test makes no sense as we can't add open funcs to protocols, we get a compiler error
+    }
+    
+    func testMacro_doesNotAddWrappedFunction_andProperty_andInitializerParameters_whenTwoFunctions_andInstanceFunc_andNoArguments_andImplicitlyReturnsVoid_andExplicitlyFileprivate() throws {
+        // This test makes no sense as we can't add fileprivate funcs to protocols, we get a compiler error
+    }
+    
+    func testMacro_doesNotAddWrappedFunction_andProperty_andInitializerParameters_whenTwoFunctions_andInstanceFunc_andNoArguments_andImplicitlyReturnsVoid_andExplicitlyPrivate() throws {
+        // This test makes no sense as we can't add private funcs to protocols, we get a compiler error
+    }
+    
+    func testMacro_addsWrappedFunction_andProperty_butNoInitializerParameters_whenTwoFunctions_andStaticFunc_andNoArguments_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                static func doSomething()
+            
+                static func doAnotherThing()
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                static func doSomething()
+
+                static func doAnotherThing()
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                static func doSomething() {
+                    _doSomething()
+                }
+
+                static var _doSomething: () -> Void = {
+                }
+
+                static func doAnotherThing() {
+                    _doAnotherThing()
+                }
+
+                static var _doAnotherThing: () -> Void = {
+                }
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+}
+
 //// MARK: Private
 //
 //extension ProtocolWitnessingTests {

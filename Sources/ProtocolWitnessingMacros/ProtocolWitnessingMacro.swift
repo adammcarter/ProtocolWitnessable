@@ -33,6 +33,8 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
         
         
         
+        let functions = makeCapturedFunctions(from: protocolDecl)
+        
         
         
         //        public struct MyClientProtocolWitness: MyClient {
@@ -49,10 +51,50 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
         
         
         
-        let protocolWitnessStruct = """
-            \(modifierOrEmpty)struct \(protocolWitnessStructTypeName): \(protocolTypeName) {
-            }
-            """
+        
+        
+        
+        
+        let protocolWitnessStruct: String
+        
+        if functions.isEmpty {
+            protocolWitnessStruct = """
+                \(modifierOrEmpty)struct \(protocolWitnessStructTypeName): \(protocolTypeName) {
+                }
+                """
+        } else {
+            let protocolWitnessStructBody = functions
+                .map { capturedFunction in
+                    let wrappedFunction = makeWrappedFunction(for: capturedFunction)
+                    
+                    let underscoredClosureParameters = capturedFunction
+                        .capturedClosureParameters
+                        .map { _ in "_" }
+                        .joined(separator: ", ")
+                        .appending(capturedFunction.capturedClosureParameters.isEmpty ? "" : " in")
+                    
+                    let defaultValueOrEmpty = capturedFunction.isStatic
+                        ? " = { \(underscoredClosureParameters) }"
+                        : ""
+                    
+                    let functionAsProperty = "\(capturedFunction.prefix)var _\(capturedFunction.name): \(capturedFunction.type)\(defaultValueOrEmpty)"
+                    
+                    
+                    return """
+                    \(wrappedFunction)
+                    
+                    \(functionAsProperty)
+                    """
+                }
+                .joined(separator: "\n\n")
+
+            
+            protocolWitnessStruct = """
+                \(modifierOrEmpty)struct \(protocolWitnessStructTypeName): \(protocolTypeName) {
+                \(protocolWitnessStructBody)
+                }
+                """
+        }
         
         
         return [
@@ -83,6 +125,9 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
         
         
         
+        let functions = makeCapturedFunctions(from: protocolDecl)
+            .filter { $0.isStatic == false }
+        
         
         //        public extension MyClient {
         //            static func makeErasedProtocolWitness(
@@ -109,17 +154,54 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
         
         
         
-        let makeErasedProtocolWitnessFunction = """
-            static func makeErasedProtocolWitness() -> \(protocolTypeName) {
-            \(protocolWitnessStructTypeName)()
-            }
-            """
+        let makeErasedProtocolWitnessFunction: String
+        let makingProtocolWitness: String
         
-        let makingProtocolWitness = """
-            func makingProtocolWitness() -> \(protocolWitnessStructTypeName) {
+        if functions.isEmpty {
+            makeErasedProtocolWitnessFunction = """
+                static func makeErasedProtocolWitness() -> \(protocolTypeName) {
                 \(protocolWitnessStructTypeName)()
-            }
-            """
+                }
+                """
+            
+            makingProtocolWitness = """
+                func makingProtocolWitness() -> \(protocolWitnessStructTypeName) {
+                \(protocolWitnessStructTypeName)()
+                }
+                """
+        } else {
+            let erasedProtocolWitnessFunctionParameters = functions
+                .map {
+                    "\($0.name): @escaping \($0.type)"
+                }
+                .joined(separator: ",\n")
+
+            
+            let protocolWitnessInitializerParameters = functions
+                .map {
+                    "_\($0.name): \($0.name)"
+                }
+                .joined(separator: ",\n")
+
+
+            makeErasedProtocolWitnessFunction = """
+                static func makeErasedProtocolWitness(
+                \(erasedProtocolWitnessFunctionParameters)
+                ) -> \(protocolTypeName) {
+                \(protocolWitnessStructTypeName)(
+                \(protocolWitnessInitializerParameters)
+                )
+                }
+                """
+            
+            makingProtocolWitness = """
+                func makingProtocolWitness() -> \(protocolWitnessStructTypeName) {
+                \(protocolWitnessStructTypeName)(
+                \(protocolWitnessInitializerParameters)
+                )
+                }
+                """
+        }
         
         let extensionBody = """
             \(modifierOrEmpty)extension \(protocolTypeName) {
@@ -391,7 +473,10 @@ private func makeCapturedProperties(from structDecl: StructDeclSyntax) -> [Captu
             
             let isPrivate = varDecl
                 .modifiers
-                .contains { $0.name.tokenKind == .keyword(.private) } == true
+                .contains {
+                    $0.name.tokenKind == .keyword(.private)
+                    || $0.name.tokenKind == .keyword(.fileprivate)
+                } == true
             
             let canBeUsedAsIs = bindings
                 .contains { $0.initializer?.equal != nil } == true
@@ -525,15 +610,25 @@ private func makeCapturedProperties(from structDecl: StructDeclSyntax) -> [Captu
         .flatMap { $0 }
 }
 
-private func makeCapturedFunctions(from structDecl: StructDeclSyntax) -> [CapturedFunction] {
-    structDecl
+private func makeCapturedFunctions(from decl: ProtocolDeclSyntax) -> [CapturedFunction] {
+    decl
         .memberBlock
         .members
         .compactMap { member -> FunctionDeclSyntax? in
             guard
-                let function = member.decl.as(FunctionDeclSyntax.self),
-                function.modifiers.contains(where: { $0.name.tokenKind == .keyword(.private) }) == false
+                let function = member.decl.as(FunctionDeclSyntax.self)
             else {
+                return nil
+            }
+
+            let isPrivate = function
+                .modifiers
+                .contains {
+                    $0.name.tokenKind == .keyword(.private)
+                    || $0.name.tokenKind == .keyword(.fileprivate)
+                } == true
+            
+            guard isPrivate == false else {
                 return nil
             }
             
@@ -560,36 +655,17 @@ private func makeCapturedFunctions(from structDecl: StructDeclSyntax) -> [Captur
             
             
             
-            struct CapturedClosure {
-                let name: String
-                let type: String
-            }
+            
 
-            let capturedClosure = signature
+            let capturedClosureParameters = signature
                 .parameterClause
                 .parameters
                 .compactMap {
-                    CapturedClosure(
+                    CapturedFunction.CapturedClosureParameter(
                         name: $0.firstName.text,
                         type: $0.type.description
                     )
                 }
-            
-            
-            
-            let parameterTypesList = capturedClosure
-                .map { $0.type }
-                .joined(separator: ", ")
-            
-            let parameterNameWithTypeList = capturedClosure
-                .map { "\($0.name): \($0.type)" }
-                .joined(separator: ", ")
-            
-            let parameterNameWithNameList = capturedClosure
-                .map { "\($0.name)" }
-                .joined(separator: ", ")
-            
-            
             
             
             
@@ -600,57 +676,10 @@ private func makeCapturedFunctions(from structDecl: StructDeclSyntax) -> [Captur
                 .name
                 .text
             
+            
+            
             let name = function.name.text
-            
-            let returnValueOrVoid = returnValue ?? "Void"
-            let returnValueIfNotVoid = returnValue.flatMap { " -> \($0)" } ?? ""
-            
-            
-            
-            let signatureDecl = if isAsync, isThrows {
-                "(\(parameterTypesList)) async throws"
-            } else if isAsync {
-                "(\(parameterTypesList)) async"
-            } else if isThrows {
-                "(\(parameterTypesList)) throws"
-            } else {
-                "(\(parameterTypesList))"
-            }
-            
-            
-            let signatureParameterNamesDecl = if isAsync, isThrows {
-                "(\(parameterNameWithTypeList)) async throws"
-            } else if isAsync {
-                "(\(parameterNameWithTypeList)) async"
-            } else if isThrows {
-                "(\(parameterNameWithTypeList)) throws"
-            } else {
-                "(\(parameterNameWithTypeList))"
-            }
-            
-            
-            let tryAwaitOrEmpty = if isAsync, isThrows {
-                "try await "
-            } else if isAsync {
-                "await "
-            } else if isThrows {
-                "try "
-            } else {
-                ""
-            }
-            
-            
-            
-            let type = "\(signatureDecl) -> \(returnValueOrVoid)"
-            
-            
-            
-            let callsite = """
-                func \(name)\(signatureParameterNamesDecl)\(returnValueIfNotVoid) {
-                \(tryAwaitOrEmpty)_\(name)(\(parameterNameWithNameList))
-                }
-                """
-            
+
             
             let isStatic = function
                 .modifiers
@@ -660,9 +689,11 @@ private func makeCapturedFunctions(from structDecl: StructDeclSyntax) -> [Captur
             return CapturedFunction(
                 modifier: modifier,
                 name: name,
-                type: type,
-                callsite: callsite,
-                isStatic: isStatic
+                returnValue: returnValue,
+                isAsync: isAsync,
+                isThrows: isThrows,
+                isStatic: isStatic,
+                capturedClosureParameters: capturedClosureParameters
             )
         }
 }
@@ -1005,6 +1036,54 @@ private func makeProtocolWitnessStructTypeName(for protocolTypeName: String) -> 
     "\(protocolTypeName)ProtocolWitness"
 }
 
+private func makeWrappedFunction(for capturedFunction: CapturedFunction) -> String {
+    let parameterNameWithTypeList = capturedFunction.capturedClosureParameters
+        .map { "\($0.name): \($0.type)" }
+        .joined(separator: ", ")
+    
+    let parameterNameWithNameList = capturedFunction.capturedClosureParameters
+        .map { "\($0.name)" }
+        .joined(separator: ", ")
+    
+    
+    let signatureParameterNamesDecl = if capturedFunction.isAsync, capturedFunction.isThrows {
+        "(\(parameterNameWithTypeList)) async throws"
+    } else if capturedFunction.isAsync {
+        "(\(parameterNameWithTypeList)) async"
+    } else if capturedFunction.isThrows {
+        "(\(parameterNameWithTypeList)) throws"
+    } else {
+        "(\(parameterNameWithTypeList))"
+    }
+    
+    
+    let returnValueIfNotVoid = capturedFunction.returnValue.flatMap { " -> \($0)" } ?? ""
+    
+    
+    
+    let tryAwaitOrEmpty = if capturedFunction.isAsync, capturedFunction.isThrows {
+        "try await "
+    } else if capturedFunction.isAsync {
+        "await "
+    } else if capturedFunction.isThrows {
+        "try "
+    } else {
+        ""
+    }
+    
+    
+    let functionCallsite = "\(capturedFunction.name)\(signatureParameterNamesDecl)\(returnValueIfNotVoid)"
+    let functionBody = "\(tryAwaitOrEmpty)_\(capturedFunction.name)(\(parameterNameWithNameList))"
+    
+    
+    return """
+        \(capturedFunction.prefix)func \(functionCallsite) {
+        \(functionBody)
+        }
+        """
+
+}
+
 
 // MARK: - Types
 
@@ -1027,10 +1106,44 @@ private struct CapturedProperty: Declaring {
 private struct CapturedFunction: Declaring {
     let modifier: String?
     let name: String
-    let type: String
-    let callsite: String
+    let returnValue: String?
+    let isAsync: Bool
+    let isThrows: Bool
     let isStatic: Bool
     let isLazy = false
+    let capturedClosureParameters: [CapturedClosureParameter]
+    
+    struct CapturedClosureParameter {
+        let name: String
+        let type: String
+    }
+        
+    var type: String {
+        let parameterTypesList = capturedClosureParameters
+            .map { $0.type }
+            .joined(separator: ", ")
+        
+        
+        
+        let signatureDecl = if isAsync, isThrows {
+            "(\(parameterTypesList)) async throws"
+        } else if isAsync {
+            "(\(parameterTypesList)) async"
+        } else if isThrows {
+            "(\(parameterTypesList)) throws"
+        } else {
+            "(\(parameterTypesList))"
+        }
+        
+        
+        
+        let returnValueOrVoid = returnValue ?? "Void"
+        
+        
+        
+        return "\(signatureDecl) -> \(returnValueOrVoid)"
+
+    }
 }
 
 protocol Declaring {
