@@ -2211,7 +2211,7 @@ extension ProtocolWitnessingTests {
     }
 }
 
-// MARK: Multiple macros
+// MARK: - Macros
 
 extension ProtocolWitnessingTests {
     func testMacro_addsAttribute_whenExtraAttributesAreAttached() throws {
@@ -2238,6 +2238,64 @@ extension ProtocolWitnessingTests {
 
                 func makingProtocolWitness() -> MyClientProtocolWitness {
                     MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsAttribute_whenExtraAttributesIsMainActor() throws {
+        assertMacro {
+            """
+            @MainActor
+            @ProtocolWitnessing
+            protocol MyClient {
+                var someProperty: Int { get }
+            
+                @MainActor
+                func doSomething()
+            }
+            """
+        } expansion: {
+            """
+            @MainActor
+            protocol MyClient {
+                var someProperty: Int { get }
+
+                @MainActor
+                func doSomething()
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                var someProperty: Int {
+                    _someProperty
+                }
+
+                var _someProperty: Int
+
+                func doSomething() {
+                    _doSomething()
+                }
+
+                var _doSomething: () -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    someProperty: Int,
+                    doSomething: @escaping () -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _someProperty: someProperty,
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _someProperty: someProperty,
+                        _doSomething: doSomething
+                    )
                 }
             }
             """
