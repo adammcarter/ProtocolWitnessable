@@ -1775,7 +1775,7 @@ extension ProtocolWitnessingTests {
 
 // MARK: - Properties
 
-// MARK: Only properties
+// MARK: Simple
 
 extension ProtocolWitnessingTests {
     func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetOnlyProperty() throws {
@@ -1963,7 +1963,7 @@ extension ProtocolWitnessingTests {
         }
     }
     
-    func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetSetProperty_andIsClosureType() throws {
+    func testMacro_createsVariable_whenGetSetProperty_andIsClosureType() throws {
         assertMacro {
             """
             @ProtocolWitnessing
@@ -2041,7 +2041,7 @@ extension ProtocolWitnessingTests {
         }
     }
     
-    func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetSetProperty_andIsClosureType_andHasParameters() throws {
+    func testMacro_createsVariable_whenGetSetProperty_andIsClosureType_andHasParameters() throws {
         assertMacro {
             """
             @ProtocolWitnessing
@@ -2079,958 +2079,96 @@ extension ProtocolWitnessingTests {
     }
 }
 
-//// MARK: With functions
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andOneFunction() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                let someLetProperty: Int
-//            
-//                func doSomething() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                let someLetProperty: Int
-//            
-//                func doSomething() { }
-//            
-//                struct ProtocolWitness {
-//                    var someLetProperty: Int {
-//                        get {
-//                            _someLetProperty
-//                        }
-//                    }
-//            
-//                    var _someLetProperty: Int
-//            
-//                    var _doSomething: () -> Void
-//
-//                    init(
-//                        someLetProperty: Int,
-//                        doSomething: @escaping () -> Void
-//                    ) {
-//                        _someLetProperty = someLetProperty
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production(
-//                        someLetProperty: Int
-//                    ) -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient(
-//                            someLetProperty: someLetProperty
-//                        )
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            someLetProperty: production.someLetProperty,
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_createsInitWithProperty_whenStructHasOneSimpleVarProperty_andOneFunction_andVarHasNoDefaultValue() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                var someLetProperty: Int
-//            
-//                func doSomething() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                var someLetProperty: Int
-//            
-//                func doSomething() { }
-//            
-//                struct ProtocolWitness {
-//                    var someLetProperty: Int {
-//                        get {
-//                            _someLetProperty
-//                        }
-//                    }
-//            
-//                    var _someLetProperty: Int
-//            
-//                    var _doSomething: () -> Void
-//            
-//                    init(
-//                        someLetProperty: Int,
-//                        doSomething: @escaping () -> Void
-//                    ) {
-//                        _someLetProperty = someLetProperty
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production(
-//                        someLetProperty: Int
-//                    ) -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient(
-//                            someLetProperty: someLetProperty
-//                        )
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            someLetProperty: production.someLetProperty,
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andOneFunction_andLetHasDefaultValue() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                let someLetProperty = 532
-//            
-//                func doSomething() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                let someLetProperty = 532
-//            
-//                func doSomething() { }
-//            
-//                struct ProtocolWitness {
-//                    var _doSomething: () -> Void
-//            
-//                    init(doSomething: @escaping () -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_createsInitWithProperty_whenStructHasOneSimpleLetProperty_andOneFunction_andVarHasDefaultValue() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                var someLetProperty = 10
-//            
-//                func doSomething() { }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                var someLetProperty = 10
-//            
-//                func doSomething() { }
-//            
-//                struct ProtocolWitness {
-//                    var someLetProperty = 10
-//            
-//                    var _doSomething: () -> Void
-//            
-//                    init(doSomething: @escaping () -> Void) {
-//                        _doSomething = doSomething
-//                    }
-//            
-//                    func doSomething() {
-//                        _doSomething()
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness(
-//                            doSomething: production.doSomething
-//                        )
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
-//// MARK: Private
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_doesNotIncludePrivateProperty_whenOnlyPrivateProperty() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                private var somethingPrivate = true
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                private var somethingPrivate = true
-//            
-//                struct ProtocolWitness {
-//                    init() {
-//                    }
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_doesNotIncludePrivateProperty_whenMixingPrivateProperty() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                var somethingNotPrivate = true
-//            
-//                private var somethingPrivate = true
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                var somethingNotPrivate = true
-//            
-//                private var somethingPrivate = true
-//            
-//                struct ProtocolWitness {
-//                    var somethingNotPrivate = true
-//            
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
-//// MARK: Internal
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_includesProperty_whenExplicitlySetAsInternal() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                internal var somethingInternal = true
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                internal var somethingInternal = true
-//            
-//                struct ProtocolWitness {
-//                    internal var somethingInternal = true
-//            
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_includesProperty_whenMix_andOneIsExplicitlySetAsInternal() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                internal var somethingInternal = true
-//            
-//                var somethingInternal = true
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                internal var somethingInternal = true
-//            
-//                var somethingInternal = true
-//            
-//                struct ProtocolWitness {
-//                    internal var somethingInternal = true
-//            
-//                    var somethingInternal = true
-//            
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
-//// MARK: Public
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_includesProperty_whenSetAsPublic() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                public var somethingPublic = true
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                public var somethingPublic = true
-//            
-//                struct ProtocolWitness {
-//                    public var somethingPublic = true
-//            
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_includesProperty_whenMix_andOneIsSetAsPublic() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                public var somethingPublic = true
-//            
-//                var somethingInternal = true
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                public var somethingPublic = true
-//            
-//                var somethingInternal = true
-//            
-//                struct ProtocolWitness {
-//                    public var somethingPublic = true
-//            
-//                    var somethingInternal = true
-//            
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
-//// MARK: Open
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_includesProperty_whenSetAsOpen() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                open var somethingOpen = true
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                open var somethingOpen = true
-//            
-//                struct ProtocolWitness {
-//                    open var somethingOpen = true
-//            
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_includesProperty_whenMix_andOneIsSetAsOpen() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                open var somethingOpen = true
-//            
-//                var somethingElse = true
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                open var somethingOpen = true
-//            
-//                var somethingElse = true
-//            
-//                struct ProtocolWitness {
-//                    open var somethingOpen = true
-//            
-//                    var somethingElse = true
-//            
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
-//// MARK: Getter
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_addsGetterToWitness_whenPropertyHasGetOnlyProperty_andGetterSpansOneLineOnly() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                var isThing: Bool { true }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                var isThing: Bool { true }
-//            
-//                struct ProtocolWitness {
-//                    var isThing: Bool {
-//                        get {
-//                            _isThing
-//                        }
-//                    }
-//
-//                    var _isThing: Bool = {
-//                        true
-//                    }()
-//
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_addsGetterToWitness_whenPropertyHasGetOnlyProperty_andGetterSpansMultipleLines() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                var isThing: Bool {
-//                    true
-//                }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                var isThing: Bool {
-//                    true
-//                }
-//            
-//                struct ProtocolWitness {
-//                    var isThing: Bool {
-//                        get {
-//                            _isThing
-//                        }
-//                    }
-//            
-//                    var _isThing: Bool = {
-//                        true
-//                    }()
-//
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_addsGetterToWitness_whenPropertyHasGetOnlyProperty_andGetterContainsComplexCode() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                var isThing: Bool {
-//                    let myThing = true
-//            
-//                    print(myThing)
-//            
-//                    return myThing
-//                }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                var isThing: Bool {
-//                    let myThing = true
-//            
-//                    print(myThing)
-//            
-//                    return myThing
-//                }
-//            
-//                struct ProtocolWitness {
-//                    var isThing: Bool {
-//                        get {
-//                            _isThing
-//                        }
-//                    }
-//            
-//                    var _isThing: Bool = {
-//                        let myThing = true
-//            
-//                                print(myThing)
-//            
-//                                return myThing
-//                    }()
-//
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_addsGetterToWitness_whenPropertyHasGetOnlyProperty_andGetterHasExplicitGetWrapper() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                var isThing: Bool {
-//                    get { true }
-//                }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                var isThing: Bool {
-//                    get { true }
-//                }
-//            
-//                struct ProtocolWitness {
-//                    var isThing: Bool {
-//                        get {
-//                            _isThing
-//                        }
-//                    }
-//            
-//                    var _isThing: Bool = {
-//                        true
-//                    }()
-//            
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
-//// MARK: Async getter
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_addsAsyncGetterToWitness_whenPropertyHasAsyncGetOnlyProperty_andSpansOneLineOnly() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                var isAsync: Bool {
-//                    get async { true }
-//                }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                var isAsync: Bool {
-//                    get async { true }
-//                }
-//            
-//                struct ProtocolWitness {
-//                    var isAsync: Bool {
-//                        get async {
-//                            _isAsync
-//                        }
-//                    }
-//            
-//                    var _isAsync: Bool = {
-//                        true
-//                    }()
-//            
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_addsAsyncGetterToWitness_whenPropertyHasAsyncGetOnlyProperty_andSpansMultipleLines() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                var isAsync: Bool {
-//                    get async {
-//                        true
-//                    }
-//                }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                var isAsync: Bool {
-//                    get async {
-//                        true
-//                    }
-//                }
-//            
-//                struct ProtocolWitness {
-//                    var isAsync: Bool {
-//                        get async {
-//                            _isAsync
-//                        }
-//                    }
-//            
-//                    var _isAsync: Bool = {
-//                        true
-//                    }()
-//            
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_addsAsyncGetterToWitness_whenPropertyHasAsyncGetOnlyProperty_andGetterContainsComplexCode() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                var isThing: Bool {
-//                    get async {
-//                        let myThing = true
-//                
-//                        print(myThing)
-//                
-//                        return myThing
-//                    }
-//                }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                var isThing: Bool {
-//                    get async {
-//                        let myThing = true
-//                
-//                        print(myThing)
-//                
-//                        return myThing
-//                    }
-//                }
-//            
-//                struct ProtocolWitness {
-//                    var isThing: Bool {
-//                        get async {
-//                            _isThing
-//                        }
-//                    }
-//            
-//                    var _isThing: Bool = {
-//                        let myThing = true
-//            
-//                                    print(myThing)
-//            
-//                                    return myThing
-//                    }()
-//            
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
+// MARK: Async
+
+extension ProtocolWitnessingTests {
+    func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetOnlyProperty_andAsync() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                var someLetProperty: Int { get async }
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                var someLetProperty: Int { get async }
+            }
+            
+            struct MyClientProtocolWitness: MyClient {
+                var someLetProperty: Int {
+                    get async {
+                        _someLetProperty
+                    }
+                }
+            
+                var _someLetProperty: Int
+            }
+            
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    someLetProperty: Int
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _someLetProperty: someLetProperty
+                    )
+                }
+            
+                func makingProtocolWitness() async -> MyClientProtocolWitness {
+                    await MyClientProtocolWitness(
+                        _someLetProperty: someLetProperty
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetOnlyProperty_andAsync_andIsClosure() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                var someLetProperty: (Int) -> Void { get async }
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                var someLetProperty: (Int) -> Void { get async }
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                var someLetProperty: (Int) -> Void {
+                    get async {
+                        _someLetProperty
+                    }
+                }
+
+                var _someLetProperty: (Int) -> Void
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    someLetProperty: @escaping (Int) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _someLetProperty: someLetProperty
+                    )
+                }
+
+                func makingProtocolWitness() async -> MyClientProtocolWitness {
+                    await MyClientProtocolWitness(
+                        _someLetProperty: someLetProperty
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
 //// MARK: Throwing getter
 //
 //extension ProtocolWitnessingTests {

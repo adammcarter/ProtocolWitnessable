@@ -217,6 +217,14 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
                 .joined(separator: ",\n")
 
             
+            
+            
+            
+            let needsAsyncAwait = capturedProperties.contains(where: \.isAsync)
+            
+            let asyncOrEmpty = needsAsyncAwait ? "async " : ""
+            let awaitOrEmpty = needsAsyncAwait ? "await " : ""
+            
 
             
             makeErasedProtocolWitnessFunction = """
@@ -230,8 +238,8 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
                 """
             
             makingProtocolWitness = """
-                func makingProtocolWitness() -> \(protocolWitnessStructTypeName) {
-                \(protocolWitnessStructTypeName)(
+                func makingProtocolWitness() \(asyncOrEmpty)-> \(protocolWitnessStructTypeName) {
+                \(awaitOrEmpty)\(protocolWitnessStructTypeName)(
                 \(protocolWitnessInitializerParameters)
                 )
                 }
@@ -997,9 +1005,13 @@ private func makeWrappedProperty(for capturedProperty: CapturedProperty) -> Stri
         return nil
     }
     
+    let getter = capturedProperty.isAsync
+        ? "get async { _\(capturedProperty.name) }"
+        :  "_\(capturedProperty.name)"
+    
     return """
         \(capturedProperty.prefix)var \(capturedProperty.name): \(capturedProperty.type) {
-        _\(capturedProperty.name)
+        \(getter)
         }
         """
 }

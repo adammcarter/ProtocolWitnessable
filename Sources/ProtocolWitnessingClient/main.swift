@@ -3,29 +3,7 @@ import ProtocolWitnessing
 
 
 
-protocol MyClient {
-    var someLetProperty: (Int) -> Void { get set }
-}
 
-struct MyClientProtocolWitness: MyClient {
-    var someLetProperty: (Int) -> Void
-}
-
-extension MyClient {
-    static func makeErasedProtocolWitness(
-        someLetProperty: @escaping (Int) -> Void
-    ) -> MyClient {
-        MyClientProtocolWitness(
-            someLetProperty: someLetProperty
-        )
-    }
-    
-    func makingProtocolWitness() -> MyClientProtocolWitness {
-        MyClientProtocolWitness(
-            someLetProperty: someLetProperty
-        )
-    }
-}
 
 
 //
