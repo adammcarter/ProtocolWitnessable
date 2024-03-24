@@ -20,7 +20,7 @@ import ProtocolWitnessing
  */
 
 
-//@ProtocolWitnessing
+@ProtocolWitnessing
 public protocol MyClient {
     var name: String { get }
     var height: Double { get set }

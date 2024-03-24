@@ -22,203 +22,222 @@ public struct WitnessingMacro: MemberMacro {
         providingMembersOf declaration: some DeclGroupSyntax,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
-        guard let structDecl = declaration as? StructDeclSyntax else {
-            WitnessingDiagnostic.notAStruct.diagnose(in: declaration, for: context)
-            
-            return []
+        guard let protocolDecl = declaration as? ProtocolDeclSyntax else {
+            throw ProtocolWitnessingError.notAProtocol
         }
-        
-        let protocolWitnessName = makeProductionInstanceName(from: node)
-        let typeName = structDecl.name.text
-        let witnessTypeName = makeWitnessTypeName(from: node)
-
-        
-        
-        let capturedProperties = makeCapturedProperties(from: structDecl)
-        let capturedFunctions = makeCapturedFunctions(from: structDecl)
-        
-        
-        
-        
-        
-        
-        
-        
-        let propertiesForInitializerParameters = capturedProperties.map {
-            InitializerParameter(
-                modifier: $0.modifier,
-                letOrVar: $0.letOrVar,
-                name: $0.name,
-                type: $0.type,
-                equals: $0.equals,
-                isEscaping: false,
-                isAsync: $0.isAsync,
-                isThrowing: $0.isThrowing,
-                isStatic: $0.isStatic,
-                closureContents: $0.closureContents
-            )
-        }
-        
-        
-        let functionsForInitializerParameters = capturedFunctions
-            .filter { $0.isStatic == false }
-            .map {
-                InitializerParameter(
-                    modifier: $0.modifier,
-                    letOrVar: nil,
-                    name: $0.name,
-                    type: $0.type,
-                    equals: nil,
-                    isEscaping: true,
-                    isAsync: false,
-                    isThrowing: false,
-                    isStatic: false,
-                    closureContents: nil
-                )
-            }
-        
-        
-        let allInitializerParameters: [InitializerParameter] = [
-            propertiesForInitializerParameters,
-            functionsForInitializerParameters,
-        ]
-            .flatMap { $0 }
-            .filter { $0.closureContents == nil }
-            .filter { $0.equals == nil }
-
-        
-        
-        let protocolWitnessInit: String
-        
-        if allInitializerParameters.isEmpty {
-            protocolWitnessInit = """
-                init() { }
-                """
-        } else if
-            allInitializerParameters.count == 1,
-            let parameter = allInitializerParameters.first
-        {
-            protocolWitnessInit = """
-                init(\(parameter.name)\(parameter.escapingRhs)) {
-                _\(parameter.name) = \(parameter.name)
-                }
-                """
-        } else {
-            let arguments = allInitializerParameters
-                .map { "\($0.name)\($0.escapingRhs)" }
-                .joined(separator: ",\n")
-            
-            let assigns = allInitializerParameters
-                .map { "_\($0.name) = \($0.name)" }
-                .joined(separator: "\n")
-            
-            protocolWitnessInit = """
-                init(
-                \(arguments)
-                ) {
-                \(assigns)
-                }
-                """
-        }
-        
-        
-        
-        
-        
-        
-        
-        let wrappedFunctions = capturedFunctions
-            .map { "\($0.prefix)\($0.callsite)" }
-            .joined(separator: "\n\n")
-        
 
         
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        let propertiesFromProtocolWitnessProperties = capturedProperties
-            .compactMap(makeProtocolWitnessProperties)
-            .joined(separator: "\n\n")
-        
-        
-        let propertiesFromProtocolWitnessFunctions = capturedFunctions
-            .map(makeProtocolWitnessProperties)
-            .joined(separator: "\n\n")
-
-        
-        let propertiesSeparator =
-            propertiesFromProtocolWitnessProperties.isEmpty
-            || propertiesFromProtocolWitnessFunctions.isEmpty
-            ? "" : "\n\n"
-        
-        let allProtocolWitnessProperties = [
-            propertiesFromProtocolWitnessProperties,
-            propertiesFromProtocolWitnessFunctions,
-        ]
-            .joined(separator: propertiesSeparator)
-        
-        
-        
-        
-        let nonComputedParameters = capturedProperties
-            .filter { $0.isComputed == false }
-    
-        let expandedParameters = nonComputedParameters
-            .filter { $0.equals == nil }
-            .map {
-                "\($0.name): \($0.type ?? "")"
-            }
-            .joined(separator: ",\n")
-
-        
-        
-        
-        let protocolWitnessFunctions = makeProtocolWitnessFunction(
-            structDecl: structDecl,
-            protocolWitnessName: protocolWitnessName,
-            typeName: typeName,
-            witnessTypeName: witnessTypeName,
-            allInitializerParameters: allInitializerParameters,
-            expandedParameters: expandedParameters,
-            nonComputedParameters: nonComputedParameters
-        )
-        
-        
-        
-        let witnessDecl: DeclSyntax
-        
-        if allProtocolWitnessProperties.isEmpty {
-            witnessDecl = """
-                struct \(raw: witnessTypeName) {
-                    \(raw: protocolWitnessInit)
-                
-                    \(raw: protocolWitnessFunctions)
-                }
-                """
-        } else {
-            witnessDecl = """
-                struct \(raw: witnessTypeName) {
-                    \(raw: allProtocolWitnessProperties)
-                
-                    \(raw: protocolWitnessInit)
-                
-                    \(raw: wrappedFunctions)
-                
-                    \(raw: protocolWitnessFunctions)
-                }
-                """
-        }
-        
-        return [witnessDecl]
+        return []
     }
+    
+    
+    
+    
+//    public static func expansion(
+//        of node: AttributeSyntax,
+//        providingMembersOf declaration: some DeclGroupSyntax,
+//        in context: some MacroExpansionContext
+//    ) throws -> [DeclSyntax] {
+//        guard let structDecl = declaration as? StructDeclSyntax else {
+//            WitnessingDiagnostic.notAStruct.diagnose(in: declaration, for: context)
+//            
+//            return []
+//        }
+//        
+//        let protocolWitnessName = makeProductionInstanceName(from: node)
+//        let typeName = structDecl.name.text
+//        let witnessTypeName = makeWitnessTypeName(from: node)
+//
+//        
+//        
+//        let capturedProperties = makeCapturedProperties(from: structDecl)
+//        let capturedFunctions = makeCapturedFunctions(from: structDecl)
+//        
+//        
+//        
+//        
+//        
+//        
+//        
+//        
+//        let propertiesForInitializerParameters = capturedProperties.map {
+//            InitializerParameter(
+//                modifier: $0.modifier,
+//                letOrVar: $0.letOrVar,
+//                name: $0.name,
+//                type: $0.type,
+//                equals: $0.equals,
+//                isEscaping: false,
+//                isAsync: $0.isAsync,
+//                isThrowing: $0.isThrowing,
+//                isStatic: $0.isStatic,
+//                closureContents: $0.closureContents
+//            )
+//        }
+//        
+//        
+//        let functionsForInitializerParameters = capturedFunctions
+//            .filter { $0.isStatic == false }
+//            .map {
+//                InitializerParameter(
+//                    modifier: $0.modifier,
+//                    letOrVar: nil,
+//                    name: $0.name,
+//                    type: $0.type,
+//                    equals: nil,
+//                    isEscaping: true,
+//                    isAsync: false,
+//                    isThrowing: false,
+//                    isStatic: false,
+//                    closureContents: nil
+//                )
+//            }
+//        
+//        
+//        let allInitializerParameters: [InitializerParameter] = [
+//            propertiesForInitializerParameters,
+//            functionsForInitializerParameters,
+//        ]
+//            .flatMap { $0 }
+//            .filter { $0.closureContents == nil }
+//            .filter { $0.equals == nil }
+//
+//        
+//        
+//        let protocolWitnessInit: String
+//        
+//        if allInitializerParameters.isEmpty {
+//            protocolWitnessInit = """
+//                init() { }
+//                """
+//        } else if
+//            allInitializerParameters.count == 1,
+//            let parameter = allInitializerParameters.first
+//        {
+//            protocolWitnessInit = """
+//                init(\(parameter.name)\(parameter.escapingRhs)) {
+//                _\(parameter.name) = \(parameter.name)
+//                }
+//                """
+//        } else {
+//            let arguments = allInitializerParameters
+//                .map { "\($0.name)\($0.escapingRhs)" }
+//                .joined(separator: ",\n")
+//            
+//            let assigns = allInitializerParameters
+//                .map { "_\($0.name) = \($0.name)" }
+//                .joined(separator: "\n")
+//            
+//            protocolWitnessInit = """
+//                init(
+//                \(arguments)
+//                ) {
+//                \(assigns)
+//                }
+//                """
+//        }
+//        
+//        
+//        
+//        
+//        
+//        
+//        
+//        let wrappedFunctions = capturedFunctions
+//            .map { "\($0.prefix)\($0.callsite)" }
+//            .joined(separator: "\n\n")
+//        
+//
+//        
+//        
+//        
+//        
+//        
+//        
+//        
+//        
+//        
+//        
+//        
+//        
+//        let propertiesFromProtocolWitnessProperties = capturedProperties
+//            .compactMap(makeProtocolWitnessProperties)
+//            .joined(separator: "\n\n")
+//        
+//        
+//        let propertiesFromProtocolWitnessFunctions = capturedFunctions
+//            .map(makeProtocolWitnessProperties)
+//            .joined(separator: "\n\n")
+//
+//        
+//        let propertiesSeparator =
+//            propertiesFromProtocolWitnessProperties.isEmpty
+//            || propertiesFromProtocolWitnessFunctions.isEmpty
+//            ? "" : "\n\n"
+//        
+//        let allProtocolWitnessProperties = [
+//            propertiesFromProtocolWitnessProperties,
+//            propertiesFromProtocolWitnessFunctions,
+//        ]
+//            .joined(separator: propertiesSeparator)
+//        
+//        
+//        
+//        
+//        let nonComputedParameters = capturedProperties
+//            .filter { $0.isComputed == false }
+//    
+//        let expandedParameters = nonComputedParameters
+//            .filter { $0.equals == nil }
+//            .map {
+//                "\($0.name): \($0.type ?? "")"
+//            }
+//            .joined(separator: ",\n")
+//
+//        
+//        
+//        
+//        let protocolWitnessFunctions = makeProtocolWitnessFunction(
+//            structDecl: structDecl,
+//            protocolWitnessName: protocolWitnessName,
+//            typeName: typeName,
+//            witnessTypeName: witnessTypeName,
+//            allInitializerParameters: allInitializerParameters,
+//            expandedParameters: expandedParameters,
+//            nonComputedParameters: nonComputedParameters
+//        )
+//        
+//        
+//        
+//        let witnessDecl: DeclSyntax
+//        
+//        if allProtocolWitnessProperties.isEmpty {
+//            witnessDecl = """
+//                struct \(raw: witnessTypeName) {
+//                    \(raw: protocolWitnessInit)
+//                
+//                    \(raw: protocolWitnessFunctions)
+//                }
+//                """
+//        } else {
+//            witnessDecl = """
+//                struct \(raw: witnessTypeName) {
+//                    \(raw: allProtocolWitnessProperties)
+//                
+//                    \(raw: protocolWitnessInit)
+//                
+//                    \(raw: wrappedFunctions)
+//                
+//                    \(raw: protocolWitnessFunctions)
+//                }
+//                """
+//        }
+//        
+//        return [witnessDecl]
+//    }
 }
 
 
@@ -996,5 +1015,15 @@ enum MyFitItMessage: FixItMessage {
     
     var fixItID: MessageID {
         MessageID(domain: "ProtocolWitnessingMacro", id: message)
+    }
+}
+
+
+
+private enum ProtocolWitnessingError: Error, CustomStringConvertible {
+    case notAProtocol
+    
+    var description: String {
+        "@ProtocolWitnessing can only be attached to protocols"
     }
 }
