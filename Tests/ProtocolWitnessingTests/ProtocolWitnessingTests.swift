@@ -1064,6 +1064,47 @@ extension ProtocolWitnessingTests {
             """
         }
     }
+    
+    func testMacro_whenOneFunction_andFunctionIsAsync_andHasReturnValue() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                func doSomething(withStrings: [String]) async -> [String]
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(withStrings: [String]) async -> [String]
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(withStrings: [String]) async -> [String] {
+                    await _doSomething(withStrings)
+                }
+
+                var _doSomething: ([String]) async -> [String]
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping ([String]) async -> [String]
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
 }
 
 // MARK: Throwing
@@ -1610,16 +1651,16 @@ extension ProtocolWitnessingTests {
             }
 
             struct MyClientProtocolWitness: MyClient {
-                func doSomething() -> Void {
+                func doSomething() ->   Void {
                     _doSomething()
                 }
 
-                var _doSomething: () -> Void
+                var _doSomething: () ->   Void
             }
 
             extension MyClient {
                 static func makeErasedProtocolWitness(
-                    doSomething: @escaping () -> Void
+                    doSomething: @escaping () ->   Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
                         _doSomething: doSomething
@@ -1651,16 +1692,16 @@ extension ProtocolWitnessingTests {
             }
 
             struct MyClientProtocolWitness: MyClient {
-                func doSomething() -> Void {
+                func doSomething() ->   Void {
                     _doSomething()
                 }
 
-                var _doSomething: () -> Void
+                var _doSomething: () ->   Void
             }
 
             extension MyClient {
                 static func makeErasedProtocolWitness(
-                    doSomething: @escaping () -> Void
+                    doSomething: @escaping () ->   Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
                         _doSomething: doSomething

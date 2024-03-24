@@ -382,10 +382,7 @@ private func makeCapturedFunctions(from decl: ProtocolDeclSyntax) -> [CapturedFu
             
             let returnValue = signature
                 .returnClause?
-                .type
-                .as(IdentifierTypeSyntax.self)?
-                .name
-                .text
+                .trimmedDescription
             
             
             
@@ -606,7 +603,7 @@ private func makeWrappedFunction(for capturedFunction: CapturedFunction) -> Stri
     }
     
     
-    let returnValueIfNotVoid = capturedFunction.returnValue.flatMap { " -> \($0)" } ?? ""
+    let returnValueIfNotVoid = capturedFunction.returnValue ?? ""
     
     
     
@@ -767,11 +764,11 @@ private struct CapturedFunction {
         
         
         
-        let returnValueOrVoid = returnValue ?? "Void"
+        let returnValueOrVoid = returnValue ?? "-> Void"
         
         
         
-        return "\(signatureDecl) -> \(returnValueOrVoid)"
+        return "\(signatureDecl) \(returnValueOrVoid)"
 
     }
 }
