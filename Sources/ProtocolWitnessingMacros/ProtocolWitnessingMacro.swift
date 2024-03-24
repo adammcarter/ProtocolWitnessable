@@ -171,74 +171,55 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
                 }
                 """
         } else {
-            let propertyParameters = capturedProperties
-                .map {
-                    let escapingOrEmpty = $0.isFunctionType ? "@escaping " : ""
-                    
-                    return "\($0.name): \(escapingOrEmpty)\($0.type)"
-                }
-            
-            let functionParameters = capturedFunctions
-                .map {
-                    "\($0.name): @escaping \($0.type)"
-                }
-            
-            
-            let erasedProtocolWitnessFunctionParameters = [
-                propertyParameters,
-                functionParameters,
-            ]
-                .flatMap { $0 }
-                .joined(separator: ",\n")
-
-            
-            
-            
-            
-            
-            let propertyInitializerParameters = capturedProperties
-                .map {
-                    let underscoreOrEmpty = $0.isGetOnly ? "_" : ""
-                    
-                    return "\(underscoreOrEmpty)\($0.name): \($0.name)"
-                }
-            
-            let functionInitializerParameters = capturedFunctions
-                .map {
-                    "_\($0.name): \($0.name)"
-                }
-            
-            
-            let protocolWitnessInitializerParameters = [
-                propertyInitializerParameters,
-                functionInitializerParameters,
-            ]
-                .flatMap { $0 }
-                .joined(separator: ",\n")
-
+            let erasedProtocolWitnessFunctionParameters = makeErasedProtocolWitnessFunctionParameters(
+                capturedProperties: capturedProperties,
+                capturedFunctions: capturedFunctions
+            )
             
             
             
             
             let needsAsyncAwait = capturedProperties.contains(where: \.isAsync)
+            let needsTryThrows = capturedProperties.contains(where: \.isThrowing)
             
-            let asyncOrEmpty = needsAsyncAwait ? "async " : ""
+            let asyncThrowsOrEmpty = if needsAsyncAwait {
+                "async "
+            } else if needsTryThrows {
+                "throws "
+            } else {
+                ""
+            }
+            
             let awaitOrEmpty = needsAsyncAwait ? "await " : ""
             
 
+            let erasedProtocolWitnessInitializerParameters = makeProtocolWitnessInitializerParameters(
+                capturedProperties: capturedProperties,
+                capturedFunctions: capturedFunctions,
+                supportsAsyncThrows: false
+            )
+            
             
             makeErasedProtocolWitnessFunction = """
                 static func makeErasedProtocolWitness(
                 \(erasedProtocolWitnessFunctionParameters)
                 ) -> \(protocolTypeName) {
                 \(protocolWitnessStructTypeName)(
-                \(protocolWitnessInitializerParameters)
+                \(erasedProtocolWitnessInitializerParameters)
                 )
                 }
                 """
             
+            
+            let protocolWitnessInitializerParameters = makeProtocolWitnessInitializerParameters(
+                capturedProperties: capturedProperties,
+                capturedFunctions: capturedFunctions,
+                supportsAsyncThrows: true
+            )
+            
+            
             makingProtocolWitness = """
-                func makingProtocolWitness() \(asyncOrEmpty)-> \(protocolWitnessStructTypeName) {
+                func makingProtocolWitness() \(asyncThrowsOrEmpty)-> \(protocolWitnessStructTypeName) {
                 \(awaitOrEmpty)\(protocolWitnessStructTypeName)(
                 \(protocolWitnessInitializerParameters)
                 )
@@ -972,25 +953,9 @@ private func makeProtocolWitnessStructTypeName(for protocolTypeName: String) -> 
 }
 
 private func makePropertiesAsPropertiesAndWrappedProperties(for capturedProperty: CapturedProperty) -> String {
-    let wrappedProperty = makeWrappedProperty(for: capturedProperty)
-    
-        
-    let defaultValueOrEmpty = capturedProperty.isStatic
-        ? " = { .init() }()"
-        : ""
-    
-    
-    let underscoreOrEmpty = capturedProperty.isGetOnly && capturedProperty.isStatic == false
-        ? "_"
-        : ""
-    
-    let prefix = "\(capturedProperty.prefix)var \(underscoreOrEmpty)"
-    let property = "\(prefix)\(capturedProperty.name): \(capturedProperty.type)\(defaultValueOrEmpty)"
-    
-    
-    return [
-        wrappedProperty,
-        property
+     [
+        makeWrappedProperty(for: capturedProperty),
+        makeProperty(for: capturedProperty),
     ]
         .compactMap { $0 }
         .joined(separator: "\n\n")
@@ -1005,9 +970,13 @@ private func makeWrappedProperty(for capturedProperty: CapturedProperty) -> Stri
         return nil
     }
     
-    let getter = capturedProperty.isAsync
-        ? "get async { _\(capturedProperty.name) }"
-        :  "_\(capturedProperty.name)"
+    let getter = if capturedProperty.isAsync {
+        "get async { _\(capturedProperty.name) }"
+    } else if capturedProperty.isThrowing {
+        "get throws { try _\(capturedProperty.name)() }"
+    } else {
+        "_\(capturedProperty.name)"
+    }
     
     return """
         \(capturedProperty.prefix)var \(capturedProperty.name): \(capturedProperty.type) {
@@ -1015,6 +984,26 @@ private func makeWrappedProperty(for capturedProperty: CapturedProperty) -> Stri
         }
         """
 }
+
+private func makeProperty(for capturedProperty: CapturedProperty) -> String? {
+    let defaultValueOrEmpty = capturedProperty.isStatic
+    ? " = { .init() }()"
+    : ""
+    
+    
+    let underscoreOrEmpty = capturedProperty.isGetOnly && capturedProperty.isStatic == false
+    ? "_"
+    : ""
+    
+    let prefix = "\(capturedProperty.prefix)var \(underscoreOrEmpty)"
+    
+    let type = if capturedProperty.isThrowing {
+        "() throws -> \(capturedProperty.type)"
+    } else {
+        "\(capturedProperty.type)\(defaultValueOrEmpty)"
+    }
+    
+    return "\(prefix)\(capturedProperty.name): \(type)"}
 
 private func makeFunctionsAsPropertiesAndWrappedFunctions(for capturedFunction: CapturedFunction) -> String {
     let wrappedFunction = makeWrappedFunction(for: capturedFunction)
@@ -1091,6 +1080,77 @@ private func makeWrappedFunction(for capturedFunction: CapturedFunction) -> Stri
         }
         """
 
+}
+
+private func makeErasedProtocolWitnessFunctionParameters(
+    capturedProperties: [CapturedProperty],
+    capturedFunctions: [CapturedFunction]
+) -> String {
+    let propertyParameters = capturedProperties
+        .map {
+            let rhs: String
+            
+            if $0.isThrowing {
+                rhs = "@escaping () throws -> \($0.type)"
+            } else {
+                let escapingOrEmpty = $0.isFunctionType ? "@escaping " : ""
+                
+                rhs = "\(escapingOrEmpty)\($0.type)"
+            }
+            
+            return "\($0.name): \(rhs)"
+        }
+    
+    
+    
+    let functionParameters = capturedFunctions
+        .map {
+            "\($0.name): @escaping \($0.type)"
+        }
+    
+    
+    
+    return [
+        propertyParameters,
+        functionParameters,
+    ]
+        .flatMap { $0 }
+        .joined(separator: ",\n")
+}
+
+private func makeProtocolWitnessInitializerParameters(
+    capturedProperties: [CapturedProperty],
+    capturedFunctions: [CapturedFunction],
+    supportsAsyncThrows: Bool
+) -> String {
+    let propertyInitializerParameters = capturedProperties
+        .map {
+            let rhs = if $0.isThrowing, supportsAsyncThrows {
+                "{ try \($0.name) }"
+            } else {
+                "\($0.name)"
+            }
+
+            
+            let underscoreOrEmpty = $0.isGetOnly ? "_" : ""
+            
+            return "\(underscoreOrEmpty)\($0.name): \(rhs)"
+        }
+    
+    
+    
+    let functionInitializerParameters = capturedFunctions
+        .map {
+            "_\($0.name): \($0.name)"
+        }
+    
+    
+    return [
+        propertyInitializerParameters,
+        functionInitializerParameters,
+    ]
+        .flatMap { $0 }
+        .joined(separator: ",\n")
 }
 
 

@@ -2169,114 +2169,55 @@ extension ProtocolWitnessingTests {
     }
 }
 
-//// MARK: Throwing getter
-//
-//extension ProtocolWitnessingTests {
-//    func testMacro_addsThrowsGetterToWitness_whenPropertyHasThrowsGetOnlyProperty_andSpansOneLineOnly() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                var isAsync: Bool {
-//                    get throws { true }
-//                }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                var isAsync: Bool {
-//                    get throws { true }
-//                }
-//            
-//                struct ProtocolWitness {
-//                    var isAsync: Bool {
-//                        get throws {
-//                            try _isAsync()
-//                        }
-//                    }
-//            
-//                    var _isAsync: () throws -> Bool = {
-//                        true
-//                    }
-//            
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//    
-//    func testMacro_addsThrowsGetterToWitness_whenPropertyHasThrowsGetOnlyProperty_andSpansMultipleLines() throws {
-//        assertMacro {
-//            """
-//            @ProtocolWitnessing
-//            struct MyClient {
-//                var isAsync: Bool {
-//                    get throws {
-//                        true
-//                    }
-//                }
-//            }
-//            """
-//        } expansion: {
-//            """
-//            struct MyClient {
-//                var isAsync: Bool {
-//                    get throws {
-//                        true
-//                    }
-//                }
-//            
-//                struct ProtocolWitness {
-//                    var isAsync: Bool {
-//                        get throws {
-//                            try _isAsync()
-//                        }
-//                    }
-//            
-//                    var _isAsync: () throws -> Bool = {
-//                        true
-//                    }
-//            
-//                    init() {
-//                    }
-//            
-//            
-//            
-//                    private static var _production: MyClient?
-//            
-//                    static func production() -> MyClient.ProtocolWitness {
-//                        let production = _production ?? MyClient()
-//            
-//                        if _production == nil {
-//                            _production = production
-//                        }
-//            
-//                        return MyClient.ProtocolWitness()
-//                    }
-//                }
-//            }
-//            """
-//        }
-//    }
-//}
-//
+// MARK: Throws
+
+extension ProtocolWitnessingTests {
+    func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetOnlyProperty_andThrows() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessing
+            protocol MyClient {
+                var someLetProperty: Int { get throws }
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                var someLetProperty: Int { get throws }
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                var someLetProperty: Int {
+                    get throws {
+                        try _someLetProperty()
+                    }
+                }
+            
+                var _someLetProperty: () throws -> Int
+            }
+
+            extension MyClient {
+                static func makeErasedProtocolWitness(
+                    someLetProperty: @escaping () throws -> Int
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _someLetProperty: someLetProperty
+                    )
+                }
+            
+                func makingProtocolWitness() throws -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _someLetProperty: {
+                            try someLetProperty
+                        }
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
 //// MARK: Static var
 //
 //extension ProtocolWitnessingTests {
