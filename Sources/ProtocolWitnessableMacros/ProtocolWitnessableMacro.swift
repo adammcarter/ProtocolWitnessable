@@ -174,210 +174,179 @@ public struct ProtocolWitnessableMacro: PeerMacro {
 }
 
 
-// MARK: - Capturing data
+// MARK: - Capturing properties
 
 private func makeCapturedProperties(from decl: ProtocolDeclSyntax) -> [CapturedProperty] {
     decl
         .memberBlock
         .members
-        .compactMap { member -> [CapturedProperty]? in
-            guard
-                let varDecl = member
-                    .decl
-                    .as(VariableDeclSyntax.self)
-            else {
-                return nil
-            }
-            
-            
-            
-            
-            
-            
-            
-            let bindings = varDecl
-                .bindings
-            
-            let initializerValue = bindings
-                .first?
-                .initializer?
-                .value
-            
-            let needsExplicitWrappingProperty =
-            initializerValue == nil
-            ||
-            initializerValue?.is(FunctionCallExprSyntax.self) == true
-            
-            let isPrivate = varDecl
-                .modifiers
-                .contains {
-                    $0.name.tokenKind == .keyword(.private)
-                    || $0.name.tokenKind == .keyword(.fileprivate)
-                } == true
-            
-            let canBeUsedAsIs = bindings
-                .contains { $0.initializer?.equal != nil } == true
-            
-            let isIncluded = !isPrivate && (needsExplicitWrappingProperty || canBeUsedAsIs)
-            
-            guard isIncluded else {
-                return nil
-            }
-            
-            
-            
-            
-                        
-            let isStatic = member
-                .decl
-                .as(VariableDeclSyntax.self)?
-                .modifiers
-                .contains { $0.name.tokenKind == .keyword(.static) } == true
-            
-            let isLazy = varDecl
-                .modifiers
-                .contains { $0.name.tokenKind == .keyword(.lazy) }
-        
-            
-            
-            
-            
-            
-            
-            return varDecl
-                .bindings
-                .compactMap { binding -> CapturedProperty? in
-                    guard let type = binding.typeAnnotation?.type.trimmedDescription else {
-                        return nil
-                    }
-                    
-                    let isFunctionType = binding.typeAnnotation?.type.is(FunctionTypeSyntax.self) == true
-                    
-                    let accessorBlock = binding.accessorBlock
-                    
-                    let declList = accessorBlock?
-                        .accessors
-                        .as(AccessorDeclListSyntax.self)
-                    
-                    
-                    let isAsync = declList?
-                        .compactMap { $0.effectSpecifiers?.asyncSpecifier }
-                        .isEmpty == false
-                    
-                    let isThrowing = declList?
-                        .compactMap { $0.effectSpecifiers?.throwsSpecifier }
-                        .isEmpty == false
-                    
-                    let isGetOnly = declList?.contains {
-                        $0.accessorSpecifier.tokenKind == .keyword(.set)
-                    } == false && declList != nil
-                    
-                    
-                    
-                    
-                    
-                    let name = binding.pattern.trimmedDescription
-                    
-                    return CapturedProperty(
-                        name: name,
-                        type: type,
-                        isGetOnly: isGetOnly,
-                        isAsync: isAsync,
-                        isThrowing: isThrowing,
-                        isStatic: isStatic,
-                        isLazy: isLazy,
-                        isFunctionType: isFunctionType
-                    )
-                }
-        }
+        .compactMap(makeCapturedProperty)
         .flatMap { $0 }
 }
+
+private func makeCapturedProperty(from blockListElement: MemberBlockItemListSyntax.Element) -> [CapturedProperty]? {
+    guard
+        let varDecl = blockListElement.decl.as(VariableDeclSyntax.self)
+    else {
+        return nil
+    }
+
+    
+    let bindings = varDecl.bindings
+    let initializerValue = bindings.first?.initializer?.value
+    
+    let needsExplicitWrappingProperty = initializerValue == nil
+        || initializerValue?.is(FunctionCallExprSyntax.self) == true
+    
+    let canBeUsedAsIs = bindings.contains { $0.initializer?.equal != nil }
+    
+    guard
+        varDecl.isPrivate == false,
+        (needsExplicitWrappingProperty || canBeUsedAsIs)
+    else {
+        return nil
+    }
+    
+
+    
+    let isStatic = varDecl
+        .modifiers
+        .contains { $0.name.tokenKind == .keyword(.static) }
+    
+    let isLazy = varDecl
+        .modifiers
+        .contains { $0.name.tokenKind == .keyword(.lazy) }
+    
+    
+    return varDecl
+        .bindings
+        .compactMap {
+            makeCapturedProperty(from: $0, isStatic: isStatic, isLazy: isLazy)
+        }
+}
+
+private func makeCapturedProperty(
+    from patternBindingList: PatternBindingListSyntax.Element,
+    isStatic: Bool,
+    isLazy: Bool
+) -> CapturedProperty? {
+    guard let type = patternBindingList.typeAnnotation?.type.trimmedDescription else {
+        return nil
+    }
+    
+    let isFunctionType = patternBindingList.typeAnnotation?.type.is(FunctionTypeSyntax.self) == true
+    
+    let accessorBlock = patternBindingList.accessorBlock
+    
+    let declList = accessorBlock?
+        .accessors
+        .as(AccessorDeclListSyntax.self)
+    
+    
+    let isAsync = declList?
+        .compactMap { $0.effectSpecifiers?.asyncSpecifier }
+        .isEmpty == false
+    
+    let isThrowing = declList?
+        .compactMap { $0.effectSpecifiers?.throwsSpecifier }
+        .isEmpty == false
+    
+    let isGetOnly = declList?.contains {
+        $0.accessorSpecifier.tokenKind == .keyword(.set)
+    } == false && declList != nil
+    
+    
+    
+    let name = patternBindingList.pattern.trimmedDescription
+    
+    return CapturedProperty(
+        name: name,
+        type: type,
+        isGetOnly: isGetOnly,
+        isAsync: isAsync,
+        isThrowing: isThrowing,
+        isStatic: isStatic,
+        isLazy: isLazy,
+        isFunctionType: isFunctionType
+    )
+}
+
+
+// MARK: - Capturing functions
 
 private func makeCapturedFunctions(from decl: ProtocolDeclSyntax) -> [CapturedFunction] {
     decl
         .memberBlock
         .members
-        .compactMap { member -> FunctionDeclSyntax? in
-            guard
-                let function = member.decl.as(FunctionDeclSyntax.self)
-            else {
-                return nil
-            }
-
-            let isPrivate = function
-                .modifiers
-                .contains {
-                    $0.name.tokenKind == .keyword(.private)
-                    || $0.name.tokenKind == .keyword(.fileprivate)
-                } == true
-            
-            guard isPrivate == false else {
-                return nil
-            }
-            
-            return function
-        }
-        .map { function -> CapturedFunction in
-            let modifier = function
-                .modifiers
-                .first {
-                    $0.name.tokenKind == .keyword(.internal)
-                    || $0.name.tokenKind == .keyword(.public)
-                    || $0.name.tokenKind == .keyword(.open)
-                }?
-                .name
-                .trimmedDescription
-            
-            
-            let signature = function.signature
-            
-            
-            let effectSpecifiers = signature.effectSpecifiers
-            let isAsync = effectSpecifiers?.asyncSpecifier != nil
-            let isThrows = effectSpecifiers?.throwsSpecifier != nil
-            
-            
-            
-            
-
-            let capturedClosureParameters = signature
-                .parameterClause
-                .parameters
-                .compactMap {
-                    CapturedFunction.CapturedClosureParameter(
-                        name: $0.firstName.text,
-                        type: $0.type.description
-                    )
-                }
-            
-            
-            
-            let returnValue = signature
-                .returnClause?
-                .trimmedDescription
-            
-            
-            
-            let name = function.name.text
-
-            
-            let isStatic = function
-                .modifiers
-                .contains { $0.name.tokenKind == .keyword(.static) } == true
-
-            
-            return CapturedFunction(
-                modifier: modifier,
-                name: name,
-                returnValue: returnValue,
-                isAsync: isAsync,
-                isThrows: isThrows,
-                isStatic: isStatic,
-                capturedClosureParameters: capturedClosureParameters
-            )
-        }
+        .compactMap(makeFunctionDecl)
+        .map(makeCapturedFunction)
 }
 
+private func makeFunctionDecl(from blockListElement: MemberBlockItemListSyntax.Element) -> FunctionDeclSyntax? {
+    guard
+        let function = blockListElement.decl.as(FunctionDeclSyntax.self),
+        function.isPrivate == false
+    else {
+        return nil
+    }
+    
+    return function
+}
+
+private func makeCapturedFunction(from functionDecl: FunctionDeclSyntax) -> CapturedFunction {
+    let name = functionDecl.name.text
+    
+    let modifier = functionDecl
+        .modifiers
+        .first {
+            $0.name.tokenKind == .keyword(.internal)
+            || $0.name.tokenKind == .keyword(.public)
+            || $0.name.tokenKind == .keyword(.open)
+        }?
+        .name
+        .trimmedDescription
+    
+    let signature = functionDecl.signature
+    
+    let returnValue = signature
+        .returnClause?
+        .trimmedDescription
+    
+    let effectSpecifiers = signature.effectSpecifiers
+    let isAsync = effectSpecifiers?.asyncSpecifier != nil
+    let isThrows = effectSpecifiers?.throwsSpecifier != nil
+    
+    let isStatic = functionDecl
+        .modifiers
+        .contains { $0.name.tokenKind == .keyword(.static) } == true
+    
+    let capturedClosureParameters = signature
+        .parameterClause
+        .parameters
+        .map(makeCapturedClosureParameters)
+
+    
+    return CapturedFunction(
+        modifier: modifier,
+        name: name,
+        returnValue: returnValue,
+        isAsync: isAsync,
+        isThrows: isThrows,
+        isStatic: isStatic,
+        capturedClosureParameters: capturedClosureParameters
+    )
+}
+
+private func makeCapturedClosureParameters(for parameter: FunctionParameterSyntax) -> CapturedFunction.CapturedClosureParameter {
+    .init(
+        firstName: parameter.firstName.trimmedDescription,
+        secondName: parameter.secondName?.trimmedDescription,
+        type: parameter.type.description
+    )
+}
+
+
+// MARK: - Make properties
 
 private func makeProtocolWitnessProperties(from capturedProperty: CapturedProperty) -> String? {
     let type = capturedProperty.type.flatMap({ ": \($0)" })
@@ -436,6 +405,7 @@ private func makeProtocolWitnessProperties(from capturedProperty: CapturedProper
 private func makeProtocolWitnessProperties(from capturedFunction: CapturedFunction) -> String {
     "\(capturedFunction.prefix)var _\(capturedFunction.name): \(capturedFunction.type)"
 }
+
 
 // MARK: - Metadata
 
@@ -555,23 +525,33 @@ private func makeFunctionsAsPropertiesAndWrappedFunctions(for capturedFunction: 
 }
 
 private func makeWrappedFunction(for capturedFunction: CapturedFunction) -> String {
-    let parameterNameWithTypeList = capturedFunction.capturedClosureParameters
-        .map { "\($0.name): \($0.type)" }
+    let parameterNamesWithTypes = capturedFunction
+        .capturedClosureParameters
+        .map {
+            let fullName = if let secondName = $0.secondName {
+                "\($0.firstName) \(secondName)"
+            } else {
+                $0.firstName
+            }
+
+            return "\(fullName): \($0.type)"
+        }
         .joined(separator: ", ")
     
-    let parameterNameWithNameList = capturedFunction.capturedClosureParameters
-        .map { "\($0.name)" }
+    let parameterNames = capturedFunction
+        .capturedClosureParameters
+        .map { "\($0.secondName ?? $0.firstName)" }
         .joined(separator: ", ")
     
     
     let signatureParameterNamesDecl = if capturedFunction.isAsync, capturedFunction.isThrows {
-        "(\(parameterNameWithTypeList)) async throws"
+        "(\(parameterNamesWithTypes)) async throws"
     } else if capturedFunction.isAsync {
-        "(\(parameterNameWithTypeList)) async"
+        "(\(parameterNamesWithTypes)) async"
     } else if capturedFunction.isThrows {
-        "(\(parameterNameWithTypeList)) throws"
+        "(\(parameterNamesWithTypes)) throws"
     } else {
-        "(\(parameterNameWithTypeList))"
+        "(\(parameterNamesWithTypes))"
     }
     
     
@@ -591,7 +571,7 @@ private func makeWrappedFunction(for capturedFunction: CapturedFunction) -> Stri
     
     
     let functionCallsite = "\(capturedFunction.name)\(signatureParameterNamesDecl)\(returnValueIfNotVoid)"
-    let functionBody = "\(tryAwaitOrEmpty)_\(capturedFunction.name)(\(parameterNameWithNameList))"
+    let functionBody = "\(tryAwaitOrEmpty)_\(capturedFunction.name)(\(parameterNames))"
     
     
     return """
@@ -705,7 +685,8 @@ private struct CapturedFunction {
     let capturedClosureParameters: [CapturedClosureParameter]
     
     struct CapturedClosureParameter {
-        let name: String
+        let firstName: String
+        let secondName: String?
         let type: String
     }
     
@@ -750,5 +731,25 @@ private enum ProtocolWitnessableError: Error, CustomStringConvertible {
     
     var description: String {
         "@ProtocolWitnessable can only be attached to protocols"
+    }
+}
+
+
+// MARK: - Extensions
+
+extension FunctionDeclSyntax {
+    var isPrivate: Bool { modifiers.isPrivate }
+}
+
+extension VariableDeclSyntax {
+    var isPrivate: Bool { modifiers.isPrivate }
+}
+
+extension DeclModifierListSyntax {
+    var isPrivate: Bool {
+        contains {
+            $0.name.tokenKind == .keyword(.private)
+            || $0.name.tokenKind == .keyword(.fileprivate)
+        } == true
     }
 }

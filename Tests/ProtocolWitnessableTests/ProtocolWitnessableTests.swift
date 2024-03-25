@@ -885,6 +885,88 @@ extension ProtocolWitnessableTests {
     }
 }
 
+// MARK: Unnamed parameters
+
+extension ProtocolWitnessableTests {
+    func testMacro_whenFunctionHasOneUnnamedParameter() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable
+            protocol MyClient {
+                func doSomething(_ hiddenName: String)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(_ hiddenName: String)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(_ hiddenName: String) {
+                    _doSomething(hiddenName)
+                }
+
+                var _doSomething: (String) -> Void
+
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping (String) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenFunctionHasMultipleUnnamedParameters() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable
+            protocol MyClient {
+                func doSomething(_ hiddenName: String, _ anotherUnnamed: Int)
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething(_ hiddenName: String, _ anotherUnnamed: Int)
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething(_ hiddenName: String, _ anotherUnnamed: Int) {
+                    _doSomething(hiddenName, anotherUnnamed)
+                }
+
+                var _doSomething: (String, Int) -> Void
+
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping (String, Int) -> Void
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
 // MARK: Async/await
 
 extension ProtocolWitnessableTests {

@@ -3,10 +3,6 @@ import ProtocolWitnessable
 
 
 
-@ProtocolWitnessable
-protocol Thing {
-    var int: Int { get }
-}
 
 
 
