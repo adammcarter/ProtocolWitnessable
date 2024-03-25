@@ -5,14 +5,14 @@ import SwiftSyntaxMacros
 import SwiftSyntaxMacrosTestSupport
 import XCTest
 
-#if canImport(ProtocolWitnessingMacros)
-import ProtocolWitnessingMacros
+#if canImport(ProtocolWitnessableMacros)
+import ProtocolWitnessableMacros
 
-final class ProtocolWitnessingTests: XCTestCase {
+final class ProtocolWitnessableTests: XCTestCase {
     override func invokeTest() {
 //        withMacroTesting(isRecording: true, macros: [
         withMacroTesting(macros: [
-            "ProtocolWitnessing": WitnessingMacro.self,
+            "ProtocolWitnessable": ProtocolWitnessableMacro.self,
         ]) {
             super.invokeTest()
         }
@@ -21,16 +21,12 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 /*
  TODO: Updates
- - Rename @ProtocolWitnessing -> @ProtocolWitnessee / something better
-    - @ProtocolWitnessable
-    - @Witness
-    - @WitnessTarget
-    - @ProtocolWitnessTarget
  - Add extension (https://forums.swift.org/t/circular-reference-when-combining-attached-peer-and-extension-macros/70901):
      extension MyClient {
         typealias ProtocolWitness = MyClientProtocolWitness
      }
  - Do we need to add any specific stuff in the witness when the protocol is marked as MainActor?
+ - Update the documentation for the macro
  
  - Add support for attaching to actors and classes?
  - Use SwiftSyntaxMacros builders?
@@ -44,18 +40,18 @@ final class ProtocolWitnessingTests: XCTestCase {
 
 // MARK: - Attachment checking
 
-extension ProtocolWitnessingTests {
+extension ProtocolWitnessableTests {
     func testMacro_throwsError_whenAttachedToStruct() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             struct MyClient { }
             """
         } diagnostics: {
             """
-            @ProtocolWitnessing
-            ┬──────────────────
-            ╰─ 🛑 @ProtocolWitnessing can only be attached to protocols
+            @ProtocolWitnessable
+            ┬───────────────────
+            ╰─ 🛑 @ProtocolWitnessable can only be attached to protocols
             struct MyClient { }
             """
         }
@@ -64,14 +60,14 @@ extension ProtocolWitnessingTests {
     func testMacro_throwsError_whenAttachedToClass() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             class MyClient { }
             """
         } diagnostics: {
             """
-            @ProtocolWitnessing
-            ┬──────────────────
-            ╰─ 🛑 @ProtocolWitnessing can only be attached to protocols
+            @ProtocolWitnessable
+            ┬───────────────────
+            ╰─ 🛑 @ProtocolWitnessable can only be attached to protocols
             class MyClient { }
             """
         }
@@ -80,14 +76,14 @@ extension ProtocolWitnessingTests {
     func testMacro_throwsError_whenAttachedToActor() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             actor MyClient { }
             """
         } diagnostics: {
             """
-            @ProtocolWitnessing
-            ┬──────────────────
-            ╰─ 🛑 @ProtocolWitnessing can only be attached to protocols
+            @ProtocolWitnessable
+            ┬───────────────────
+            ╰─ 🛑 @ProtocolWitnessable can only be attached to protocols
             actor MyClient { }
             """
         }
@@ -96,14 +92,14 @@ extension ProtocolWitnessingTests {
     func testMacro_throwsError_whenAttachedToEnum() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             enum MyClient { }
             """
         } diagnostics: {
             """
-            @ProtocolWitnessing
-            ┬──────────────────
-            ╰─ 🛑 @ProtocolWitnessing can only be attached to protocols
+            @ProtocolWitnessable
+            ┬───────────────────
+            ╰─ 🛑 @ProtocolWitnessable can only be attached to protocols
             enum MyClient { }
             """
         }
@@ -112,11 +108,11 @@ extension ProtocolWitnessingTests {
 
 // MARK: - Empty structure
 
-extension ProtocolWitnessingTests {
+extension ProtocolWitnessableTests {
     func testMacro_createsEmptyStruct_andEmptyExtensionOnProtocol_whenProtocolIsEmpty_andProtocolIsImplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient { }
             """
         } expansion: {
@@ -139,7 +135,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsEmptyStruct_andEmptyExtensionOnProtocol_whenProtocolIsEmpty_andProtocolIsExplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             internal protocol MyClient { }
             """
         } expansion: {
@@ -162,7 +158,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsEmptyStruct_andEmptyExtensionOnProtocol_whenProtocolIsEmpty_andProtocolIsExplicitlyPublic() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             public protocol MyClient { }
             """
         } expansion: {
@@ -185,7 +181,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsEmptyStruct_andEmptyExtensionOnProtocol_whenProtocolIsEmpty_andProtocolIsExplicitlyPrivate() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             private protocol MyClient { }
             """
         } expansion: {
@@ -208,7 +204,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsEmptyStruct_andEmptyExtensionOnProtocol_whenProtocolIsEmpty_andProtocolIsExplicitlyFileprivate() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             fileprivate protocol MyClient { }
             """
         } expansion: {
@@ -233,11 +229,11 @@ extension ProtocolWitnessingTests {
 
 // MARK: One
 
-extension ProtocolWitnessingTests {
+extension ProtocolWitnessableTests {
     func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenOneFunction_andInstanceFunc_andNoArguments_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething()
             }
@@ -276,7 +272,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenOneFunction_andInstanceFunc_andOneArgument_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething(someInt: Int)
             }
@@ -315,7 +311,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenOneFunction_andInstanceFunc_andTwoArguments_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething(someInt: Int, otherArg: String)
             }
@@ -354,7 +350,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenOneFunction_andInstanceFunc_andNoArguments_andExplicitlyReturnsVoid_andImplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething() -> Void
             }
@@ -393,7 +389,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenOneFunction_andInstanceFunc_andNoArguments_andExplicitlyReturnsInt_andImplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething() -> Int
             }
@@ -452,7 +448,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsWrappedFunction_andProperty_butNoInitializerParameters_whenOneFunction_andStaticFunc_andNoArguments_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 static func doSomething()
             }
@@ -486,7 +482,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsWrappedFunction_andProperty_butNoInitializerParameters_whenOneFunction_andStaticFunc_andOneArgument_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 static func doSomething(int: Int)
             }
@@ -520,7 +516,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsWrappedFunction_andProperty_butNoInitializerParameters_whenOneFunction_andStaticFunc_andTwoArguments_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 static func doSomething(int: Int, string: String)
             }
@@ -554,11 +550,11 @@ extension ProtocolWitnessingTests {
 
 // MARK: Two (same)
 
-extension ProtocolWitnessingTests {
+extension ProtocolWitnessableTests {
     func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenTwoFunctions_andInstanceFunc_andNoArguments_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething()
             
@@ -610,7 +606,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenTwoFunctions_andInstanceFunc_andOneArgument_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething(someInt: Int)
             
@@ -662,7 +658,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenTwoFunctions_andInstanceFunc_andTwoArguments_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething(someInt: Int, otherArg: String)
             
@@ -714,7 +710,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenTwoFunctions_andInstanceFunc_andNoArguments_andExplicitlyReturnsVoid_andImplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething() -> Void
             
@@ -766,7 +762,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsWrappedFunction_andProperty_andInitializerParameters_whenTwoFunctions_andInstanceFunc_andNoArguments_andExplicitlyReturnsInt_andImplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething() -> Int
             
@@ -838,7 +834,7 @@ extension ProtocolWitnessingTests {
     func testMacro_addsWrappedFunction_andProperty_butNoInitializerParameters_whenTwoFunctions_andStaticFunc_andNoArguments_andImplicitlyReturnsVoid_andImplicitlyInternal() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 static func doSomething()
             
@@ -883,11 +879,11 @@ extension ProtocolWitnessingTests {
 
 // MARK: Async/await
 
-extension ProtocolWitnessingTests {
+extension ProtocolWitnessableTests {
     func testMacro_whenOneFunction_andFunctionIsAsync() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething() async
             }
@@ -926,7 +922,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenTwoFunctions_andBothFunctionsAreAsync() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething() async
             
@@ -978,7 +974,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenTwoFunctions_andOnlyOneFunctionsIsAsync() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething()
             
@@ -1030,7 +1026,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenOneFunction_andFunctionIsAsync_andHasReturnValue() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething(withStrings: [String]) async -> [String]
             }
@@ -1069,11 +1065,11 @@ extension ProtocolWitnessingTests {
 
 // MARK: Throwing
 
-extension ProtocolWitnessingTests {
+extension ProtocolWitnessableTests {
     func testMacro_whenOneFunction_andFunctionIsThrowing() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething() throws
             }
@@ -1112,7 +1108,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenTwoFunctions_andBothFunctionsAreThrowing() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething() throws
             
@@ -1164,7 +1160,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenTwoFunctions_andOneFunctionIsThrowing_andOtherFunctionIsNot() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething()
             
@@ -1216,11 +1212,11 @@ extension ProtocolWitnessingTests {
 
 // MARK: Completion handlers
 
-extension ProtocolWitnessingTests {
+extension ProtocolWitnessableTests {
     func testMacro_whenFunctionParametersContainsVoidToVoidClosure() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething(completionHandler: () -> Void)
             }
@@ -1259,7 +1255,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenFunctionParametersContainsTypeToVoidClosure() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething(completionHandler: (Int) -> Void)
             }
@@ -1298,7 +1294,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenFunctionParametersContainsTypeToVoidClosure_andTypeIsOptional() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething(completionHandler: (Int?) -> Void)
             }
@@ -1337,7 +1333,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenFunctionParametersContainsMultipleVariousTypesToVoidClosure() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething(completionHandler: (Int, String, Double) -> Void)
             }
@@ -1376,7 +1372,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenFunctionParametersContainsMultipleSameTypesToVoidClosure() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething(completionHandler: (Int, Int, Int) -> Void)
             }
@@ -1415,7 +1411,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenFunctionParametersContainsVoidToVoidClosure_andIsEscaping() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething(completionHandler: @escaping () -> Void)
             }
@@ -1454,7 +1450,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenFunctionParametersContainsTypeToVoidClosure_andIsEscaping() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething(completionHandler: @escaping (Int) -> Void)
             }
@@ -1493,7 +1489,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenFunctionParametersContainsMultipleVoidToVoidClosures() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething(configurationHandler: () -> Void, completionHandler: () -> Void)
             }
@@ -1532,7 +1528,7 @@ extension ProtocolWitnessingTests {
     func testMacro_whenFunctionParametersContainsMultipleVoidToVoidClosures_andMixedParameters() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething(configurationHandler: () -> Void, completionHandler: (Bool, Error?) -> Void)
             }
@@ -1571,11 +1567,11 @@ extension ProtocolWitnessingTests {
 
 // MARK: Funky code formatting
 
-extension ProtocolWitnessingTests {
+extension ProtocolWitnessableTests {
     func testMacro_expandsType_whenContainingFunction_andProtocolHasLotsOfWhitespaceAroundName() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol      MyClient     {
                 func doSomething()   ->   Void
             }
@@ -1614,7 +1610,7 @@ extension ProtocolWitnessingTests {
     func testMacro_expandsType_whenContainingFunction_andFunctionHasExtraWhitespaceAroundReturnArrow() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func doSomething()   ->   Void
             }
@@ -1653,7 +1649,7 @@ extension ProtocolWitnessingTests {
     func testMacro_expandsType_whenContainingFunction_andFunctionHasExtraWhitespaceAroundFunctionName() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func    doSomething()
             }
@@ -1692,7 +1688,7 @@ extension ProtocolWitnessingTests {
     func testMacro_expandsType_whenContainingFunction_andFunctionHasExtraNewlinesAndWhitespaceEverywhere() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 func    doSomething      (      )
                 
@@ -1739,11 +1735,11 @@ extension ProtocolWitnessingTests {
 
 // MARK: Simple
 
-extension ProtocolWitnessingTests {
+extension ProtocolWitnessableTests {
     func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetOnlyProperty() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 var someLetProperty: Int { get }
             }
@@ -1782,7 +1778,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsVariable_butWithoutWrapper_whenGetSetProperty() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 var someLetProperty: Int { get set }
             }
@@ -1817,7 +1813,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsVariableWithDefaultLazyClosure_whenGetOnlyProperty_andStatic() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 static var someLetProperty: Int { get }
             }
@@ -1848,7 +1844,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsVariableWithDefaultLazyClosure_whenGetAndSetProperty_andStatic() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 static var someLetProperty: Int { get set }
             }
@@ -1879,7 +1875,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetOnlyProperty_andIsClosureType() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 var someLetProperty: () -> Void { get }
             }
@@ -1918,7 +1914,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsVariable_whenGetSetProperty_andIsClosureType() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 var someLetProperty: () -> Void { get set }
             }
@@ -1953,7 +1949,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetOnlyProperty_andIsClosureType_andHasParameters() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 var someLetProperty: (Int) -> Void { get }
             }
@@ -1992,7 +1988,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsVariable_whenGetSetProperty_andIsClosureType_andHasParameters() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 var someLetProperty: (Int) -> Void { get set }
             }
@@ -2027,11 +2023,11 @@ extension ProtocolWitnessingTests {
 
 // MARK: Async
 
-extension ProtocolWitnessingTests {
+extension ProtocolWitnessableTests {
     func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetOnlyProperty_andAsync() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 var someLetProperty: Int { get async }
             }
@@ -2072,7 +2068,7 @@ extension ProtocolWitnessingTests {
     func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetOnlyProperty_andAsync_andIsClosure() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 var someLetProperty: (Int) -> Void { get async }
             }
@@ -2113,11 +2109,11 @@ extension ProtocolWitnessingTests {
 
 // MARK: Throws
 
-extension ProtocolWitnessingTests {
+extension ProtocolWitnessableTests {
     func testMacro_createsUnderscoredVariable_andWrapsItWithGetOnlyVar_whenGetOnlyProperty_andThrows() throws {
         assertMacro {
             """
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 var someLetProperty: Int { get throws }
             }
@@ -2160,12 +2156,12 @@ extension ProtocolWitnessingTests {
 
 // MARK: - Macros
 
-extension ProtocolWitnessingTests {
+extension ProtocolWitnessableTests {
     func testMacro_addsAttribute_whenExtraAttributesAreAttached() throws {
         assertMacro {
             """
             @SomeAttribute
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
             }
             """
@@ -2192,7 +2188,7 @@ extension ProtocolWitnessingTests {
         assertMacro {
             """
             @MainActor
-            @ProtocolWitnessing
+            @ProtocolWitnessable
             protocol MyClient {
                 var someProperty: Int { get }
             
@@ -2245,7 +2241,7 @@ extension ProtocolWitnessingTests {
     }
 }
 #else
-final class ProtocolWitnessingTests: XCTestCase {
+final class ProtocolWitnessableTests: XCTestCase {
     func testMacro() throws {
         throw XCTSkip("macros are only supported when running tests for the host platform")
     }

@@ -6,21 +6,21 @@ import SwiftDiagnostics
 
 
 @main
-struct ProtocolWitnessingPlugin: CompilerPlugin {
+struct ProtocolWitnessablePlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
-        WitnessingMacro.self,
+        ProtocolWitnessableMacro.self,
     ]
 }
 
 
-public struct WitnessingMacro: PeerMacro {
+public struct ProtocolWitnessableMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
         providingPeersOf declaration: some DeclSyntaxProtocol,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         guard let protocolDecl = declaration.as(ProtocolDeclSyntax.self) else {
-            throw ProtocolWitnessingError.notAProtocol
+            throw ProtocolWitnessableError.notAProtocol
         }
         
         let protocolTypeName = protocolDecl.name.trimmedDescription
@@ -745,10 +745,10 @@ private struct CapturedFunction {
     }
 }
 
-private enum ProtocolWitnessingError: Error, CustomStringConvertible {
+private enum ProtocolWitnessableError: Error, CustomStringConvertible {
     case notAProtocol
     
     var description: String {
-        "@ProtocolWitnessing can only be attached to protocols"
+        "@ProtocolWitnessable can only be attached to protocols"
     }
 }

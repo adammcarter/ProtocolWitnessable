@@ -1,10 +1,12 @@
-import ProtocolWitnessing
+import ProtocolWitnessable
 
 
 
 
-
-
+@ProtocolWitnessable
+protocol Thing {
+    var int: Int { get }
+}
 
 
 
@@ -18,7 +20,7 @@ import ProtocolWitnessing
 //
 //
 ///*
-// Rules for @ProtocolWitnessing:
+// Rules for @ProtocolWitnessable:
 // - Must be attached to a protocol - can this be validated? Maybe some if on the passed in type?
 //    - let p = MyClient.Protocol.self    <-- only protocols have this .Protocol so we can use that to check?
 //    - Alt can the argument's type be a protocol so swift compiler enforces only protocols are passed in
@@ -26,7 +28,7 @@ import ProtocolWitnessing
 // */
 //
 //
-////@ProtocolWitnessing
+////@ProtocolWitnessable
 //internal protocol MyClient {
 //    var name: String { get }
 //    var height: Double { get set }

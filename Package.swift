@@ -4,16 +4,16 @@ import PackageDescription
 import CompilerPluginSupport
 
 let package = Package(
-    name: "ProtocolWitnessing",
+    name: "ProtocolWitnessable",
     platforms: [.macOS(.v12), .iOS(.v13), .tvOS(.v13), .watchOS(.v6), .macCatalyst(.v13)],
     products: [
         .library(
-            name: "ProtocolWitnessing",
-            targets: ["ProtocolWitnessing"]
+            name: "ProtocolWitnessable",
+            targets: ["ProtocolWitnessable"]
         ),
         .executable(
-            name: "ProtocolWitnessingClient",
-            targets: ["ProtocolWitnessingClient"]
+            name: "ProtocolWitnessableClient",
+            targets: ["ProtocolWitnessableClient"]
         ),
     ],
     dependencies: [
@@ -22,18 +22,18 @@ let package = Package(
     ],
     targets: [
         .macro(
-            name: "ProtocolWitnessingMacros",
+            name: "ProtocolWitnessableMacros",
             dependencies: [
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
             ]
         ),
-        .target(name: "ProtocolWitnessing", dependencies: ["ProtocolWitnessingMacros"]),
-        .executableTarget(name: "ProtocolWitnessingClient", dependencies: ["ProtocolWitnessing"]),
+        .target(name: "ProtocolWitnessable", dependencies: ["ProtocolWitnessableMacros"]),
+        .executableTarget(name: "ProtocolWitnessableClient", dependencies: ["ProtocolWitnessable"]),
         .testTarget(
-            name: "ProtocolWitnessingTests",
+            name: "ProtocolWitnessableTests",
             dependencies: [
-                "ProtocolWitnessingMacros",
+                "ProtocolWitnessableMacros",
                 .product(name: "MacroTesting", package: "swift-macro-testing"),
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ]
