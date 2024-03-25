@@ -26,7 +26,9 @@ final class ProtocolWitnessableTests: XCTestCase {
         typealias ProtocolWitness = MyClientProtocolWitness
      }
  - Do we need to add any specific stuff in the witness when the protocol is marked as MainActor?
- - Update the documentation for the macro
+ - Use nicer syntax for creating/manipulating types like here:
+    https://forums.swift.org/t/workaround-for-macros-not-allowed-to-add-extensions/67916/2
+ - Rename makeErasedProtocolWitness() -> makingErased()
  
  - Add support for attaching to actors and classes?
  - Use SwiftSyntaxMacros builders?
