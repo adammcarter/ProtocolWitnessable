@@ -29,6 +29,9 @@ final class ProtocolWitnessableTests: XCTestCase {
  - Use nicer syntax for creating/manipulating types like here:
     https://forums.swift.org/t/workaround-for-macros-not-allowed-to-add-extensions/67916/2
  - Rename makeErasedProtocolWitness() -> makingErased()
+ - make statis preview() func with default args
+    - default args including closures with args inside them
+    - use autoclosure where possible?
  
  - Add support for attaching to actors and classes?
  - Use SwiftSyntaxMacros builders?
@@ -959,6 +962,136 @@ extension ProtocolWitnessableTests {
                 func makingProtocolWitness() -> MyClientProtocolWitness {
                     MyClientProtocolWitness(
                         _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: Attributes
+
+extension ProtocolWitnessableTests {
+    func testMacro_whenFunctionHasNoAttributes() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable
+            protocol MyClient {
+                func doSomething() -> Int
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                func doSomething() -> Int
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                func doSomething() -> Int {
+                    _doSomething()
+                }
+
+                var _doSomething: () -> Int
+
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () -> Int
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenFunctionHasOneAttribute() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable
+            protocol MyClient {
+                @discardableResult
+                func doSomething() -> Int
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                @discardableResult
+                func doSomething() -> Int
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                @discardableResult
+                func doSomething() -> Int {
+                    _doSomething()
+                }
+
+                var _doSomething: () -> Int
+
+                static func makeErasedProtocolWitness(
+                    doSomething: @escaping () -> Int
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomething: doSomething
+                    )
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_whenFunctionTwoAttributes() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable
+            protocol MyClient {
+                @available(iOS 16, *)
+                @discardableResult
+                func doSomethingForiOS16() -> Int
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                @available(iOS 16, *)
+                @discardableResult
+                func doSomethingForiOS16() -> Int
+            }
+
+            struct MyClientProtocolWitness: MyClient {
+                @available(iOS 16, *)
+                @discardableResult
+                func doSomethingForiOS16() -> Int {
+                    _doSomethingForiOS16()
+                }
+
+                var _doSomethingForiOS16: () -> Int
+
+                static func makeErasedProtocolWitness(
+                    doSomethingForiOS16: @escaping () -> Int
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _doSomethingForiOS16: doSomethingForiOS16
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _doSomethingForiOS16: doSomethingForiOS16
                     )
                 }
             }
@@ -2303,6 +2436,7 @@ extension ProtocolWitnessableTests {
 
                 var _someProperty: Int
 
+                @MainActor
                 func doSomething() {
                     _doSomething()
                 }

@@ -294,7 +294,8 @@ private func makeFunctionDecl(from blockListElement: MemberBlockItemListSyntax.E
 }
 
 private func makeCapturedFunction(from functionDecl: FunctionDeclSyntax) -> CapturedFunction {
-    let name = functionDecl.name.text
+    let attributes = functionDecl
+        .attributes.map { $0.trimmedDescription }
     
     let modifier = functionDecl
         .modifiers
@@ -305,6 +306,8 @@ private func makeCapturedFunction(from functionDecl: FunctionDeclSyntax) -> Capt
         }?
         .name
         .trimmedDescription
+    
+    let name = functionDecl.name.text
     
     let signature = functionDecl.signature
     
@@ -327,6 +330,7 @@ private func makeCapturedFunction(from functionDecl: FunctionDeclSyntax) -> Capt
 
     
     return CapturedFunction(
+        attributes: attributes,
         modifier: modifier,
         name: name,
         returnValue: returnValue,
@@ -435,32 +439,11 @@ private func makeProperty(for capturedProperty: CapturedProperty) -> String? {
     return "\(prefix)\(capturedProperty.name): \(type)"}
 
 private func makeFunctionsAsPropertiesAndWrappedFunctions(for capturedFunction: CapturedFunction) -> String {
-    let wrappedFunction = makeWrappedFunction(for: capturedFunction)
+    """
+    \(makeWrappedFunction(for: capturedFunction))
     
-    
-    
-    let underscoredClosureParameters = capturedFunction
-        .capturedClosureParameters
-        .map { _ in "_" }
-        .joined(separator: ", ")
-        .appending(capturedFunction.capturedClosureParameters.isEmpty ? "" : " in")
-    
-    
-    let defaultValueOrEmpty = capturedFunction.isStatic
-        ? " = { \(underscoredClosureParameters) }"
-        : ""
-    
-    
-    let functionAsProperty = "\(capturedFunction.prefix)var _\(capturedFunction.name): \(capturedFunction.type)\(defaultValueOrEmpty)"
-    
-    
-    
-    return """
-        \(wrappedFunction)
-        
-        \(functionAsProperty)
-        """
-    
+    \(makeFunctionAsProperty(for: capturedFunction))
+    """
 }
 
 private func makeWrappedFunction(for capturedFunction: CapturedFunction) -> String {
@@ -481,6 +464,7 @@ private func makeWrappedFunction(for capturedFunction: CapturedFunction) -> Stri
         .capturedClosureParameters
         .map { "\($0.secondName ?? $0.firstName)" }
         .joined(separator: ", ")
+    
     
     
     let signatureParameterNamesDecl = if capturedFunction.isAsync, capturedFunction.isThrows {
@@ -514,11 +498,26 @@ private func makeWrappedFunction(for capturedFunction: CapturedFunction) -> Stri
     
     
     return """
-        \(capturedFunction.prefix)func \(functionCallsite) {
+        \(capturedFunction.functionPrefix)func \(functionCallsite) {
         \(functionBody)
         }
         """
+}
 
+private func makeFunctionAsProperty(for capturedFunction: CapturedFunction) -> String {
+    let underscoredClosureParameters = capturedFunction
+        .capturedClosureParameters
+        .map { _ in "_" }
+        .joined(separator: ", ")
+        .appending(capturedFunction.capturedClosureParameters.isEmpty ? "" : " in")
+    
+    
+    let defaultValueOrEmpty = capturedFunction.isStatic
+    ? " = { \(underscoredClosureParameters) }"
+    : ""
+    
+    
+    return "\(capturedFunction.prefix)var _\(capturedFunction.name): \(capturedFunction.type)\(defaultValueOrEmpty)"
 }
 
 private func makeErasedProtocolWitnessFunctionParameters(
@@ -614,13 +613,13 @@ private struct CapturedProperty {
 }
 
 private struct CapturedFunction {
+    let attributes: [String]
     let modifier: String?
     let name: String
     let returnValue: String?
     let isAsync: Bool
     let isThrows: Bool
     let isStatic: Bool
-    let isLazy = false
     let capturedClosureParameters: [CapturedClosureParameter]
     
     struct CapturedClosureParameter {
@@ -629,12 +628,19 @@ private struct CapturedFunction {
         let type: String
     }
     
+    var functionPrefix: String {
+        let attributeOrEmpty = attributes.isEmpty
+            ? ""
+            : attributes.joined(separator: "\n") + "\n"
+        
+        return "\(attributeOrEmpty)\(prefix)"
+    }
+    
     var prefix: String {
-        let lazyOrEmpty = isLazy ? "lazy " : ""
         let modifierOrEmpty = modifier.flatMap { "\($0) " } ?? ""
         let staticOrEmpty = isStatic ? "static " : ""
         
-        return "\(lazyOrEmpty)\(modifierOrEmpty)\(staticOrEmpty)"
+        return "\(modifierOrEmpty)\(staticOrEmpty)"
     }
         
     var type: String {
