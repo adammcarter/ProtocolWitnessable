@@ -37,6 +37,12 @@ final class ProtocolWitnessableTests: XCTestCase {
  - Enable concurrency checking to "complete" mode - https://forums.swift.org/t/concurrency-checking-in-swift-packages-unsafeflags/61135
  - Use Swift Testing instead of XCTest
  - Refactor all the stuff
+ 
+ 
+ TODO: When done
+ - Write documentation in code/docc and GitHub readme
+ - Post about it in https://forums.swift.org/c/community-showcase/66
+ - Add to the SPM index
 
  */
 
