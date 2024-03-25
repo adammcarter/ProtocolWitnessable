@@ -346,67 +346,6 @@ private func makeCapturedClosureParameters(for parameter: FunctionParameterSynta
 }
 
 
-// MARK: - Make properties
-
-private func makeProtocolWitnessProperties(from capturedProperty: CapturedProperty) -> String? {
-    let type = capturedProperty.type.flatMap({ ": \($0)" })
-    let name = capturedProperty.name
-    
-    
-    let asyncThrows = if capturedProperty.isAsync, capturedProperty.isThrowing {
-        " async throws"
-    } else if capturedProperty.isAsync {
-        " async"
-    } else if capturedProperty.isThrowing {
-        " throws"
-    } else {
-        ""
-    }
-    
-    let getExpression = if capturedProperty.isAsync, capturedProperty.isThrowing {
-        "try await _\(capturedProperty.name)()"
-    } else if capturedProperty.isThrowing {
-        "try _\(capturedProperty.name)()"
-    } else {
-        "_\(capturedProperty.name)"
-    }
-    
-    let getName = "get\(asyncThrows)"
-    let getter = "\(getName) { \(getExpression) }"
-    
-    
-    
-    let rhs = if capturedProperty.isThrowing {
-        ": () throws -> \(capturedProperty.type)"
-    } else {
-        ": \(capturedProperty.type)"
-    }
-    
-    
-    
-    let underscoredProperty = "\(capturedProperty.prefix)var _\(name)\(rhs)"
-    
-    let wrappedProperty = """
-                \(capturedProperty.prefix)var \(name)\(type) {
-                \(getter)
-                }
-                """
-    
-    
-    
-    
-    return """
-                \(wrappedProperty)
-                
-                \(underscoredProperty)
-                """
-}
-
-private func makeProtocolWitnessProperties(from capturedFunction: CapturedFunction) -> String {
-    "\(capturedFunction.prefix)var _\(capturedFunction.name): \(capturedFunction.type)"
-}
-
-
 // MARK: - Metadata
 
 private func declGroupIsMainActor(_ decl: some DeclGroupSyntax) -> Bool {
