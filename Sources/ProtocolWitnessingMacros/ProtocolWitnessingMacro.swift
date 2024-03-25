@@ -13,7 +13,7 @@ struct ProtocolWitnessingPlugin: CompilerPlugin {
 }
 
 
-public struct WitnessingMacro: PeerMacro, ExtensionMacro {
+public struct WitnessingMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
         providingPeersOf declaration: some DeclSyntaxProtocol,
@@ -28,11 +28,99 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
         
         let modifierOrEmpty = modifierOrEmpty(for: protocolDecl)
         
-        
-        
         let capturedProperties = makeCapturedProperties(from: protocolDecl)
-        
         let capturedFunctions = makeCapturedFunctions(from: protocolDecl)
+        
+        let nonStaticCapturedProperties = capturedProperties.filter { $0.isStatic == false }
+        let nonStaticCapturedFunctions = capturedFunctions.filter { $0.isStatic == false }
+        
+
+        
+        
+        
+        
+        
+        let makeErasedProtocolWitnessFunction: String
+        let makingProtocolWitness: String
+        
+        if nonStaticCapturedProperties.isEmpty && nonStaticCapturedFunctions.isEmpty {
+            makeErasedProtocolWitnessFunction = """
+                static func makeErasedProtocolWitness() -> \(protocolTypeName) {
+                \(protocolWitnessStructTypeName)()
+                }
+                """
+            
+            makingProtocolWitness = """
+                func makingProtocolWitness() -> \(protocolWitnessStructTypeName) {
+                \(protocolWitnessStructTypeName)()
+                }
+                """
+        } else {
+            let erasedProtocolWitnessFunctionParameters = makeErasedProtocolWitnessFunctionParameters(
+                capturedProperties: nonStaticCapturedProperties,
+                capturedFunctions: nonStaticCapturedFunctions
+            )
+            
+            
+            
+            
+            let needsAsyncAwait = nonStaticCapturedProperties.contains(where: \.isAsync)
+            let needsTryThrows = nonStaticCapturedProperties.contains(where: \.isThrowing)
+            
+            let asyncThrowsOrEmpty = if needsAsyncAwait {
+                "async "
+            } else if needsTryThrows {
+                "throws "
+            } else {
+                ""
+            }
+            
+            let awaitOrEmpty = needsAsyncAwait ? "await " : ""
+            
+            
+            let erasedProtocolWitnessInitializerParameters = makeProtocolWitnessInitializerParameters(
+                capturedProperties: nonStaticCapturedProperties,
+                capturedFunctions: nonStaticCapturedFunctions,
+                supportsAsyncThrows: false
+            )
+            
+            
+            makeErasedProtocolWitnessFunction = """
+                static func makeErasedProtocolWitness(
+                \(erasedProtocolWitnessFunctionParameters)
+                ) -> \(protocolTypeName) {
+                \(protocolWitnessStructTypeName)(
+                \(erasedProtocolWitnessInitializerParameters)
+                )
+                }
+                """
+            
+            
+            let protocolWitnessInitializerParameters = makeProtocolWitnessInitializerParameters(
+                capturedProperties: nonStaticCapturedProperties,
+                capturedFunctions: nonStaticCapturedFunctions,
+                supportsAsyncThrows: true
+            )
+            
+            
+            makingProtocolWitness = """
+                func makingProtocolWitness() \(asyncThrowsOrEmpty)-> \(protocolWitnessStructTypeName) {
+                \(awaitOrEmpty)\(protocolWitnessStructTypeName)(
+                \(protocolWitnessInitializerParameters)
+                )
+                }
+                """
+        }
+        
+        let factoryFunctions = """
+            \(makeErasedProtocolWitnessFunction)
+            
+            \(makingProtocolWitness)
+            """
+
+        
+        
+        
         
         
         
@@ -43,6 +131,7 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
         if capturedProperties.isEmpty && capturedFunctions.isEmpty {
             protocolWitnessStruct = """
                 \(modifierOrEmpty)struct \(protocolWitnessStructTypeName): \(protocolTypeName) {
+                \(factoryFunctions)
                 }
                 """
         } else {
@@ -71,6 +160,8 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
             protocolWitnessStruct = """
                 \(modifierOrEmpty)struct \(protocolWitnessStructTypeName): \(protocolTypeName) {
                 \(protocolWitnessStructBody)
+                
+                \(factoryFunctions)
                 }
                 """
         }
@@ -78,125 +169,6 @@ public struct WitnessingMacro: PeerMacro, ExtensionMacro {
         
         return [
             DeclSyntax(stringLiteral: protocolWitnessStruct)
-        ]
-    }
-    
-    
-    public static func expansion(
-        of node: AttributeSyntax,
-        attachedTo declaration: some DeclGroupSyntax,
-        providingExtensionsOf type: some TypeSyntaxProtocol,
-        conformingTo protocols: [TypeSyntax],
-        in context: some MacroExpansionContext
-    ) throws -> [ExtensionDeclSyntax] {
-        guard let protocolDecl = declaration.as(ProtocolDeclSyntax.self) else {
-            // This is handled by the peer macro so no need to throw here to avoid duplicate Xcode errors
-            return []
-        }
-        
-        
-        let protocolTypeName = protocolDecl.name.trimmedDescription
-        let protocolWitnessStructTypeName = makeProtocolWitnessStructTypeName(for: protocolTypeName)
-        
-        let modifierOrEmpty = modifierOrEmpty(for: protocolDecl)
-        
-        
-        
-        let capturedProperties = makeCapturedProperties(from: protocolDecl)
-            .filter { $0.isStatic == false }
-        
-        let capturedFunctions = makeCapturedFunctions(from: protocolDecl)
-            .filter { $0.isStatic == false }
-        
-        
-
-        
-        let makeErasedProtocolWitnessFunction: String
-        let makingProtocolWitness: String
-        
-        if capturedProperties.isEmpty && capturedFunctions.isEmpty {
-            makeErasedProtocolWitnessFunction = """
-                static func makeErasedProtocolWitness() -> \(protocolTypeName) {
-                \(protocolWitnessStructTypeName)()
-                }
-                """
-            
-            makingProtocolWitness = """
-                func makingProtocolWitness() -> \(protocolWitnessStructTypeName) {
-                \(protocolWitnessStructTypeName)()
-                }
-                """
-        } else {
-            let erasedProtocolWitnessFunctionParameters = makeErasedProtocolWitnessFunctionParameters(
-                capturedProperties: capturedProperties,
-                capturedFunctions: capturedFunctions
-            )
-            
-            
-            
-            
-            let needsAsyncAwait = capturedProperties.contains(where: \.isAsync)
-            let needsTryThrows = capturedProperties.contains(where: \.isThrowing)
-            
-            let asyncThrowsOrEmpty = if needsAsyncAwait {
-                "async "
-            } else if needsTryThrows {
-                "throws "
-            } else {
-                ""
-            }
-            
-            let awaitOrEmpty = needsAsyncAwait ? "await " : ""
-            
-
-            let erasedProtocolWitnessInitializerParameters = makeProtocolWitnessInitializerParameters(
-                capturedProperties: capturedProperties,
-                capturedFunctions: capturedFunctions,
-                supportsAsyncThrows: false
-            )
-            
-            
-            makeErasedProtocolWitnessFunction = """
-                static func makeErasedProtocolWitness(
-                \(erasedProtocolWitnessFunctionParameters)
-                ) -> \(protocolTypeName) {
-                \(protocolWitnessStructTypeName)(
-                \(erasedProtocolWitnessInitializerParameters)
-                )
-                }
-                """
-            
-            
-            let protocolWitnessInitializerParameters = makeProtocolWitnessInitializerParameters(
-                capturedProperties: capturedProperties,
-                capturedFunctions: capturedFunctions,
-                supportsAsyncThrows: true
-            )
-            
-            
-            makingProtocolWitness = """
-                func makingProtocolWitness() \(asyncThrowsOrEmpty)-> \(protocolWitnessStructTypeName) {
-                \(awaitOrEmpty)\(protocolWitnessStructTypeName)(
-                \(protocolWitnessInitializerParameters)
-                )
-                }
-                """
-        }
-        
-        let extensionBody = """
-            \(modifierOrEmpty)extension \(protocolTypeName) {
-            \(makeErasedProtocolWitnessFunction)
-            
-            \(makingProtocolWitness)
-            }
-            """
-        
-
-        
-        
-        
-        return [
-            try ExtensionDeclSyntax("\(raw: extensionBody)")
         ]
     }
 }
