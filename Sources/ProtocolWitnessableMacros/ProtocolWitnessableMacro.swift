@@ -24,7 +24,7 @@ public struct ProtocolWitnessableMacro: PeerMacro {
                 
         let protocolTypeName = protocolDecl.name.trimmedDescription
         let targetType = makeProtocolWitnessTargetType(for: node)
-        let targetTypeNeedsInitializer = targetType == "class"
+        let targetTypeIsClass = targetType == "class"
         let needsObservableOnTargetType = needsObservableOnTargetType(for: node)
         let protocolWitnessTargetTypeName = makeProtocolWitnessTargetTypeName(for: protocolTypeName)
         
@@ -59,7 +59,7 @@ public struct ProtocolWitnessableMacro: PeerMacro {
                 }
                 """
             
-            initOrEmpty = targetTypeNeedsInitializer ? """
+            initOrEmpty = targetTypeIsClass ? """
                 
                 
                 init() {
@@ -137,7 +137,7 @@ public struct ProtocolWitnessableMacro: PeerMacro {
             )
             
             
-            initOrEmpty = targetTypeNeedsInitializer ? """
+            initOrEmpty = targetTypeIsClass ? """
                 
                 
                 init(
@@ -598,10 +598,10 @@ private func makeErasedProtocolWitnessFunctionParameters(
     capturedFunctions: [CapturedFunction],
     needsUnderscorePrefix: Bool
 ) -> String {
-    let underscoreOrEmpty = needsUnderscorePrefix ? "_" : ""
-    
     let propertyParameters = capturedProperties
         .map {
+            let underscoreOrEmpty = $0.isGetOnly && needsUnderscorePrefix ? "_" : ""
+            
             let rhs: String
             
             if $0.isThrowing {
@@ -619,7 +619,9 @@ private func makeErasedProtocolWitnessFunctionParameters(
     
     let functionParameters = capturedFunctions
         .map {
-            "\(underscoreOrEmpty)\($0.name): @escaping \($0.type)"
+            let underscoreOrEmpty = needsUnderscorePrefix ? "_" : ""
+            
+            return "\(underscoreOrEmpty)\($0.name): @escaping \($0.type)"
         }
     
     
@@ -675,7 +677,9 @@ private func makeProtocolWitnessClassInitializerValues(
 ) -> String {
     let propertyInitializerParameters = capturedProperties
         .map {
-            "self._\($0.name) = _\($0.name)"
+            let underscoreOrEmpty = $0.isGetOnly ? "_" : ""
+            
+            return "self.\(underscoreOrEmpty)\($0.name) = \(underscoreOrEmpty)\($0.name)"
         }
     
     

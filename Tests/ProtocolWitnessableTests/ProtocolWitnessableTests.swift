@@ -246,7 +246,7 @@ extension ProtocolWitnessableTests {
         }
     }
     
-    func testMacro_usesClassType_andCreatesInitWithParameters_whenTargetTypeIsClass_andMultipleProperties() throws {
+    func testMacro_usesClassType_andCreatesInitWithParameters_whenTargetTypeIsClass_andMultipleProperties_andGetOnly() throws {
         assertMacro {
             """
             @ProtocolWitnessable(targetType: .class)
@@ -298,6 +298,56 @@ extension ProtocolWitnessableTests {
                 ) {
                     self._someString = _someString
                     self._anotherString = _anotherString
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_usesClassType_andCreatesInitWithParameters_whenTargetTypeIsClass_andMultipleProperties_andGetSet() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable(targetType: .class)
+            protocol MyClient {
+                var someString: String { get set }
+                var anotherString: String { get set }
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                var someString: String { get set }
+                var anotherString: String { get set }
+            }
+
+            class MyClientProtocolWitness: MyClient {
+                var someString: String
+
+                var anotherString: String
+
+                static func makeErasedProtocolWitness(
+                    someString: String,
+                    anotherString: String
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        someString: someString,
+                        anotherString: anotherString
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        someString: someString,
+                        anotherString: anotherString
+                    )
+                }
+
+                init(
+                    someString: String,
+                    anotherString: String
+                ) {
+                    self.someString = someString
+                    self.anotherString = anotherString
                 }
             }
             """
