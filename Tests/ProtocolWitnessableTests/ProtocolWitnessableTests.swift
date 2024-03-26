@@ -33,7 +33,6 @@ final class ProtocolWitnessableTests: XCTestCase {
     - default values are not always possible? Maybe in the cases of non standard lib we don't set a default value?
  - make static test() like above
  - update static funcs to use _ prefix only for properties we generate to distinguish which properties are being overridden vs the ones that are being set at the callsite
- - ProtocolWitnessTargetType -> TargetType
  
  - Add support for attaching to actors?
  - Use SwiftSyntaxMacros builders?
