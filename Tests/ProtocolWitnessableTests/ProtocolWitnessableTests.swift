@@ -25,6 +25,8 @@ final class ProtocolWitnessableTests: XCTestCase {
      extension MyClient {
         typealias ProtocolWitness = MyClientProtocolWitness
      }
+ - Make class a final class in implementation
+    - Feels like we never want the classes to be subclasses but do final classes still allow extensions? Double check.
  - Do we need to add any specific stuff in the witness when the protocol is marked as MainActor?
  - Use nicer syntax for creating/manipulating types like here:
     https://forums.swift.org/t/workaround-for-macros-not-allowed-to-add-extensions/67916/2
@@ -32,11 +34,17 @@ final class ProtocolWitnessableTests: XCTestCase {
  - make statis preview() func with default args
     - default args including closures with args inside them
     - use autoclosure where possible?
+ - make static test() like above
  - update isObservable to extendable array of extra attributes
  
- - Add support for attaching to actors and classes?
+ - Add support for attaching to actors?
  - Use SwiftSyntaxMacros builders?
 
+ - Create an inversed version of this
+ - @InversedProtocolWitness
+ - Turns a concrete type in to a protocol witness protocol then expands that in to a protocol witness, adopting the target to the protocol too
+ For example. Apple's UserDefaults is already implemented so it would be good to avoid the overweight task of turning that in to a protocol then re-implementing it in to structs.
+ 
  
  - Enable concurrency checking to "complete" mode - https://forums.swift.org/t/concurrency-checking-in-swift-packages-unsafeflags/61135
  - Use Swift Testing instead of XCTest
