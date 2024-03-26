@@ -12,7 +12,6 @@ struct ProtocolWitnessablePlugin: CompilerPlugin {
     ]
 }
 
-
 public struct ProtocolWitnessableMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -22,9 +21,10 @@ public struct ProtocolWitnessableMacro: PeerMacro {
         guard let protocolDecl = declaration.as(ProtocolDeclSyntax.self) else {
             throw ProtocolWitnessableError.notAProtocol
         }
-        
+                
         let protocolTypeName = protocolDecl.name.trimmedDescription
-        let protocolWitnessStructTypeName = makeProtocolWitnessStructTypeName(for: protocolTypeName)
+        let targetType = makeProtocolWitnessTargetType(for: node)
+        let protocolWitnessStructTypeName = makeProtocolWitnessTargetTypeName(for: protocolTypeName)
         
         let modifierOrEmpty = modifierOrEmpty(for: protocolDecl)
         
@@ -130,7 +130,7 @@ public struct ProtocolWitnessableMacro: PeerMacro {
         
         if capturedProperties.isEmpty && capturedFunctions.isEmpty {
             protocolWitnessStruct = """
-                \(modifierOrEmpty)struct \(protocolWitnessStructTypeName): \(protocolTypeName) {
+                \(modifierOrEmpty)\(targetType) \(protocolWitnessStructTypeName): \(protocolTypeName) {
                 \(factoryFunctions)
                 }
                 """
@@ -158,7 +158,7 @@ public struct ProtocolWitnessableMacro: PeerMacro {
 
             
             protocolWitnessStruct = """
-                \(modifierOrEmpty)struct \(protocolWitnessStructTypeName): \(protocolTypeName) {
+                \(modifierOrEmpty)\(targetType) \(protocolWitnessStructTypeName): \(protocolTypeName) {
                 \(protocolWitnessStructBody)
                 
                 \(factoryFunctions)
@@ -381,9 +381,26 @@ private func modifierOrEmpty(for protocolDecl: ProtocolDeclSyntax) -> String {
     return modifierOrNil.flatMap { "\($0) " } ?? ""
 }
 
-private func makeProtocolWitnessStructTypeName(for protocolTypeName: String) -> String {
+
+private func makeProtocolWitnessTargetType(for node: AttributeSyntax) -> String {
+    node
+        .arguments?
+        .as(LabeledExprListSyntax.self)?
+        .first(where: {
+            $0.label?.tokenKind == .identifier("targetType")
+        })?
+        .expression
+        .as(MemberAccessExprSyntax.self)?
+        .declName
+        .trimmedDescription
+    ?? "struct"
+}
+
+
+private func makeProtocolWitnessTargetTypeName(for protocolTypeName: String) -> String {
     "\(protocolTypeName)ProtocolWitness"
 }
+
 
 private func makePropertiesAsPropertiesAndWrappedProperties(for capturedProperty: CapturedProperty) -> String {
      [
@@ -437,6 +454,7 @@ private func makeProperty(for capturedProperty: CapturedProperty) -> String? {
     }
     
     return "\(prefix)\(capturedProperty.name): \(type)"}
+
 
 private func makeFunctionsAsPropertiesAndWrappedFunctions(for capturedFunction: CapturedFunction) -> String {
     """
@@ -520,6 +538,7 @@ private func makeFunctionAsProperty(for capturedFunction: CapturedFunction) -> S
     return "\(capturedFunction.prefix)var _\(capturedFunction.name): \(capturedFunction.type)\(defaultValueOrEmpty)"
 }
 
+
 private func makeErasedProtocolWitnessFunctionParameters(
     capturedProperties: [CapturedProperty],
     capturedFunctions: [CapturedFunction]
@@ -555,6 +574,7 @@ private func makeErasedProtocolWitnessFunctionParameters(
         .flatMap { $0 }
         .joined(separator: ",\n")
 }
+
 
 private func makeProtocolWitnessInitializerParameters(
     capturedProperties: [CapturedProperty],

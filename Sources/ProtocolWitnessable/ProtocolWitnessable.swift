@@ -9,4 +9,9 @@
  It's common to make multiple types for: production, SwiftUI previews, unit tests.
  */
 @attached(peer, names: suffixed(ProtocolWitness))
-public macro ProtocolWitnessable() = #externalMacro(module: "ProtocolWitnessableMacros", type: "ProtocolWitnessableMacro")
+public macro ProtocolWitnessable(targetType: ProtocolWitnessTargetType = .struct) = #externalMacro(module: "ProtocolWitnessableMacros", type: "ProtocolWitnessableMacro")
+
+public enum ProtocolWitnessTargetType {
+    case `struct`
+    case `class`
+}

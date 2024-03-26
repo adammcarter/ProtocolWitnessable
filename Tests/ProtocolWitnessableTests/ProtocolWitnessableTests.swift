@@ -120,6 +120,93 @@ extension ProtocolWitnessableTests {
 // MARK: - Empty structure
 
 extension ProtocolWitnessableTests {
+    func testMacro_usesStructTypeByDefault() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable()
+            protocol MyClient { }
+            """
+        } expansion: {
+            """
+            protocol MyClient { }
+
+            struct MyClientProtocolWitness: MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_usesStructType_whenTargetTypeIsStruct() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable(targetType: .struct)
+            protocol MyClient { }
+            """
+        } expansion: {
+            """
+            protocol MyClient { }
+
+            struct MyClientProtocolWitness: MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_usesClassType_andCreatesInit_whenTargetTypeIsClass() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable(targetType: .class)
+            protocol MyClient { }
+            """
+        } expansion: {
+            """
+            protocol MyClient { }
+
+            class MyClientProtocolWitness: MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            
+                init() {
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_usesClassType_andCreatesInitWithParameters_whenTargetTypeIsClass() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable(targetType: .class)
+            protocol MyClient {
+                var someString: String { get }
+            }
+            """
+        }
+    }
+}
+
+// MARK: - Empty structure
+
+extension ProtocolWitnessableTests {
     func testMacro_createsEmptyStruct_andEmptyExtensionOnProtocol_whenProtocolIsEmpty_andProtocolIsImplicitlyInternal() throws {
         assertMacro {
             """
