@@ -34,9 +34,10 @@ final class ProtocolWitnessableTests: XCTestCase {
  - make statis preview() func with default args
     - default args including closures with args inside them
     - use autoclosure where possible?
+    - default values are not always possible? Maybe in the cases of non standard lib we don't set a default value?
  - make static test() like above
- - update isObservable to extendable array of extra attributes
  - update static funcs to use _ prefix only for properties we generate to distinguish which properties are being overridden vs the ones that are being set at the callsite
+ - ProtocolWitnessTargetType -> TargetType
  
  - Add support for attaching to actors?
  - Use SwiftSyntaxMacros builders?
@@ -358,10 +359,10 @@ extension ProtocolWitnessableTests {
     // TODO: Class tests for other things like throws/async etc.
 }
 
-// MARK: - isObservable argument
+// MARK: - attributes argument
 
 extension ProtocolWitnessableTests {
-    func testMacro_doesNotAddObservableByDefault() throws {
+    func testMacro_doesNotAddAttributesByDefault() throws {
         assertMacro {
             """
             @ProtocolWitnessable()
@@ -384,10 +385,10 @@ extension ProtocolWitnessableTests {
         }
     }
     
-    func testMacro_usesMainActor_whenIsObservableIsFalse() throws {
+    func testMacro_doesNotAddAttribute_whenAttributesIsEmptyArray() throws {
         assertMacro {
             """
-            @ProtocolWitnessable(isObservable: false)
+            @ProtocolWitnessable(attributeNames: [])
             protocol MyClient { }
             """
         } expansion: {
@@ -407,10 +408,81 @@ extension ProtocolWitnessableTests {
         }
     }
     
-    func testMacro_usesMainActor_whenIsObservableIsTrue() throws {
+    func testMacro_doesNotAddAttribute_whenAttributesHasEmptyString() throws {
         assertMacro {
             """
-            @ProtocolWitnessable(isObservable: true)
+            @ProtocolWitnessable(attributeNames: [""])
+            protocol MyClient { }
+            """
+        } expansion: {
+            """
+            protocol MyClient { }
+            
+            struct MyClientProtocolWitness: MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+            
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsAttribute_whenAttributesHasOneValue() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable(attributeNames: ["Observable"])
+            protocol MyClient { }
+            """
+        } expansion: {
+            """
+            protocol MyClient { }
+            
+            @Observable
+            struct MyClientProtocolWitness: MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+            
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsAttribute_whenAttributesHasOneValue_andValueIsComplexAttribute() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable(attributeNames: ["ComplexAttribute(withParameter: true)"])
+            protocol MyClient { }
+            """
+        } expansion: {
+            """
+            protocol MyClient { }
+            
+            @ComplexAttribute(withParameter: true)
+            struct MyClientProtocolWitness: MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+            
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsAttribute_whenAttributesHasTwoValues() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable(attributeNames: ["Observable", "MainActor"])
             protocol MyClient { }
             """
         } expansion: {
@@ -418,6 +490,32 @@ extension ProtocolWitnessableTests {
             protocol MyClient { }
 
             @Observable
+            @MainActor
+            struct MyClientProtocolWitness: MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_addsAttribute_whenAttributesHasTwoValues_andValuesAreComplexAttribute() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable(attributeNames: ["ComplexAttribute(withParameter: true)", "SomeOtherComplexThing(someValues: 1, other: false)"])
+            protocol MyClient { }
+            """
+        } expansion: {
+            """
+            protocol MyClient { }
+
+            @ComplexAttribute(withParameter: true)
+            @SomeOtherComplexThing(someValues: 1, other: false)
             struct MyClientProtocolWitness: MyClient {
                 static func makeErasedProtocolWitness() -> MyClient {
                     MyClientProtocolWitness()
@@ -435,10 +533,10 @@ extension ProtocolWitnessableTests {
 // MARK: - Multiple arguments
 
 extension ProtocolWitnessableTests {
-    func testMacro_usesClassAndObservable_whenArguments() throws {
+    func testMacro_usesClassAndAttributes_whenArguments() throws {
         assertMacro {
             """
-            @ProtocolWitnessable(targetType: .class, isObservable: true)
+            @ProtocolWitnessable(targetType: .class, attributeNames: ["Observable", "MainActor"])
             protocol MyClient { }
             """
         } expansion: {
@@ -446,6 +544,7 @@ extension ProtocolWitnessableTests {
             protocol MyClient { }
             
             @Observable
+            @MainActor
             class MyClientProtocolWitness: MyClient {
                 static func makeErasedProtocolWitness() -> MyClient {
                     MyClientProtocolWitness()
@@ -462,10 +561,10 @@ extension ProtocolWitnessableTests {
         }
     }
     
-    func testMacro_usesClass_butNotObservable_whenArguments() throws {
+    func testMacro_usesClass_butNotAttributes_whenArguments() throws {
         assertMacro {
             """
-            @ProtocolWitnessable(targetType: .class, isObservable: false)
+            @ProtocolWitnessable(targetType: .class, attributeNames: [])
             protocol MyClient { }
             """
         } expansion: {

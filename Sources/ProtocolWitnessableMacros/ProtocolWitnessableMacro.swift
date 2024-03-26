@@ -23,9 +23,12 @@ public struct ProtocolWitnessableMacro: PeerMacro {
         }
                 
         let protocolTypeName = protocolDecl.name.trimmedDescription
+        
         let targetType = makeProtocolWitnessTargetType(for: node)
         let targetTypeIsClass = targetType == "class"
-        let needsObservableOnTargetType = needsObservableOnTargetType(for: node)
+        
+        let formattedAttributeNames = makeFormattedAttributeNames(for: node)
+        
         let protocolWitnessTargetTypeName = makeProtocolWitnessTargetTypeName(for: protocolTypeName)
         
         let modifierOrEmpty = modifierOrEmpty(for: protocolDecl)
@@ -165,9 +168,9 @@ public struct ProtocolWitnessableMacro: PeerMacro {
         let protocolWitnessStruct: String
         
         
-        let observableOrEmpty = needsObservableOnTargetType ? "@Observable\n" : ""
+        let formattedAttributeNamesOrEmpty = formattedAttributeNames ?? ""
         
-        let targetTypeLhs = "\(observableOrEmpty)\(modifierOrEmpty)\(targetType) \(protocolWitnessTargetTypeName)"
+        let targetTypeLhs = "\(formattedAttributeNamesOrEmpty)\(modifierOrEmpty)\(targetType) \(protocolWitnessTargetTypeName)"
         let targetTypeDecl = "\(targetTypeLhs): \(protocolTypeName) {"
         
         if capturedProperties.isEmpty && capturedFunctions.isEmpty {
@@ -428,9 +431,7 @@ private func makeProtocolWitnessTargetType(for node: AttributeSyntax) -> String 
     node
         .arguments?
         .as(LabeledExprListSyntax.self)?
-        .first(where: {
-            $0.label?.tokenKind == .identifier("targetType")
-        })?
+        .first { $0.label?.tokenKind == .identifier("targetType") }?
         .expression
         .as(MemberAccessExprSyntax.self)?
         .declName
@@ -438,16 +439,29 @@ private func makeProtocolWitnessTargetType(for node: AttributeSyntax) -> String 
     ?? "struct"
 }
 
-private func needsObservableOnTargetType(for node: AttributeSyntax) -> Bool {
+
+private func makeFormattedAttributeNames(for node: AttributeSyntax) -> String? {
     node
         .arguments?
         .as(LabeledExprListSyntax.self)?
         .first(where: {
-            $0.label?.tokenKind == .identifier("isObservable")
+            $0.label?.tokenKind == .identifier("attributeNames")
         })?
         .expression
-        .as(BooleanLiteralExprSyntax.self)?
-        .literal.tokenKind == .keyword(.true)
+        .as(ArrayExprSyntax.self)?
+        .elements
+        .compactMap(makeAttributes)
+        .filter { $0.isEmpty == false }
+        .map { "@\($0)\n" }
+        .joined()
+}
+
+private func makeAttributes(from array: ArrayElementSyntax) -> String? {
+    array
+        .expression
+        .as(StringLiteralExprSyntax.self)
+        .flatMap { $0.segments }?
+        .trimmedDescription
 }
 
 
