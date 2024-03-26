@@ -6,21 +6,6 @@ import ProtocolWitnessable
 
 
 
-protocol MyClient { }
-
-final class MyClientProtocolWitness: MyClient {
-    static func makeErasedProtocolWitness() -> MyClient {
-        MyClientProtocolWitness()
-    }
-    
-    func makingProtocolWitness() -> MyClientProtocolWitness {
-        MyClientProtocolWitness()
-    }
-    
-    init() {
-    }
-}
-
 
 
 

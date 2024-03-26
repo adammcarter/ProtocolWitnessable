@@ -71,7 +71,7 @@ public struct ProtocolWitnessableMacro: PeerMacro {
             let erasedProtocolWitnessFunctionParameters = makeErasedProtocolWitnessFunctionParameters(
                 capturedProperties: nonStaticCapturedProperties,
                 capturedFunctions: nonStaticCapturedFunctions,
-                needsUnderscorePrefix: false
+                needsUnderscorePrefix: true
             )
             
             
@@ -680,23 +680,23 @@ private func makeProtocolWitnessInitializerParameters(
 ) -> String {
     let propertyInitializerParameters = capturedProperties
         .map {
-            let rhs = if $0.isThrowing, supportsAsyncThrows {
-                "{ try \($0.name) }"
-            } else {
-                "\($0.name)"
-            }
-
-            
             let underscoreOrEmpty = $0.isGetOnly ? "_" : ""
+            let name = "\(underscoreOrEmpty)\($0.name)"
             
-            return "\(underscoreOrEmpty)\($0.name): \(rhs)"
+            let rhs = if $0.isThrowing, supportsAsyncThrows {
+                "{ try \(name) }"
+            } else {
+                "\(name)"
+            }
+            
+            return "\(name): \(rhs)"
         }
     
     
     
     let functionInitializerParameters = capturedFunctions
         .map {
-            "_\($0.name): \($0.name)"
+            "_\($0.name): _\($0.name)"
         }
     
     
