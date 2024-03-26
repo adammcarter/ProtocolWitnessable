@@ -25,8 +25,6 @@ final class ProtocolWitnessableTests: XCTestCase {
      extension MyClient {
         typealias ProtocolWitness = MyClientProtocolWitness
      }
- - Make class a final class in implementation
-    - Feels like we never want the classes to be subclasses but do final classes still allow extensions? Double check.
  - Do we need to add any specific stuff in the witness when the protocol is marked as MainActor?
  - Use nicer syntax for creating/manipulating types like here:
     https://forums.swift.org/t/workaround-for-macros-not-allowed-to-add-extensions/67916/2
@@ -187,7 +185,7 @@ extension ProtocolWitnessableTests {
             """
             protocol MyClient { }
 
-            class MyClientProtocolWitness: MyClient {
+            final class MyClientProtocolWitness: MyClient {
                 static func makeErasedProtocolWitness() -> MyClient {
                     MyClientProtocolWitness()
                 }
@@ -217,7 +215,7 @@ extension ProtocolWitnessableTests {
                 var someString: String { get }
             }
 
-            class MyClientProtocolWitness: MyClient {
+            final class MyClientProtocolWitness: MyClient {
                 var someString: String {
                     _someString
                 }
@@ -264,7 +262,7 @@ extension ProtocolWitnessableTests {
                 var anotherString: String { get }
             }
 
-            class MyClientProtocolWitness: MyClient {
+            final class MyClientProtocolWitness: MyClient {
                 var someString: String {
                     _someString
                 }
@@ -322,7 +320,7 @@ extension ProtocolWitnessableTests {
                 var anotherString: String { get set }
             }
 
-            class MyClientProtocolWitness: MyClient {
+            final class MyClientProtocolWitness: MyClient {
                 var someString: String
 
                 var anotherString: String
@@ -545,7 +543,7 @@ extension ProtocolWitnessableTests {
             
             @Observable
             @MainActor
-            class MyClientProtocolWitness: MyClient {
+            final class MyClientProtocolWitness: MyClient {
                 static func makeErasedProtocolWitness() -> MyClient {
                     MyClientProtocolWitness()
                 }
@@ -571,7 +569,7 @@ extension ProtocolWitnessableTests {
             """
             protocol MyClient { }
             
-            class MyClientProtocolWitness: MyClient {
+            final class MyClientProtocolWitness: MyClient {
                 static func makeErasedProtocolWitness() -> MyClient {
                     MyClientProtocolWitness()
                 }

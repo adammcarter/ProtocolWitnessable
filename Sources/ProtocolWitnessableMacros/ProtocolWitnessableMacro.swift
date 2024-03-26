@@ -25,7 +25,7 @@ public struct ProtocolWitnessableMacro: PeerMacro {
         let protocolTypeName = protocolDecl.name.trimmedDescription
         
         let targetType = makeProtocolWitnessTargetType(for: node)
-        let targetTypeIsClass = targetType == "class"
+        let targetTypeIsClass = targetType == .class
         
         let formattedAttributeNames = makeFormattedAttributeNames(for: node)
         
@@ -170,7 +170,7 @@ public struct ProtocolWitnessableMacro: PeerMacro {
         
         let formattedAttributeNamesOrEmpty = formattedAttributeNames ?? ""
         
-        let targetTypeLhs = "\(formattedAttributeNamesOrEmpty)\(modifierOrEmpty)\(targetType) \(protocolWitnessTargetTypeName)"
+        let targetTypeLhs = "\(formattedAttributeNamesOrEmpty)\(modifierOrEmpty)\(targetType.declaration) \(protocolWitnessTargetTypeName)"
         let targetTypeDecl = "\(targetTypeLhs): \(protocolTypeName) {"
         
         if capturedProperties.isEmpty && capturedFunctions.isEmpty {
@@ -427,16 +427,15 @@ private func modifierOrEmpty(for protocolDecl: ProtocolDeclSyntax) -> String {
 }
 
 
-private func makeProtocolWitnessTargetType(for node: AttributeSyntax) -> String {
+private func makeProtocolWitnessTargetType(for node: AttributeSyntax) -> TargetType {
     node
         .arguments?
         .as(LabeledExprListSyntax.self)?
         .first { $0.label?.tokenKind == .identifier("targetType") }?
         .expression
-        .as(MemberAccessExprSyntax.self)?
-        .declName
-        .trimmedDescription
-    ?? "struct"
+        .as(MemberAccessExprSyntax.self)
+        .flatMap { TargetType(rawValue: $0.declName.trimmedDescription) }
+    ?? .struct
 }
 
 
@@ -797,6 +796,18 @@ private enum ProtocolWitnessableError: Error, CustomStringConvertible {
     
     var description: String {
         "@ProtocolWitnessable can only be attached to protocols"
+    }
+}
+
+private enum TargetType: String {
+    case `struct`
+    case `class`
+    
+    var declaration: String {
+        switch self {
+            case .class: "final class"
+            default: rawValue
+        }
     }
 }
 
