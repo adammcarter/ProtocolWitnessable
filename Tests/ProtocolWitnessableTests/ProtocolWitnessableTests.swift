@@ -36,6 +36,7 @@ final class ProtocolWitnessableTests: XCTestCase {
     - use autoclosure where possible?
  - make static test() like above
  - update isObservable to extendable array of extra attributes
+ - update static funcs to use _ prefix only for properties we generate to distinguish which properties are being overridden vs the ones that are being set at the callsite
  
  - Add support for attaching to actors?
  - Use SwiftSyntaxMacros builders?
