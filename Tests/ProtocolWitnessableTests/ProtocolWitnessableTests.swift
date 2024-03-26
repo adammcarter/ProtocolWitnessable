@@ -117,7 +117,7 @@ extension ProtocolWitnessableTests {
     }
 }
 
-// MARK: - Empty structure
+// MARK: - targetType argument
 
 extension ProtocolWitnessableTests {
     func testMacro_usesStructTypeByDefault() throws {
@@ -200,8 +200,102 @@ extension ProtocolWitnessableTests {
                 var someString: String { get }
             }
             """
+        } expansion: {
+            """
+            protocol MyClient {
+                var someString: String { get }
+            }
+
+            class MyClientProtocolWitness: MyClient {
+                var someString: String {
+                    _someString
+                }
+
+                var _someString: String
+
+                static func makeErasedProtocolWitness(
+                    someString: String
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _someString: someString
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _someString: someString
+                    )
+                }
+
+                init(
+                    _someString: String
+                ) {
+                    self._someString = _someString
+                }
+            }
+            """
         }
     }
+    
+    func testMacro_usesClassType_andCreatesInitWithParameters_whenTargetTypeIsClass_andMultipleProperties() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable(targetType: .class)
+            protocol MyClient {
+                var someString: String { get }
+                var anotherString: String { get }
+            }
+            """
+        } expansion: {
+            """
+            protocol MyClient {
+                var someString: String { get }
+                var anotherString: String { get }
+            }
+
+            class MyClientProtocolWitness: MyClient {
+                var someString: String {
+                    _someString
+                }
+
+                var _someString: String
+
+                var anotherString: String {
+                    _anotherString
+                }
+
+                var _anotherString: String
+
+                static func makeErasedProtocolWitness(
+                    someString: String,
+                    anotherString: String
+                ) -> MyClient {
+                    MyClientProtocolWitness(
+                        _someString: someString,
+                        _anotherString: anotherString
+                    )
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness(
+                        _someString: someString,
+                        _anotherString: anotherString
+                    )
+                }
+
+                init(
+                    _someString: String,
+                    _anotherString: String
+                ) {
+                    self._someString = _someString
+                    self._anotherString = _anotherString
+                }
+            }
+            """
+        }
+    }
+    
+    // TODO: Class tests for other things like throws/async etc.
 }
 
 // MARK: - Empty structure

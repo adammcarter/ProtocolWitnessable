@@ -24,6 +24,7 @@ public struct ProtocolWitnessableMacro: PeerMacro {
                 
         let protocolTypeName = protocolDecl.name.trimmedDescription
         let targetType = makeProtocolWitnessTargetType(for: node)
+        let targetTypeNeedsInitializer = targetType == "class"
         let protocolWitnessStructTypeName = makeProtocolWitnessTargetTypeName(for: protocolTypeName)
         
         let modifierOrEmpty = modifierOrEmpty(for: protocolDecl)
@@ -42,6 +43,7 @@ public struct ProtocolWitnessableMacro: PeerMacro {
         
         let makeErasedProtocolWitnessFunction: String
         let makingProtocolWitness: String
+        let initOrEmpty: String
         
         if nonStaticCapturedProperties.isEmpty && nonStaticCapturedFunctions.isEmpty {
             makeErasedProtocolWitnessFunction = """
@@ -55,10 +57,18 @@ public struct ProtocolWitnessableMacro: PeerMacro {
                 \(protocolWitnessStructTypeName)()
                 }
                 """
+            
+            initOrEmpty = targetTypeNeedsInitializer ? """
+                
+                
+                init() {
+                }
+                """ : ""
         } else {
             let erasedProtocolWitnessFunctionParameters = makeErasedProtocolWitnessFunctionParameters(
                 capturedProperties: nonStaticCapturedProperties,
-                capturedFunctions: nonStaticCapturedFunctions
+                capturedFunctions: nonStaticCapturedFunctions,
+                needsUnderscorePrefix: false
             )
             
             
@@ -110,12 +120,37 @@ public struct ProtocolWitnessableMacro: PeerMacro {
                 )
                 }
                 """
+            
+            
+            
+            let protocolWitnessFunctionParameters = makeErasedProtocolWitnessFunctionParameters(
+                capturedProperties: nonStaticCapturedProperties,
+                capturedFunctions: nonStaticCapturedFunctions,
+                needsUnderscorePrefix: true
+            )
+
+            
+            let classProtocolWitnessInitializerParameters = makeProtocolWitnessClassInitializerValues(
+                capturedProperties: nonStaticCapturedProperties,
+                capturedFunctions: nonStaticCapturedFunctions
+            )
+            
+            
+            initOrEmpty = targetTypeNeedsInitializer ? """
+                
+                
+                init(
+                \(protocolWitnessFunctionParameters)
+                ) {
+                \(classProtocolWitnessInitializerParameters)
+                }
+                """ : ""
         }
         
         let factoryFunctions = """
             \(makeErasedProtocolWitnessFunction)
             
-            \(makingProtocolWitness)
+            \(makingProtocolWitness)\(initOrEmpty)
             """
 
         
@@ -541,8 +576,11 @@ private func makeFunctionAsProperty(for capturedFunction: CapturedFunction) -> S
 
 private func makeErasedProtocolWitnessFunctionParameters(
     capturedProperties: [CapturedProperty],
-    capturedFunctions: [CapturedFunction]
+    capturedFunctions: [CapturedFunction],
+    needsUnderscorePrefix: Bool
 ) -> String {
+    let underscoreOrEmpty = needsUnderscorePrefix ? "_" : ""
+    
     let propertyParameters = capturedProperties
         .map {
             let rhs: String
@@ -555,14 +593,14 @@ private func makeErasedProtocolWitnessFunctionParameters(
                 rhs = "\(escapingOrEmpty)\($0.type)"
             }
             
-            return "\($0.name): \(rhs)"
+            return "\(underscoreOrEmpty)\($0.name): \(rhs)"
         }
     
     
     
     let functionParameters = capturedFunctions
         .map {
-            "\($0.name): @escaping \($0.type)"
+            "\(underscoreOrEmpty)\($0.name): @escaping \($0.type)"
         }
     
     
@@ -609,6 +647,32 @@ private func makeProtocolWitnessInitializerParameters(
     ]
         .flatMap { $0 }
         .joined(separator: ",\n")
+}
+
+
+private func makeProtocolWitnessClassInitializerValues(
+    capturedProperties: [CapturedProperty],
+    capturedFunctions: [CapturedFunction]
+) -> String {
+    let propertyInitializerParameters = capturedProperties
+        .map {
+            "self._\($0.name) = _\($0.name)"
+        }
+    
+    
+    
+    let functionInitializerParameters = capturedFunctions
+        .map {
+            "self._\($0.name) = _\($0.name)"
+        }
+    
+    
+    return [
+        propertyInitializerParameters,
+        functionInitializerParameters,
+    ]
+        .flatMap { $0 }
+        .joined(separator: "\n")
 }
 
 
