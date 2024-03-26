@@ -25,10 +25,8 @@ final class ProtocolWitnessableTests: XCTestCase {
      extension MyClient {
         typealias ProtocolWitness = MyClientProtocolWitness
      }
- - Do we need to add any specific stuff in the witness when the protocol is marked as MainActor?
  - Use nicer syntax for creating/manipulating types like here:
     https://forums.swift.org/t/workaround-for-macros-not-allowed-to-add-extensions/67916/2
- - Rename makeErasedProtocolWitness() -> makingErased()
  - make statis preview() func with default args
     - default args including closures with args inside them
     - use autoclosure where possible?
@@ -140,7 +138,7 @@ extension ProtocolWitnessableTests {
             protocol MyClient { }
 
             struct MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -163,7 +161,7 @@ extension ProtocolWitnessableTests {
             protocol MyClient { }
 
             struct MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -186,7 +184,7 @@ extension ProtocolWitnessableTests {
             protocol MyClient { }
 
             final class MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -222,7 +220,7 @@ extension ProtocolWitnessableTests {
 
                 var _someString: String
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     someString: String
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -275,7 +273,7 @@ extension ProtocolWitnessableTests {
 
                 var _anotherString: String
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     someString: String,
                     anotherString: String
                 ) -> MyClient {
@@ -325,7 +323,7 @@ extension ProtocolWitnessableTests {
 
                 var anotherString: String
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     someString: String,
                     anotherString: String
                 ) -> MyClient {
@@ -371,7 +369,7 @@ extension ProtocolWitnessableTests {
             protocol MyClient { }
 
             struct MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -394,7 +392,7 @@ extension ProtocolWitnessableTests {
             protocol MyClient { }
             
             struct MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
             
@@ -417,7 +415,7 @@ extension ProtocolWitnessableTests {
             protocol MyClient { }
             
             struct MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
             
@@ -441,7 +439,7 @@ extension ProtocolWitnessableTests {
             
             @Observable
             struct MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
             
@@ -465,7 +463,7 @@ extension ProtocolWitnessableTests {
             
             @ComplexAttribute(withParameter: true)
             struct MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
             
@@ -490,7 +488,7 @@ extension ProtocolWitnessableTests {
             @Observable
             @MainActor
             struct MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -515,7 +513,7 @@ extension ProtocolWitnessableTests {
             @ComplexAttribute(withParameter: true)
             @SomeOtherComplexThing(someValues: 1, other: false)
             struct MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -544,7 +542,7 @@ extension ProtocolWitnessableTests {
             @Observable
             @MainActor
             final class MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
             
@@ -570,7 +568,7 @@ extension ProtocolWitnessableTests {
             protocol MyClient { }
             
             final class MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
             
@@ -600,7 +598,7 @@ extension ProtocolWitnessableTests {
             protocol MyClient { }
 
             struct MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -623,7 +621,7 @@ extension ProtocolWitnessableTests {
             internal protocol MyClient { }
 
             internal struct MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -646,7 +644,7 @@ extension ProtocolWitnessableTests {
             public protocol MyClient { }
 
             public struct MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -669,7 +667,7 @@ extension ProtocolWitnessableTests {
             private protocol MyClient { }
 
             private struct MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -692,7 +690,7 @@ extension ProtocolWitnessableTests {
             fileprivate protocol MyClient { }
 
             fileprivate struct MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -731,7 +729,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: () -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -770,7 +768,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: (Int) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping (Int) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -809,7 +807,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: (Int, String) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping (Int, String) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -848,7 +846,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: () -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -887,7 +885,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: () -> Int
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () -> Int
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -947,7 +945,7 @@ extension ProtocolWitnessableTests {
                 static var _doSomething: () -> Void = {
                 }
 
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -981,7 +979,7 @@ extension ProtocolWitnessableTests {
                 static var _doSomething: (Int) -> Void = { _ in
                 }
 
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -1015,7 +1013,7 @@ extension ProtocolWitnessableTests {
                 static var _doSomething: (Int, String) -> Void = { _, _ in
                 }
 
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -1062,7 +1060,7 @@ extension ProtocolWitnessableTests {
 
                 var _doAnotherThing: () -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () -> Void,
                     doAnotherThing: @escaping () -> Void
                 ) -> MyClient {
@@ -1114,7 +1112,7 @@ extension ProtocolWitnessableTests {
 
                 var _doAnotherThing: (String) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping (Int) -> Void,
                     doAnotherThing: @escaping (String) -> Void
                 ) -> MyClient {
@@ -1166,7 +1164,7 @@ extension ProtocolWitnessableTests {
 
                 var _doAnotherThing: (Int, Double) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping (Int, String) -> Void,
                     doAnotherThing: @escaping (Int, Double) -> Void
                 ) -> MyClient {
@@ -1218,7 +1216,7 @@ extension ProtocolWitnessableTests {
 
                 var _doAnotherThing: () -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () -> Void,
                     doAnotherThing: @escaping () -> Void
                 ) -> MyClient {
@@ -1270,7 +1268,7 @@ extension ProtocolWitnessableTests {
 
                 var _doAnotherThing: () -> Double
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () -> Int,
                     doAnotherThing: @escaping () -> Double
                 ) -> MyClient {
@@ -1344,7 +1342,7 @@ extension ProtocolWitnessableTests {
                 static var _doAnotherThing: () -> Void = {
                 }
 
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -1381,7 +1379,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: (String) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping (String) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -1420,7 +1418,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: (String, Int) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping (String, Int) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -1463,7 +1461,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: () -> Int
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () -> Int
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -1505,7 +1503,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: () -> Int
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () -> Int
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -1550,7 +1548,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomethingForiOS16: () -> Int
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomethingForiOS16: @escaping () -> Int
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -1593,7 +1591,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: () async -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () async -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -1642,7 +1640,7 @@ extension ProtocolWitnessableTests {
 
                 var _doAnotherThing: () async -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () async -> Void,
                     doAnotherThing: @escaping () async -> Void
                 ) -> MyClient {
@@ -1694,7 +1692,7 @@ extension ProtocolWitnessableTests {
 
                 var _doAnotherThing: () async -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () -> Void,
                     doAnotherThing: @escaping () async -> Void
                 ) -> MyClient {
@@ -1736,7 +1734,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: ([String]) async -> [String]
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping ([String]) async -> [String]
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -1779,7 +1777,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: () throws -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () throws -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -1828,7 +1826,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomethingElse: () throws -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () throws -> Void,
                     doSomethingElse: @escaping () throws -> Void
                 ) -> MyClient {
@@ -1880,7 +1878,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomethingElse: () throws -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () -> Void,
                     doSomethingElse: @escaping () throws -> Void
                 ) -> MyClient {
@@ -1926,7 +1924,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: (() -> Void) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping (() -> Void) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -1965,7 +1963,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: ((Int) -> Void) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping ((Int) -> Void) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2004,7 +2002,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: ((Int?) -> Void) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping ((Int?) -> Void) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2043,7 +2041,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: ((Int, String, Double) -> Void) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping ((Int, String, Double) -> Void) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2082,7 +2080,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: ((Int, Int, Int) -> Void) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping ((Int, Int, Int) -> Void) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2121,7 +2119,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: (@escaping () -> Void) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping (@escaping () -> Void) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2160,7 +2158,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: (@escaping (Int) -> Void) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping (@escaping (Int) -> Void) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2199,7 +2197,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: (() -> Void, () -> Void) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping (() -> Void, () -> Void) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2238,7 +2236,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: (() -> Void, (Bool, Error?) -> Void) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping (() -> Void, (Bool, Error?) -> Void) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2281,7 +2279,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: () ->   Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () ->   Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2320,7 +2318,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: () ->   Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () ->   Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2359,7 +2357,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: () -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2404,7 +2402,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: () -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     doSomething: @escaping () -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2449,7 +2447,7 @@ extension ProtocolWitnessableTests {
 
                 var _someLetProperty: Int
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     someLetProperty: Int
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2484,7 +2482,7 @@ extension ProtocolWitnessableTests {
             struct MyClientProtocolWitness: MyClient {
                 var someLetProperty: Int
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     someLetProperty: Int
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2521,7 +2519,7 @@ extension ProtocolWitnessableTests {
                     .init()
                 }()
 
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -2552,7 +2550,7 @@ extension ProtocolWitnessableTests {
                     .init()
                 }()
 
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -2585,7 +2583,7 @@ extension ProtocolWitnessableTests {
 
                 var _someLetProperty: () -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     someLetProperty: @escaping () -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2620,7 +2618,7 @@ extension ProtocolWitnessableTests {
             struct MyClientProtocolWitness: MyClient {
                 var someLetProperty: () -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     someLetProperty: @escaping () -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2659,7 +2657,7 @@ extension ProtocolWitnessableTests {
 
                 var _someLetProperty: (Int) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     someLetProperty: @escaping (Int) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2694,7 +2692,7 @@ extension ProtocolWitnessableTests {
             struct MyClientProtocolWitness: MyClient {
                 var someLetProperty: (Int) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     someLetProperty: @escaping (Int) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2739,7 +2737,7 @@ extension ProtocolWitnessableTests {
 
                 var _someLetProperty: Int
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     someLetProperty: Int
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2780,7 +2778,7 @@ extension ProtocolWitnessableTests {
 
                 var _someLetProperty: (Int) -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     someLetProperty: @escaping (Int) -> Void
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2825,7 +2823,7 @@ extension ProtocolWitnessableTests {
 
                 var _someLetProperty: () throws -> Int
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     someLetProperty: @escaping () throws -> Int
                 ) -> MyClient {
                     MyClientProtocolWitness(
@@ -2864,7 +2862,7 @@ extension ProtocolWitnessableTests {
             }
 
             struct MyClientProtocolWitness: MyClient {
-                static func makeErasedProtocolWitness() -> MyClient {
+                static func makingErased() -> MyClient {
                     MyClientProtocolWitness()
                 }
 
@@ -2912,7 +2910,7 @@ extension ProtocolWitnessableTests {
 
                 var _doSomething: () -> Void
 
-                static func makeErasedProtocolWitness(
+                static func makingErased(
                     someProperty: Int,
                     doSomething: @escaping () -> Void
                 ) -> MyClient {

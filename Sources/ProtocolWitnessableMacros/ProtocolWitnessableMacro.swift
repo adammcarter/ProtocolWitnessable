@@ -29,7 +29,7 @@ public struct ProtocolWitnessableMacro: PeerMacro {
         
         let formattedAttributeNames = makeFormattedAttributeNames(for: node)
         
-        let protocolWitnessTargetTypeName = makeProtocolWitnessTargetTypeName(for: protocolTypeName)
+        let targetTypeName = makeTargetTypeName(for: protocolTypeName)
         
         let modifierOrEmpty = modifierOrEmpty(for: protocolDecl)
         
@@ -50,15 +50,14 @@ public struct ProtocolWitnessableMacro: PeerMacro {
         let initOrEmpty: String
         
         if nonStaticCapturedProperties.isEmpty && nonStaticCapturedFunctions.isEmpty {
-            makeErasedProtocolWitnessFunction = """
-                static func makeErasedProtocolWitness() -> \(protocolTypeName) {
-                \(protocolWitnessTargetTypeName)()
-                }
-                """
-            
+            makeErasedProtocolWitnessFunction = makeMakeErasedProtocolWitnessFunction(
+                protocolTypeName: protocolTypeName,
+                targetTypeName: targetTypeName
+            )
+
             makingProtocolWitness = """
-                func makingProtocolWitness() -> \(protocolWitnessTargetTypeName) {
-                \(protocolWitnessTargetTypeName)()
+                func makingProtocolWitness() -> \(targetTypeName) {
+                \(targetTypeName)()
                 }
                 """
             
@@ -76,6 +75,27 @@ public struct ProtocolWitnessableMacro: PeerMacro {
             )
             
             
+            let erasedProtocolWitnessInitializerParameters = makeProtocolWitnessInitializerParameters(
+                capturedProperties: nonStaticCapturedProperties,
+                capturedFunctions: nonStaticCapturedFunctions,
+                supportsAsyncThrows: false
+            )
+            
+            
+            makeErasedProtocolWitnessFunction = makeMakeErasedProtocolWitnessFunction(
+                protocolTypeName: protocolTypeName,
+                targetTypeName: targetTypeName,
+                initializerParameters: erasedProtocolWitnessInitializerParameters,
+                functionParameters: erasedProtocolWitnessFunctionParameters
+            )
+            
+            
+            let protocolWitnessInitializerParameters = makeProtocolWitnessInitializerParameters(
+                capturedProperties: nonStaticCapturedProperties,
+                capturedFunctions: nonStaticCapturedFunctions,
+                supportsAsyncThrows: true
+            )
+            
             
             
             let needsAsyncAwait = nonStaticCapturedProperties.contains(where: \.isAsync)
@@ -91,35 +111,9 @@ public struct ProtocolWitnessableMacro: PeerMacro {
             
             let awaitOrEmpty = needsAsyncAwait ? "await " : ""
             
-            
-            let erasedProtocolWitnessInitializerParameters = makeProtocolWitnessInitializerParameters(
-                capturedProperties: nonStaticCapturedProperties,
-                capturedFunctions: nonStaticCapturedFunctions,
-                supportsAsyncThrows: false
-            )
-            
-            
-            makeErasedProtocolWitnessFunction = """
-                static func makeErasedProtocolWitness(
-                \(erasedProtocolWitnessFunctionParameters)
-                ) -> \(protocolTypeName) {
-                \(protocolWitnessTargetTypeName)(
-                \(erasedProtocolWitnessInitializerParameters)
-                )
-                }
-                """
-            
-            
-            let protocolWitnessInitializerParameters = makeProtocolWitnessInitializerParameters(
-                capturedProperties: nonStaticCapturedProperties,
-                capturedFunctions: nonStaticCapturedFunctions,
-                supportsAsyncThrows: true
-            )
-            
-            
             makingProtocolWitness = """
-                func makingProtocolWitness() \(asyncThrowsOrEmpty)-> \(protocolWitnessTargetTypeName) {
-                \(awaitOrEmpty)\(protocolWitnessTargetTypeName)(
+                func makingProtocolWitness() \(asyncThrowsOrEmpty)-> \(targetTypeName) {
+                \(awaitOrEmpty)\(targetTypeName)(
                 \(protocolWitnessInitializerParameters)
                 )
                 }
@@ -170,7 +164,7 @@ public struct ProtocolWitnessableMacro: PeerMacro {
         
         let formattedAttributeNamesOrEmpty = formattedAttributeNames ?? ""
         
-        let targetTypeLhs = "\(formattedAttributeNamesOrEmpty)\(modifierOrEmpty)\(targetType.declaration) \(protocolWitnessTargetTypeName)"
+        let targetTypeLhs = "\(formattedAttributeNamesOrEmpty)\(modifierOrEmpty)\(targetType.declaration) \(targetTypeName)"
         let targetTypeDecl = "\(targetTypeLhs): \(protocolTypeName) {"
         
         if capturedProperties.isEmpty && capturedFunctions.isEmpty {
@@ -464,8 +458,39 @@ private func makeAttributes(from array: ArrayElementSyntax) -> String? {
 }
 
 
-private func makeProtocolWitnessTargetTypeName(for protocolTypeName: String) -> String {
+private func makeTargetTypeName(for protocolTypeName: String) -> String {
     "\(protocolTypeName)ProtocolWitness"
+}
+
+
+private func makeMakeErasedProtocolWitnessFunction(
+    protocolTypeName: String,
+    targetTypeName: String,
+    initializerParameters: String = "",
+    functionParameters: String = ""
+) -> String {
+    let functionDeclaration = "static func makingErased("
+    
+    if
+        initializerParameters.isEmpty,
+        functionParameters.isEmpty
+    {
+        return """
+            \(functionDeclaration)) -> \(protocolTypeName) {
+            \(targetTypeName)()
+            }
+            """
+    } else {
+        return """
+            \(functionDeclaration)
+            \(functionParameters)
+            ) -> \(protocolTypeName) {
+            \(targetTypeName)(
+            \(initializerParameters)
+            )
+            }
+            """
+    }
 }
 
 
