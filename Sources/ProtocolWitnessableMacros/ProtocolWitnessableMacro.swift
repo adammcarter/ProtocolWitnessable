@@ -25,7 +25,8 @@ public struct ProtocolWitnessableMacro: PeerMacro {
         let protocolTypeName = protocolDecl.name.trimmedDescription
         let targetType = makeProtocolWitnessTargetType(for: node)
         let targetTypeNeedsInitializer = targetType == "class"
-        let protocolWitnessStructTypeName = makeProtocolWitnessTargetTypeName(for: protocolTypeName)
+        let needsObservableOnTargetType = needsObservableOnTargetType(for: node)
+        let protocolWitnessTargetTypeName = makeProtocolWitnessTargetTypeName(for: protocolTypeName)
         
         let modifierOrEmpty = modifierOrEmpty(for: protocolDecl)
         
@@ -48,13 +49,13 @@ public struct ProtocolWitnessableMacro: PeerMacro {
         if nonStaticCapturedProperties.isEmpty && nonStaticCapturedFunctions.isEmpty {
             makeErasedProtocolWitnessFunction = """
                 static func makeErasedProtocolWitness() -> \(protocolTypeName) {
-                \(protocolWitnessStructTypeName)()
+                \(protocolWitnessTargetTypeName)()
                 }
                 """
             
             makingProtocolWitness = """
-                func makingProtocolWitness() -> \(protocolWitnessStructTypeName) {
-                \(protocolWitnessStructTypeName)()
+                func makingProtocolWitness() -> \(protocolWitnessTargetTypeName) {
+                \(protocolWitnessTargetTypeName)()
                 }
                 """
             
@@ -99,7 +100,7 @@ public struct ProtocolWitnessableMacro: PeerMacro {
                 static func makeErasedProtocolWitness(
                 \(erasedProtocolWitnessFunctionParameters)
                 ) -> \(protocolTypeName) {
-                \(protocolWitnessStructTypeName)(
+                \(protocolWitnessTargetTypeName)(
                 \(erasedProtocolWitnessInitializerParameters)
                 )
                 }
@@ -114,8 +115,8 @@ public struct ProtocolWitnessableMacro: PeerMacro {
             
             
             makingProtocolWitness = """
-                func makingProtocolWitness() \(asyncThrowsOrEmpty)-> \(protocolWitnessStructTypeName) {
-                \(awaitOrEmpty)\(protocolWitnessStructTypeName)(
+                func makingProtocolWitness() \(asyncThrowsOrEmpty)-> \(protocolWitnessTargetTypeName) {
+                \(awaitOrEmpty)\(protocolWitnessTargetTypeName)(
                 \(protocolWitnessInitializerParameters)
                 )
                 }
@@ -163,9 +164,15 @@ public struct ProtocolWitnessableMacro: PeerMacro {
         
         let protocolWitnessStruct: String
         
+        
+        let observableOrEmpty = needsObservableOnTargetType ? "@Observable\n" : ""
+        
+        let targetTypeLhs = "\(observableOrEmpty)\(modifierOrEmpty)\(targetType) \(protocolWitnessTargetTypeName)"
+        let targetTypeDecl = "\(targetTypeLhs): \(protocolTypeName) {"
+        
         if capturedProperties.isEmpty && capturedFunctions.isEmpty {
             protocolWitnessStruct = """
-                \(modifierOrEmpty)\(targetType) \(protocolWitnessStructTypeName): \(protocolTypeName) {
+                \(targetTypeDecl)
                 \(factoryFunctions)
                 }
                 """
@@ -193,7 +200,7 @@ public struct ProtocolWitnessableMacro: PeerMacro {
 
             
             protocolWitnessStruct = """
-                \(modifierOrEmpty)\(targetType) \(protocolWitnessStructTypeName): \(protocolTypeName) {
+                \(targetTypeDecl)
                 \(protocolWitnessStructBody)
                 
                 \(factoryFunctions)
@@ -429,6 +436,18 @@ private func makeProtocolWitnessTargetType(for node: AttributeSyntax) -> String 
         .declName
         .trimmedDescription
     ?? "struct"
+}
+
+private func needsObservableOnTargetType(for node: AttributeSyntax) -> Bool {
+    node
+        .arguments?
+        .as(LabeledExprListSyntax.self)?
+        .first(where: {
+            $0.label?.tokenKind == .identifier("isObservable")
+        })?
+        .expression
+        .as(BooleanLiteralExprSyntax.self)?
+        .literal.tokenKind == .keyword(.true)
 }
 
 

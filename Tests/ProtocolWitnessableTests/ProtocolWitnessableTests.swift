@@ -32,6 +32,7 @@ final class ProtocolWitnessableTests: XCTestCase {
  - make statis preview() func with default args
     - default args including closures with args inside them
     - use autoclosure where possible?
+ - update isObservable to extendable array of extra attributes
  
  - Add support for attaching to actors and classes?
  - Use SwiftSyntaxMacros builders?
@@ -296,6 +297,137 @@ extension ProtocolWitnessableTests {
     }
     
     // TODO: Class tests for other things like throws/async etc.
+}
+
+// MARK: - isObservable argument
+
+extension ProtocolWitnessableTests {
+    func testMacro_doesNotAddObservableByDefault() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable()
+            protocol MyClient { }
+            """
+        } expansion: {
+            """
+            protocol MyClient { }
+
+            struct MyClientProtocolWitness: MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_usesMainActor_whenIsObservableIsFalse() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable(isObservable: false)
+            protocol MyClient { }
+            """
+        } expansion: {
+            """
+            protocol MyClient { }
+            
+            struct MyClientProtocolWitness: MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+            
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_usesMainActor_whenIsObservableIsTrue() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable(isObservable: true)
+            protocol MyClient { }
+            """
+        } expansion: {
+            """
+            protocol MyClient { }
+
+            @Observable
+            struct MyClientProtocolWitness: MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            }
+            """
+        }
+    }
+}
+
+// MARK: - Multiple arguments
+
+extension ProtocolWitnessableTests {
+    func testMacro_usesClassAndObservable_whenArguments() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable(targetType: .class, isObservable: true)
+            protocol MyClient { }
+            """
+        } expansion: {
+            """
+            protocol MyClient { }
+            
+            @Observable
+            class MyClientProtocolWitness: MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+            
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            
+                init() {
+                }
+            }
+            """
+        }
+    }
+    
+    func testMacro_usesClass_butNotObservable_whenArguments() throws {
+        assertMacro {
+            """
+            @ProtocolWitnessable(targetType: .class, isObservable: false)
+            protocol MyClient { }
+            """
+        } expansion: {
+            """
+            protocol MyClient { }
+            
+            class MyClientProtocolWitness: MyClient {
+                static func makeErasedProtocolWitness() -> MyClient {
+                    MyClientProtocolWitness()
+                }
+            
+                func makingProtocolWitness() -> MyClientProtocolWitness {
+                    MyClientProtocolWitness()
+                }
+            
+                init() {
+                }
+            }
+            """
+        }
+    }
 }
 
 // MARK: - Empty structure
