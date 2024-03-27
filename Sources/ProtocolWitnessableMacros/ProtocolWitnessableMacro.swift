@@ -5,13 +5,6 @@ import SwiftSyntaxMacros
 import SwiftDiagnostics
 
 
-@main
-struct ProtocolWitnessablePlugin: CompilerPlugin {
-    let providingMacros: [Macro.Type] = [
-        ProtocolWitnessableMacro.self,
-    ]
-}
-
 public struct ProtocolWitnessableMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
