@@ -166,104 +166,6 @@ public struct ProtocolWitnessableMacro: PeerMacro {
 }
 
 
-// MARK: - Capturing properties
-
-private func makeCapturedProperties(from decl: ProtocolDeclSyntax) -> [CapturedProperty] {
-    decl
-        .memberBlock
-        .members
-        .compactMap(makeCapturedProperty)
-        .flatMap { $0 }
-}
-
-private func makeCapturedProperty(from blockListElement: MemberBlockItemListSyntax.Element) -> [CapturedProperty]? {
-    guard
-        let varDecl = blockListElement.decl.as(VariableDeclSyntax.self)
-    else {
-        return nil
-    }
-
-    
-    let bindings = varDecl.bindings
-    let initializerValue = bindings.first?.initializer?.value
-    
-    let needsExplicitWrappingProperty = initializerValue == nil
-        || initializerValue?.is(FunctionCallExprSyntax.self) == true
-    
-    let canBeUsedAsIs = bindings.contains { $0.initializer?.equal != nil }
-    
-    guard
-        varDecl.isPrivate == false,
-        (needsExplicitWrappingProperty || canBeUsedAsIs)
-    else {
-        return nil
-    }
-    
-
-    
-    let isStatic = varDecl
-        .modifiers
-        .contains { $0.name.tokenKind == .keyword(.static) }
-    
-    let isLazy = varDecl
-        .modifiers
-        .contains { $0.name.tokenKind == .keyword(.lazy) }
-    
-    
-    return varDecl
-        .bindings
-        .compactMap {
-            makeCapturedProperty(from: $0, isStatic: isStatic, isLazy: isLazy)
-        }
-}
-
-private func makeCapturedProperty(
-    from patternBindingList: PatternBindingListSyntax.Element,
-    isStatic: Bool,
-    isLazy: Bool
-) -> CapturedProperty? {
-    guard let type = patternBindingList.typeAnnotation?.type.trimmedDescription else {
-        return nil
-    }
-    
-    let isFunctionType = patternBindingList.typeAnnotation?.type.is(FunctionTypeSyntax.self) == true
-    
-    let accessorBlock = patternBindingList.accessorBlock
-    
-    let declList = accessorBlock?
-        .accessors
-        .as(AccessorDeclListSyntax.self)
-    
-    
-    let isAsync = declList?
-        .compactMap { $0.effectSpecifiers?.asyncSpecifier }
-        .isEmpty == false
-    
-    let isThrowing = declList?
-        .compactMap { $0.effectSpecifiers?.throwsSpecifier }
-        .isEmpty == false
-    
-    let isGetOnly = declList?.contains {
-        $0.accessorSpecifier.tokenKind == .keyword(.set)
-    } == false && declList != nil
-    
-    
-    
-    let name = patternBindingList.pattern.trimmedDescription
-    
-    return CapturedProperty(
-        name: name,
-        type: type,
-        isGetOnly: isGetOnly,
-        isAsync: isAsync,
-        isThrowing: isThrowing,
-        isStatic: isStatic,
-        isLazy: isLazy,
-        isFunctionType: isFunctionType
-    )
-}
-
-
 // MARK: - Capturing functions
 
 private func makeCapturedFunctions(from decl: ProtocolDeclSyntax) -> [CapturedFunction] {
@@ -684,24 +586,6 @@ private func makeProtocolWitnessClassInitializerValues(
 
 
 // MARK: - Types
-
-private struct CapturedProperty {
-    let name: String
-    let type: String
-    let isGetOnly: Bool
-    let isAsync: Bool
-    let isThrowing: Bool
-    let isStatic: Bool
-    let isLazy: Bool
-    let isFunctionType: Bool
-    
-    var prefix: String {
-        let lazyOrEmpty = isLazy ? "lazy " : ""
-        let staticOrEmpty = isStatic ? "static " : ""
-        
-        return "\(lazyOrEmpty)\(staticOrEmpty)"
-    }
-}
 
 private struct CapturedFunction {
     let attributes: [String]

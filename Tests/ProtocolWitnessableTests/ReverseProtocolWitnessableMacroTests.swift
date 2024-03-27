@@ -38,6 +38,132 @@ extension ReverseProtocolWitnessableTests {
         }
     }
 }
+
+// MARK: - Struct
+
+// MARK: Properties
+
+extension ReverseProtocolWitnessableTests {
+    func test_extractsPropertyToGetOnlyVar_whenStruct_andLet_andExplicitType() throws {
+        assertMacro {
+            """
+            @ReverseProtocolWitnessable
+            struct MyClient {
+                let thing: String = ""
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                let thing: String = ""
+            }
+            
+            @ProtocolWitnessable
+            protocol MyClientReverseProtocolWitness {
+                var thing: String {
+                    get
+                }
+            }
+            """
+        }
+    }
+    
+    func test_extractsPropertyToGetOnlyVar_whenStruct_andLet_andImplicitStringType() throws {
+        assertMacro {
+            """
+            @ReverseProtocolWitnessable
+            struct MyClient {
+                let thing = ""
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                let thing = ""
+            }
+            
+            @ProtocolWitnessable
+            protocol MyClientReverseProtocolWitness {
+                var thing: String {
+                    get
+                }
+            }
+            """
+        }
+    }
+    
+    func test_extractsPropertyToGetOnlyVar_whenStruct_andLet_andImplicitIntType() throws {
+        assertMacro {
+            """
+            @ReverseProtocolWitnessable
+            struct MyClient {
+                let thing = 1
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                let thing = 1
+            }
+            
+            @ProtocolWitnessable
+            protocol MyClientReverseProtocolWitness {
+                var thing: Int {
+                    get
+                }
+            }
+            """
+        }
+    }
+    
+    func test_extractsPropertyToGetOnlyVar_whenStruct_andLet_andImplicitBoolType() throws {
+        assertMacro {
+            """
+            @ReverseProtocolWitnessable
+            struct MyClient {
+                let thing = false
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                let thing = false
+            }
+            
+            @ProtocolWitnessable
+            protocol MyClientReverseProtocolWitness {
+                var thing: Bool {
+                    get
+                }
+            }
+            """
+        }
+    }
+    
+    func test_extractsPropertyToGetOnlyVar_whenStruct_andLet_andImplicitDoubleType() throws {
+        assertMacro {
+            """
+            @ReverseProtocolWitnessable
+            struct MyClient {
+                let thing = 0.5
+            }
+            """
+        } expansion: {
+            """
+            struct MyClient {
+                let thing = 0.5
+            }
+            
+            @ProtocolWitnessable
+            protocol MyClientReverseProtocolWitness {
+                var thing: Double {
+                    get
+                }
+            }
+            """
+        }
+    }
+}
 #else
 final class ProtocolWitnessableTests: XCTestCase {
     func testMacro() throws {
